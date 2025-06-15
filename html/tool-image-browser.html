@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Image Browser</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; --background-light: #f0f2f5; --background-dark: #ffffff;
+      --text-dark: #333; --text-medium: #555; --text-light: #777; --accent-color: #4A90E2;
+      --spacing-unit: 15px; --border-radius: 8px; --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --error-color: #d93025; /* Added error color */
+    }
+    /* --- Base Styles --- */
+    * { margin: 0; padding: 0; box-sizing: border; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif; background-color: var(--background-light);
+      color: var(--text-dark); min-height: 100vh;
+      max-width: 420px; margin: 0 auto; overflow-x: hidden; position: relative;
+    }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--border-radius); transition: background-color 0.3s, transform 0.1s; }
+    button:active { transform: translateY(1px); }
+    button:disabled { background-color: #ccc; cursor: not-allowed; } /* Disabled button style */
+    /* Combined styles for input and select */
+    input, select {
+      font-family: inherit; padding: 10px; border: 1px solid #ccc;
+      border-radius: var(--border-radius); width: 100%; font-size: 0.95rem;
+      margin-bottom: var(--spacing-unit); /* Add margin-bottom here */
+    }
+    label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-medium); }
+    /* Specific margin adjustment for the last input/select before button */
+    input:last-of-type, select:last-of-type { margin-bottom: var(--spacing-unit); /* Ensure spacing before the button */ }
+
+    /* --- Utility Classes --- */
+     .primary-button { background-color: var(--primary-color); color: #FFFFFF; padding: 12px var(--spacing-unit); font-size: 1rem; font-weight: 600; text-align: center; width: 100%; }
+    .primary-button:hover:not(:disabled) { background-color: #192F4A; } /* Only hover if not disabled */
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+    /* --- Header --- */
+    .header { background-color: var(--background-dark); padding: 0 var(--spacing-unit); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: 56px; }
+    .header-left { display: flex; align-items: center; }
+    .back-button { color: var(--text-medium); padding: 10px; margin-left: -10px; cursor: pointer; display: flex; align-items: center; }
+    .header-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin-left: 8px; }
+    .header-icons-right { display: flex; align-items: center; gap: var(--spacing-unit); }
+    .header-icon { position: relative; cursor: pointer; color: var(--text-medium); display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: -8px; }
+    .header-icon .material-symbols-outlined { font-size: 24px; }
+    /* --- Main Content Area --- */
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: var(--spacing-unit); }
+    .tool-card { background-color: var(--background-dark); border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: var(--spacing-unit); }
+    .placeholder-text { color: var(--text-light); font-style: italic; text-align: center; padding: 10px 0; line-height: 1.5; min-height: 40px; /* Give it some space */ }
+     .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: var(--spacing-unit); }
+     .image-grid img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; background-color: #eee; display: block; /* Prevents small gaps */ cursor: pointer; /* Indicate clickable */ transition: transform 0.2s ease-in-out; }
+     .image-grid img:hover { transform: scale(1.05); } /* Simple hover effect */
+
+     /* Style for the Load More Button */
+     .load-more-button {
+         display: none; /* Hidden by default */
+         margin-top: var(--spacing-unit);
+     }
+     .load-more-button.visible {
+         display: block;
+     }
+
+    /* --- Loading Indicator --- */
+    #pageLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s; opacity: 0; visibility: hidden; }
+    #pageLoading.visible { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+    #pageLoading .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <span class="material-symbols-outlined back-button" id="backButton">arrow_back_ios</span>
+      <span class="header-title">Image Browser</span>
+    </div>
+    <div class="header-icons-right">
+      <div id="signOutIcon" class="header-icon">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="tool-card">
+        <label for="searchInput">Search Unsplash Images:</label>
+        <input type="search" id="searchInput" placeholder="e.g., nature, business, technology">
+
+        <!-- Orientation Filter -->
+        <label for="orientationFilter">Filter by Orientation:</label>
+        <select id="orientationFilter">
+            <option value="">Any Orientation</option>
+            <option value="landscape">Landscape</option>
+            <option value="portrait">Portrait</option>
+            <option value="square">Square</option>
+        </select>
+        <!-- End Orientation Filter -->
+
+        <button id="searchButton" class="primary-button">Search</button>
+    </div>
+
+    <div class="tool-card">
+         <p class="placeholder-text" id="statusText">
+             Enter a search term to find photos from Unsplash.
+         </p>
+         <div class="image-grid" id="imageResults">
+             <!-- Images will be loaded here -->
+         </div>
+         <!-- Load More Button -->
+         <button id="loadMoreButton" class="primary-button load-more-button">Load More</button>
+         <!-- End Load More Button -->
+    </div>
+  </main>
+
+  <script>
+    // Firebase Configuration (Same as tools.html)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Masked original key
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    // Initialize Firebase App
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+
+    // --- Unsplash API Key ---
+    // WARNING: Exposing API keys client-side is insecure for production. Use a backend proxy.
+    const unsplashAccessKey = 'Zvat9H5CBYNXYjvDkqq6Y5QEkVzKzidqFX6eabgWRVo';
+    // The Secret Key is generally not needed for simple client-side search requests.
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const backButton = document.getElementById('backButton');
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const statusText = document.getElementById('statusText');
+    const imageResults = document.getElementById('imageResults');
+    const orientationFilter = document.getElementById('orientationFilter');
+    const loadMoreButton = document.getElementById('loadMoreButton'); // Get the load more button
+
+    // --- State Variables for Pagination ---
+    let currentPage = 1;
+    let currentSearchTerm = '';
+    let currentOrientation = '';
+    let isLoading = false;
+    const perPage = 30; // Number of images per page, now fixed at 30
+    let totalImagesFound = 0; // To track total images available based on API response
+
+    // --- Loading Indicator Functions ---
+    const showLoading = (text = 'Loading...') => {
+        pageLoadingText.textContent = text;
+        pageLoadingElement.classList.add('visible');
+        // Disable all interactive elements related to search while loading
+        searchButton.disabled = true;
+        searchInput.disabled = true;
+        orientationFilter.disabled = true;
+        loadMoreButton.disabled = true; // Disable load more button too
+    };
+    const hideLoading = () => {
+        pageLoadingElement.classList.remove('visible');
+        // Re-enable elements, but check if load more button should be visible/enabled
+        searchButton.disabled = false;
+        searchInput.disabled = false;
+        orientationFilter.disabled = false;
+        // The state (hasMore) will determine if loadMoreButton remains disabled/hidden
+        updateLoadMoreButtonState();
+    };
+
+     // --- Update Load More Button State ---
+     const updateLoadMoreButtonState = () => {
+        const imagesCurrentlyDisplayed = imageResults.children.length;
+        // Show button only if there are results AND the number displayed is less than the total found
+        if (imagesCurrentlyDisplayed > 0 && imagesCurrentlyDisplayed < totalImagesFound) {
+            loadMoreButton.classList.add('visible');
+            loadMoreButton.disabled = isLoading; // Disable if already loading
+            loadMoreButton.textContent = 'Load More'; // Reset text
+        } else {
+            loadMoreButton.classList.remove('visible');
+        }
+     };
+
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+        if (!user) {
+            console.log("User is signed out. Redirecting...");
+            window.location.href = 'signin.html';
+        } else {
+            console.log("User is signed in:", user.uid);
+            // Maybe pre-load some default images or recent searches here if desired
+            // Or simply wait for user input to trigger a search
+        }
+    });
+
+    // --- Sign Out Logic ---
+    if (signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                    showLoading('Signing out...');
+                    await auth.signOut();
+                    // The onAuthStateChanged listener will handle the redirect
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out: " + error.message);
+                    hideLoading(); // Hide loading on error
+                }
+                // No need for hideLoading() on success, as the redirect will happen
+            }
+        });
+    }
+
+    // --- Back Button Navigation ---
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            window.location.href = 'tools.html';
+        });
+    }
+
+    // --- Function to Load a Specific Page of Images ---
+    const loadImagesPage = async (searchTerm, orientation, pageNumber) => {
+        if (isLoading) return; // Prevent multiple requests
+
+        isLoading = true;
+        const loadingText = pageNumber === 1 ?
+                            `Searching Unsplash for "${searchTerm}"...` :
+                            `Loading page ${pageNumber} for "${searchTerm}"...`;
+        showLoading(loadingText);
+        statusText.textContent = loadingText;
+        statusText.style.color = 'var(--text-medium)';
+
+
+        let apiUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&page=${pageNumber}&per_page=${perPage}&client_id=${unsplashAccessKey}`;
+
+        // Add orientation parameter if a filter is selected
+        if (orientation) {
+            apiUrl += `&orientation=${orientation}`;
+        }
+
+        try {
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                 let errorMsg = `Error: ${response.status} ${response.statusText}`;
+                 try {
+                     const errorData = await response.json();
+                     if (errorData && errorData.errors) {
+                         errorMsg += ` - ${errorData.errors.join(', ')}`;
+                     }
+                 } catch(e) { /* Ignore if response body isn't JSON */ }
+                 console.error("Unsplash API Error Response:", response);
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+
+            if (pageNumber === 1) {
+                 // Clear previous results only for a new search
+                 imageResults.innerHTML = '';
+                 totalImagesFound = data.total; // Store total found for pagination check
+            }
+
+            if (data.results && data.results.length > 0) {
+                data.results.forEach(photo => {
+                    const img = document.createElement('img');
+                    img.src = photo.urls.small; // Use 'small' for grid performance
+                    img.alt = photo.alt_description || `Unsplash photo by ${photo.user.name}`;
+                    img.title = `Photo by ${photo.user.name} on Unsplash. Click to view full size.`; // Tooltip
+                    // Add data attributes for potential later use (like opening full image)
+                    img.dataset.fullUrl = photo.urls.regular;
+                    img.dataset.photographer = photo.user.name;
+                    img.dataset.profileUrl = photo.user.links.html; // Link to photographer's profile
+                    img.dataset.unsplashUrl = photo.links.html; // Link to image on Unsplash
+
+                    img.addEventListener('click', () => {
+                        // Example action: open the regular size image in a new tab
+                        window.open(photo.urls.regular, '_blank');
+                    });
+
+                    imageResults.appendChild(img);
+                });
+
+                // Increment page *after* successful loading
+                currentPage = pageNumber + 1;
+
+                 // Update status text with current count vs total
+                 const imagesCurrentlyDisplayed = imageResults.children.length;
+                 statusText.textContent = `Showing ${imagesCurrentlyDisplayed} of ${totalImagesFound} images for "${searchTerm}" on Unsplash.`;
+                 if (orientation) {
+                     statusText.textContent += ` (Orientation: ${orientation})`;
+                 }
+                 statusText.style.color = 'var(--text-light)';
+
+
+            } else {
+                 // If no results on this page or the first page
+                if (pageNumber === 1) {
+                    statusText.textContent = `No images found on Unsplash for "${searchTerm}"`;
+                    if (orientation) {
+                        statusText.textContent += ` with "${orientation}" orientation.`;
+                    } else {
+                         statusText.textContent += `. Try a different term.`;
+                    }
+                    totalImagesFound = 0; // Reset total found
+                } else {
+                    // Loaded a page but got no results, means no more pages
+                    statusText.textContent = `No more images found for "${searchTerm}".`;
+                     if (orientation) {
+                         statusText.textContent += ` (Orientation: ${orientation})`;
+                     }
+                }
+                statusText.style.color = 'var(--text-light)';
+            }
+
+        } catch (error) {
+            console.error("Error fetching from Unsplash:", error);
+            statusText.textContent = `Failed to fetch images. ${error.message}. Check API key or network.`;
+            statusText.style.color = 'var(--error-color)'; // Use error color
+            // Don't increment page on error, and assume no more pages for safety
+            totalImagesFound = imageResults.children.length; // Stop trying to load more than currently displayed
+        } finally {
+            isLoading = false;
+            hideLoading(); // Ensure loading indicator is hidden regardless of outcome
+        }
+    };
+
+    // --- Function to Start a NEW Search ---
+    const startNewSearch = () => {
+        const searchTerm = searchInput.value.trim();
+        const selectedOrientation = orientationFilter.value;
+
+        if (searchTerm === currentSearchTerm && selectedOrientation === currentOrientation && !isLoading && imageResults.children.length > 0) {
+             // If already showing results for the exact same search/filter, do nothing
+             console.log("Same search, already loaded.");
+             return;
+        }
+
+        if (!searchTerm) {
+            statusText.textContent = "Please enter a search term.";
+            statusText.style.color = 'var(--text-medium)';
+            imageResults.innerHTML = ''; // Clear images
+            loadMoreButton.classList.remove('visible'); // Hide load more
+            totalImagesFound = 0; // Reset count
+            return;
+        }
+
+        // Reset state for a new search
+        currentSearchTerm = searchTerm;
+        currentOrientation = selectedOrientation;
+        currentPage = 1;
+        totalImagesFound = 0; // Reset before the new fetch
+
+        // Clear previous results immediately for visual feedback
+        imageResults.innerHTML = '';
+        loadMoreButton.classList.remove('visible'); // Hide button until we know if there are more pages
+
+        // Start loading the first page
+        loadImagesPage(currentSearchTerm, currentOrientation, currentPage);
+    };
+
+    // --- Event Listeners ---
+    searchButton.addEventListener('click', startNewSearch);
+
+    searchInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent default form submission
+            startNewSearch();
+        }
+    });
+
+    orientationFilter.addEventListener('change', startNewSearch); // Trigger new search on filter change
+
+    loadMoreButton.addEventListener('click', () => {
+        // Load the next page using the current state
+        loadImagesPage(currentSearchTerm, currentOrientation, currentPage);
+    });
+
+
+    // --- Prevent multi-touch zoom (Existing code) ---
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) { const now = Date.now(); if (now - lastTouchEnd <= 300) event.preventDefault(); lastTouchEnd = now; }, { passive: false });
+
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

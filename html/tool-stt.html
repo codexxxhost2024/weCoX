@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Speech-to-Text</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; --background-light: #f0f2f5; --background-dark: #ffffff;
+      --text-dark: #333; --text-medium: #555; --text-light: #777; --accent-color: #4A90E2;
+      --spacing-unit: 15px; --border-radius: 8px; --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --error-color: #D0021B; --success-color: #28a745;
+    }
+    /* --- Base Styles --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif; background-color: var(--background-light);
+      color: var(--text-dark); min-height: 100vh;
+      max-width: 420px; margin: 0 auto; overflow-x: hidden; position: relative;
+    }
+    a { color: var(--primary-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--border-radius); transition: background-color 0.3s, transform 0.1s; }
+    button:active { transform: translateY(1px); }
+    input, textarea, select { font-family: inherit; padding: 10px; border: 1px solid #ccc; border-radius: var(--border-radius); width: 100%; font-size: 0.95rem; margin-bottom: var(--spacing-unit); }
+    textarea { resize: vertical; min-height: 150px; background-color: #f8f9fa; }
+    label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-medium); }
+    /* --- Utility Classes --- */
+    .primary-button { background-color: var(--primary-color); color: #FFFFFF; padding: 12px var(--spacing-unit); font-size: 1rem; font-weight: 600; text-align: center; width: 100%; }
+    .primary-button:hover { background-color: #192F4A; }
+    .primary-button:disabled { background-color: #a0aec0; cursor: not-allowed; }
+    .secondary-button { background-color: #e2e8f0; color: var(--text-dark); padding: 8px var(--spacing-unit); font-size: 0.9rem; font-weight: 500; margin-left: 10px; }
+    .secondary-button:hover { background-color: #cbd5e0; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+    .error-message { color: var(--error-color); font-size: 0.85rem; margin-top: -10px; margin-bottom: 10px; }
+    .success-message { color: var(--success-color); font-size: 0.85rem; margin-bottom: 10px; }
+    /* --- Header --- */
+    .header { background-color: var(--background-dark); padding: 0 var(--spacing-unit); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: 56px; }
+    .header-left { display: flex; align-items: center; }
+    .back-button { color: var(--text-medium); padding: 10px; margin-left: -10px; cursor: pointer; display: flex; align-items: center; }
+    .header-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin-left: 8px; }
+    .header-icons-right { display: flex; align-items: center; gap: var(--spacing-unit); }
+    .header-icon { position: relative; cursor: pointer; color: var(--text-medium); display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: -8px; }
+    .header-icon .material-symbols-outlined { font-size: 24px; }
+    /* --- Main Content Area --- */
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: var(--spacing-unit); }
+    .tool-card { background-color: var(--background-dark); border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: var(--spacing-unit); }
+    .result-area { margin-top: var(--spacing-unit); }
+    .result-area h3 { font-size: 1rem; font-weight: 600; margin-bottom: 10px; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center;}
+    .placeholder-text { color: var(--text-light); font-style: italic; padding: 10px; }
+    /* --- Loading Indicator --- */
+    #pageLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s; opacity: 0; visibility: hidden; }
+    #pageLoading.visible { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+    #pageLoading .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <span class="material-symbols-outlined back-button" id="backButton">arrow_back_ios</span>
+      <span class="header-title">Speech-to-Text</span>
+    </div>
+    <div class="header-icons-right">
+      <div id="signOutIcon" class="header-icon">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="tool-card">
+      <form id="sttForm">
+         <p style="font-size: 0.9rem; color: var(--text-medium); margin-bottom: var(--spacing-unit);">
+             Enter the URL of a publicly accessible audio or video file to transcribe.
+             (Note: Transcribing local files directly requires a different API approach not implemented here).
+         </p>
+        <label for="urlInput">Audio/Video URL:</label>
+        <input type="url" id="urlInput" name="url" placeholder="https://example.com/audio.mp3" required>
+        <div id="urlError" class="error-message"></div>
+
+        <!-- Optional: Add controls for language/model selection later -->
+         <input type="hidden" id="languageModel" value="nova-3"> <!-- From user's script -->
+         <input type="hidden" id="languageCode" value="multi"> <!-- From user's script -->
+
+        <button type="submit" id="transcribeButton" class="primary-button">
+          <span class="material-symbols-outlined" style="font-size: 20px; margin-right: 5px;">mic</span>Transcribe Audio
+        </button>
+        <div id="apiError" class="error-message" style="margin-top: 10px;"></div>
+      </form>
+    </div>
+
+    <div class="tool-card result-area">
+      <h3>
+        Transcription Result
+        <button id="copyButton" class="secondary-button" style="display: none;" title="Copy Text">
+            <span class="material-symbols-outlined" style="font-size: 18px;">content_copy</span> Copy
+        </button>
+      </h3>
+        <textarea id="transcriptionOutput" readonly placeholder="Transcription will appear here..."></textarea>
+        <div id="copyStatus" class="success-message" style="text-align: right; font-size: 0.8rem; margin-top: 5px;"></div>
+    </div>
+  </main>
+
+  <script>
+    // --- !!! WARNING: API Token exposed in client-side code. NOT FOR PRODUCTION. ---
+    const DEEPGRAM_API_TOKEN = "ad4eb6d073aaded7342426f0dd6970875a890292"; // Replace with your actual token
+    const DEEPGRAM_STT_API_URL = "https://api.deepgram.com/v1/listen";
+
+    // Firebase Configuration (Same as tools.html)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Masked original key
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    // Initialize Firebase App
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const backButton = document.getElementById('backButton');
+    const sttForm = document.getElementById('sttForm');
+    const urlInput = document.getElementById('urlInput');
+    const transcribeButton = document.getElementById('transcribeButton');
+    const transcriptionOutput = document.getElementById('transcriptionOutput');
+    const urlError = document.getElementById('urlError');
+    const apiError = document.getElementById('apiError');
+    const copyButton = document.getElementById('copyButton');
+    const copyStatus = document.getElementById('copyStatus');
+    const languageModelInput = document.getElementById('languageModel');
+    const languageCodeInput = document.getElementById('languageCode');
+
+
+    // --- Loading Indicator Functions ---
+    const showLoading = (text = 'Loading...') => {
+        pageLoadingText.textContent = text;
+        pageLoadingElement.classList.add('visible');
+        transcribeButton.disabled = true;
+    };
+    const hideLoading = () => {
+        pageLoadingElement.classList.remove('visible');
+        transcribeButton.disabled = false;
+    };
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+        if (!user) {
+            console.log("User is signed out. Redirecting...");
+            window.location.href = 'signin.html';
+        } else {
+            console.log("User is signed in:", user.uid);
+        }
+    });
+
+    // --- Sign Out Logic ---
+    if (signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                    showLoading('Signing out...');
+                    await auth.signOut();
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out.");
+                    hideLoading();
+                }
+            }
+        });
+    }
+
+    // --- Back Button Navigation ---
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            window.location.href = 'tools.html';
+        });
+    }
+
+    // --- STT Transcription Logic ---
+    sttForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        urlError.textContent = '';
+        apiError.textContent = '';
+        transcriptionOutput.value = ''; // Clear previous results
+        copyButton.style.display = 'none';
+        copyStatus.textContent = '';
+
+        const audioUrl = urlInput.value.trim();
+        const model = languageModelInput.value;
+        const language = languageCodeInput.value;
+
+        if (!audioUrl) {
+            urlError.textContent = 'Please enter a valid URL.';
+            urlInput.focus();
+            return;
+        }
+        // Basic URL validation
+        try {
+            new URL(audioUrl);
+        } catch (_) {
+            urlError.textContent = 'Invalid URL format.';
+            urlInput.focus();
+            return;
+        }
+
+        showLoading('Transcribing...');
+
+        const requestBody = { url: audioUrl };
+        const apiUrlWithParams = `${DEEPGRAM_STT_API_URL}?model=${model}&language=${language}`; // Add other params like diarize, punctuate as needed
+
+        try {
+            const response = await fetch(apiUrlWithParams, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${DEEPGRAM_API_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+             const responseData = await response.json();
+
+            if (!response.ok) {
+                 const errorMsg = responseData.reason || responseData.err_msg || `HTTP error! status: ${response.status}`;
+                 throw new Error(`API Error: ${errorMsg}`);
+            }
+
+            // Extract transcript - structure based on Deepgram's Nova-2 response
+            const transcript = responseData?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
+
+            if (transcript) {
+                transcriptionOutput.value = transcript;
+                copyButton.style.display = 'inline-block'; // Show copy button
+            } else {
+                console.error("Transcription not found in response:", responseData);
+                throw new Error('Transcription data not found in the API response.');
+            }
+
+        } catch (error) {
+            console.error('STT Transcription Error:', error);
+            apiError.textContent = `Failed to transcribe: ${error.message}`;
+            transcriptionOutput.placeholder = 'Could not transcribe audio.';
+        } finally {
+            hideLoading();
+        }
+    });
+
+     // --- Copy to Clipboard Logic ---
+     copyButton.addEventListener('click', () => {
+        transcriptionOutput.select(); // Select the text
+        transcriptionOutput.setSelectionRange(0, 99999); // For mobile devices
+
+        try {
+            document.execCommand('copy'); // Deprecated but widely supported for simple copy
+            copyStatus.textContent = 'Copied!';
+            // Clear the message after a few seconds
+            setTimeout(() => { copyStatus.textContent = ''; }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            copyStatus.textContent = 'Copy failed';
+             setTimeout(() => { copyStatus.textContent = ''; }, 2000);
+        }
+        // Deselect text
+        window.getSelection().removeAllRanges();
+     });
+
+
+    // --- Prevent multi-touch zoom ---
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) { const now = Date.now(); if (now - lastTouchEnd <= 300) event.preventDefault(); lastTouchEnd = now; }, { passive: false });
+
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

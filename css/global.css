@@ -1,0 +1,197 @@
+/* Global CSS styles */
+
+/* Prevent zooming */
+html {
+  touch-action: manipulation;
+}
+
+/* Hide on non-mobile devices */
+@media only screen and (min-width: 768px) {
+  body {
+    display: none !important;
+  }
+}
+
+/* Allow vertical scrolling */
+body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+}
+
+/* Common styles from signin.html and signup.html */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px; /* Adjusted padding */
+}
+.container {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+.logo img {
+  width: 225px;
+  height: auto;
+  margin-bottom: 25px; /* Adjusted margin */
+}
+h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+p.subtitle {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 30px; /* Adjusted margin */
+  line-height: 1.5;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Adjusted gap */
+}
+.input-container input {
+  width: 100%;
+  padding: 12px; /* Adjusted padding */
+  border: 1px solid #CCC; /* Adjusted border color */
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #333;
+}
+button[type="submit"] {
+  width: 100%;
+  background-color: #1F3A5C; /* Primary color */
+  color: #FFFFFF;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+button[type="submit"]:hover {
+  background-color: #192F4A; /* Darker hover state */
+}
+.links {
+  margin-top: 25px;
+  font-size: 0.9rem;
+  color: #555;
+}
+.links a {
+  color: #1F3A5C;
+  text-decoration: none;
+  font-weight: 500;
+}
+.links a:hover {
+  text-decoration: underline;
+}
+/* Forgot Password Link Style */
+.forgot-password {
+    display: block;
+    margin-top: 15px;
+    font-size: 0.9rem;
+}
+.install-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.install-banner {
+  background-color: white;
+  border-radius: 10px;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 300px;
+  margin: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.install-banner img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+}
+.hidden {
+  display: none;
+}
+.loading-indicator {
+  display: none; /* Initially hidden */
+  margin-top: 20px;
+}
+.loading-indicator img { /* Assuming a loading GIF */
+  width: 40px;
+  height: 40px;
+}
+
+/* Loading Modal Styles from signup.html */
+.loading-modal {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6);
+  display: flex; justify-content: center; align-items: center; z-index: 1050; opacity: 0; visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+.loading-modal.visible { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+.loading-content { background-color: white; padding: 30px 40px; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+.loading-content p { margin-top: 15px; color: #333; font-size: 1rem; font-weight: 500; }
+.spinner { border: 5px solid #f3f3f3; border-top: 5px solid #1F3A5C; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* CSS for lazy loading indicator */
+.crud-loading-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Ensure it's on top */
+  visibility: hidden; /* Initially hidden */
+  opacity: 0;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+  overflow-y: auto; /* Allow vertical scrolling within the indicator if needed */
+}
+
+.crud-loading-indicator.visible {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease, visibility 0s linear 0s;
+}
+
+/* Hide on non-mobile devices (PC/Tablets) */
+@media only screen and (min-width: 768px) {
+  .crud-loading-indicator {
+    display: none !important;
+  }
+}
+
+/* Add a simple spinner for the indicator */
+.crud-loading-indicator .spinner {
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #1F3A5C; /* Match primary color */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}

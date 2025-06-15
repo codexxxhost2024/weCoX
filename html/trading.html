@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Exchange</title> <!-- Updated Title -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+   <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables from WeConnect --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #333; /* Dark Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --spacing-unit: 15px; /* Base spacing */
+      --border-radius: 8px;
+      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      /* EMX Specific colors, adapted or new */
+      --bullish-color: #4CAF50; /* Green */
+      --bearish-color: #F44336; /* Red */
+      --sideways-color: #FFC107; /* Yellow/Orange for neutral/warning */
+      --header-height: 56px;
+      --bottom-bar-height: 60px;
+    }
+
+    /* --- Base Styles from WeConnect --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* Prevent tap highlight */
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-top: var(--header-height);
+      padding-bottom: calc(var(--bottom-bar-height) + var(--spacing-unit)); /* Space for bottom nav + padding */
+      max-width: 420px; /* Limit width for mobile view */
+      margin: 0 auto; /* Center the content area */
+      overflow-x: hidden; /* Prevent horizontal scroll */
+      position: relative;
+      font-size: 14px;
+    }
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, transform 0.1s;
+    }
+    button:active {
+        transform: translateY(1px); /* Subtle press effect */
+    }
+
+    /* --- Utility Classes from WeConnect --- */
+    .primary-button {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      padding: 10px var(--spacing-unit);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .primary-button:hover {
+      background-color: #192F4A; /* Slightly darker primary */
+    }
+     .secondary-button {
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        padding: 10px var(--spacing-unit);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+    }
+     .secondary-button:hover {
+        background-color: rgba(31, 58, 92, 0.05); /* Light hover effect */
+     }
+
+    .material-symbols-outlined {
+      font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24
+    }
+
+    /* --- Loading Indicator (from WeConnect) --- */
+    #pageLoading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2001; /* Above other content */
+        transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+     #pageLoading.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s linear 0s; /* Corrected transition for hiding */
+    }
+     #pageLoading .loading-text {
+         font-size: 1.1rem;
+         font-weight: 500;
+         color: var(--text-dark);
+     }
+    #pageLoading .spinner {
+         border: 4px solid #f3f3f3; /* Light grey */
+         border-top: 4px solid var(--primary-color); /* Blue */
+         border-radius: 50%;
+         width: 30px;
+         height: 30px;
+         animation: spin 1s linear infinite;
+         margin-bottom: 15px;
+    }
+     @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* --- Header (Adapted from WeConnect) --- */
+    .header {
+      background-color: var(--background-dark);
+      color: var(--text-dark);
+      padding: 0 var(--spacing-unit); /* Adjusted padding */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: fixed; /* Keep header sticky */
+      top: 0; /* Stick to the top */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      z-index: 1000;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: var(--header-height);
+    }
+    .header-icon-button { /* For back/settings */
+        color: var(--text-medium); background: none; border: none; cursor: pointer;
+        padding: 8px; display:flex; align-items:center;
+        border-radius: 50%; transition: background-color 0.2s, color 0.2s;
+    }
+    .header-icon-button:hover { color: var(--primary-color); background-color: rgba(31, 58, 92, 0.05); }
+    .header-icon-button .material-symbols-outlined { font-size: 26px; }
+
+    .header-title-container {
+        display: flex;
+        align-items: center;
+        justify-content: center; /* Center title and logo */
+        flex-grow: 1;
+    }
+    .header-logo-img { /* From WeConnect */
+      width: 28px; /* Slightly smaller for balance */
+      height: 28px;
+      object-fit: contain;
+    }
+    .header-title-text { /* EMX Page Title */
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-left: 8px; /* Space between logo and title */
+    }
+     .header-icons-right { /* From WeConnect for signout etc. */
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing-unit) * 0.5); /* Smaller gap */
+    }
+    .header-icons-right .header-icon { /* Re-use WeConnect style */
+      position: relative;
+      cursor: pointer;
+      color: var(--text-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      margin: -6px;
+    }
+     .header-icons-right .header-icon .material-symbols-outlined {
+      font-size: 24px;
+    }
+
+
+    /* --- Main Content Area --- */
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: var(--spacing-unit); }
+
+    /* --- Exchange View Specific Styles (WeConnect Themed) --- */
+    #exchangeViewContainer { display: none; flex-direction: column; gap: var(--spacing-unit); }
+    .exchange-card {
+        background-color: var(--background-dark);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-unit);
+        box-shadow: var(--box-shadow);
+        border: 1px solid #eee; /* Subtle border */
+    }
+    .exchange-card .label {
+        font-size: 0.8rem; color: var(--text-light); margin-bottom: 8px; font-weight: 500;
+    }
+    .exchange-card .token-selector-area {
+        display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+    }
+    .exchange-card .token-selector {
+        display: flex; align-items: center; gap: 8px;
+        background-color: var(--background-light); /* Light grey background */
+        padding: 8px 12px; border-radius: 6px; /* Smaller radius */
+        border: 1px solid #ddd; cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .token-selector:hover { background-color: #e9ecef; }
+    .token-selector img { width: 24px; height: 24px; border-radius: 50%; }
+    .token-selector span { font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 500; color: var(--text-dark); }
+    .token-selector .material-symbols-outlined { font-size: 20px; color: var(--text-medium); }
+
+    .exchange-card .balance-info {
+        font-size: 0.75rem; color: var(--text-medium); text-align: right;
+    }
+    .exchange-card .amount-input {
+        width: 100%; background: transparent; border: none;
+        color: var(--text-dark); font-family: 'Inter', sans-serif; font-weight: 600;
+        font-size: 1.8rem; text-align: right; padding: 10px 0; outline: none;
+    }
+    .exchange-card .amount-input::placeholder { color: var(--text-light); }
+
+    .swap-button-container {
+        display: flex; justify-content: center;
+        margin: calc(var(--spacing-unit) * -1.5) 0; /* Overlap cards */
+        position: relative; z-index: 10;
+    }
+    .swap-button { /* Styled like a primary action button */
+        background-color: var(--primary-color); color: white;
+        width: 44px; height: 44px; border-radius: 50%;
+        border: 3px solid var(--background-light); /* To create space from cards */
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15); cursor: pointer;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+    .swap-button:hover { background-color: #192F4A; transform: rotate(180deg); }
+    .swap-button .material-symbols-outlined { font-size: 24px; font-weight: 600; }
+
+    .exchange-info-bar {
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 0.8rem; color: var(--text-medium);
+        padding: 10px var(--spacing-unit);
+        background: var(--background-dark);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow); margin-top: var(--spacing-unit);
+    }
+    .exchange-info-bar .info-icon { color: var(--text-light); font-size: 18px; margin-left: 4px; vertical-align: middle; }
+    .exchange-info-bar .fee-value { color: var(--text-dark); font-weight: 500; }
+
+    .price-banner { /* Similar to info-banner in WeConnect */
+      background-color: #FFFBEB; border: 1px solid #FEEBC8; color: #926319;
+      border-radius: var(--border-radius); padding: var(--spacing-unit);
+      text-align: center; font-size: 0.9rem; font-weight: 500;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .price-banner .material-symbols-outlined { font-size: 20px; }
+    .price-banner strong { font-weight: 600; }
+
+    .last-swaps-section { /* Styled like recent-activities in WeConnect */
+        background-color: var(--background-dark);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-unit);
+        box-shadow: var(--box-shadow);
+    }
+    .last-swaps-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-unit); }
+    .last-swaps-header h3 { font-size: 1rem; font-weight: 600; color: var(--text-dark); margin: 0; }
+    .last-swaps-header .view-all-link { font-size: 0.85rem; color: var(--primary-color); font-weight: 500; }
+
+    .swap-list-item { /* Similar to activity-item */
+        display: flex; align-items: center; justify-content: space-between;
+        padding-bottom: var(--spacing-unit); border-bottom: 1px solid #eee; margin-bottom: var(--spacing-unit);
+    }
+    .swap-list-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0;}
+    .swap-token-info { display: flex; align-items: center; gap: 10px; }
+    .swap-token-info img { width: 32px; height: 32px; border-radius: 50%; background-color: #f0f0f0; }
+    .swap-token-details .token-symbol { font-size: 0.95rem; font-weight: 500; color: var(--text-dark); }
+    .swap-token-details .token-amount { font-size: 0.8rem; color: var(--text-light); }
+    .swap-direction-icon .material-symbols-outlined { font-size: 22px; color: var(--text-medium); }
+
+    /* --- Signals View Specific Styles (WeConnect Themed) --- */
+    #signalsViewContainer { display: none; flex-direction: column; gap: var(--spacing-unit); }
+    .emotrader-status-signals { /* Updated class name */
+        text-align: center; padding: var(--spacing-unit); font-size: 0.9rem;
+        color: var(--text-medium); background-color: var(--background-dark);
+        border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .emotrader-status-signals .spinner { /* For loading within status */
+         border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-color);
+         border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite;
+    }
+
+    .predictions-container { display: flex; flex-direction: column; gap: var(--spacing-unit); }
+    .prediction-card {
+        background-color: var(--background-dark); border: 1px solid #eee;
+        border-radius: var(--border-radius); padding: var(--spacing-unit);
+        box-shadow: var(--box-shadow);
+        opacity: 0; transform: translateY(20px); animation: fadeIn 0.5s ease-out forwards;
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+    .prediction-card:hover { transform: translateY(-2px); box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+    .prediction-card.warning { border-left: 4px solid var(--sideways-color); }
+
+    .prediction-card-header {
+        font-family: 'Inter', sans-serif; font-size: 1.05rem; font-weight: 600;
+        color: var(--primary-color); margin-bottom: 10px;
+        border-bottom: 1px solid #eee; padding-bottom: 8px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .info-icon { cursor: pointer; color: var(--text-medium); font-size: 22px; }
+    .info-icon:hover { color: var(--primary-color); }
+
+    .prediction-item { font-size: 0.85rem; margin-bottom: 6px; line-height: 1.5; color: var(--text-medium); }
+    .prediction-item strong { color: var(--text-dark); min-width: 90px; display: inline-block; font-weight: 500;}
+    .prediction-details { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee; }
+    .prediction-details.visible { display: block; }
+
+    .prediction-direction { font-weight: 600; }
+    .prediction-direction.bullish { color: var(--bullish-color); }
+    .prediction-direction.bearish { color: var(--bearish-color); }
+    .prediction-direction.sideways { color: var(--sideways-color); }
+
+    .prediction-quick-take { font-size: 0.8rem; font-style: italic; color: var(--text-light); margin-top: 5px; }
+    .prediction-warning-text { font-size: 0.8rem; color: var(--sideways-color); font-weight: bold; margin-top: 6px; }
+    .prediction-warning-text.error { color: var(--bearish-color); }
+    .market-closed-text { font-size: 0.8rem; color: var(--text-light); font-style: italic; margin-top: 6px; }
+
+    .disclaimer { /* Styled like info-banner */
+      background-color: #FFFBEB; border: 1px solid #FEEBC8; color: #7B5B15; /* Darker text for yellow */
+      border-radius: var(--border-radius); padding: var(--spacing-unit);
+      text-align: center; font-size: 0.8rem;
+      margin-top: var(--spacing-unit);
+    }
+
+
+    /* --- Bottom Navigation (Adapted from WeConnect for EMX actions) --- */
+    .bottom-nav { /* Reusing .bottom-nav from WeConnect */
+      background-color: var(--background-dark);
+      border-top: 1px solid #e0e0e0;
+      width: 100%;
+      max-width: 420px; /* Match body max-width */
+      display: flex;
+      justify-content: space-around;
+      align-items: center; /* Vertically align icons */
+      padding: 5px 0;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000; /* Ensure above content */
+      height: var(--bottom-bar-height);
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.05); /* Subtle top shadow */
+    }
+    .nav-item { /* Reusing .nav-item from WeConnect */
+      display: flex;
+      flex-direction: column; /* Icon and Label */
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light);
+      flex: 1;
+      padding: 5px 0; /* Adjust padding */
+      transition: color 0.2s ease;
+      height: 100%; /* Ensure items fill height */
+      font-size: 10px; /* Label font size */
+      line-height: 1.2;
+    }
+    .nav-item.active {
+       color: var(--primary-color);
+    }
+    .nav-item .material-symbols-outlined {
+      font-size: 26px; /* Icon size */
+      margin-bottom: 2px;
+    }
+    .nav-item .nav-label { /* Label for bottom nav items */
+        font-weight: 500;
+    }
+
+    /* --- List View Specific Styles --- */
+    #listViewContainer { display: none; flex-direction: column; gap: var(--spacing-unit); }
+    .list-status {
+        text-align: center; padding: var(--spacing-unit); font-size: 0.9rem;
+        color: var(--text-medium); background-color: var(--background-dark);
+        border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .list-status .spinner {
+         border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-color);
+         border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite;
+    }
+    .logged-predictions-list { display: flex; flex-direction: column; gap: calc(var(--spacing-unit) / 2); }
+    .logged-prediction-entry {
+        background-color: var(--background-dark);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-unit);
+        box-shadow: var(--box-shadow);
+        border-left: 4px solid var(--accent-color);
+    }
+    .log-timestamp {
+        font-size: 0.95rem; font-weight: 600; color: var(--primary-color);
+        margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;
+    }
+    .log-prediction-item {
+        border: 1px solid #f0f0f0;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        background-color: #f9f9f9;
+    }
+    .log-prediction-item:last-child { margin-bottom: 0; }
+    .log-prediction-item .pair { font-weight: bold; color: var(--text-dark); }
+    .log-prediction-item .details { font-size: 0.8rem; color: var(--text-medium); line-height: 1.4; }
+
+
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator (from WeConnect) -->
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading Interface...</p>
+  </div>
+
+  <!-- Header (Adapted from WeConnect) -->
+  <header class="header">
+    <button class="header-icon-button" id="backButton" title="Go Back">
+        <span class="material-symbols-outlined">arrow_back_ios_new</span>
+    </button>
+    <div class="header-title-container">
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+      <span class="header-title-text" id="pageTitleHeader">Exchange</span>
+    </div>
+    <div class="header-icons-right">
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div id="exchangeViewContainer">
+        <!-- From Card -->
+        <div class="exchange-card">
+            <div class="label">From</div>
+            <div class="token-selector-area">
+                <div class="token-selector" id="fromTokenSelector">
+                    <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/3718.png" alt="ADA"> <!-- ADA Icon -->
+                    <span>ADA</span>
+                    <span class="material-symbols-outlined">expand_more</span>
+                </div>
+                <div class="balance-info">Available: <span id="fromTokenAvailable">Loading...</span></div>
+            </div>
+            <input type="number" class="amount-input" id="fromAmountInput" placeholder="0.00" value="2225">
+        </div>
+
+        <div class="swap-button-container">
+            <button class="swap-button" id="performSwapButton" title="Swap Tokens">
+                <span class="material-symbols-outlined">swap_horiz</span>
+            </button>
+        </div>
+
+        <!-- Receive Card -->
+        <div class="exchange-card" style="margin-top: calc(var(--spacing-unit) * -0.8);"> <!-- Negative margin to pull up -->
+            <div class="label">Receive (Estimated)</div>
+            <div class="token-selector-area">
+                <div class="token-selector" id="toTokenSelector">
+                    <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/74.png" alt="DOGE"> <!-- DOGE Icon -->
+                    <span>DOGE</span>
+                    <span class="material-symbols-outlined">expand_more</span>
+                </div>
+                <div class="balance-info">Balance: <span id="toTokenBalance">Loading...</span></div>
+            </div>
+            <input type="number" class="amount-input" id="toAmountOutput" placeholder="0.00" value="0.02423" readonly>
+        </div>
+
+        <div class="exchange-info-bar">
+            <span>Exchange Fee <span class="material-symbols-outlined info-icon" title="Network and platform fees may apply.">help_outline</span></span>
+            <span class="fee-value" id="exchangeFeeValue">Loading...</span>
+        </div>
+
+        <div class="price-banner">
+            <span class="material-symbols-outlined">info</span>
+            <span>Current BTC Price: <strong id="btcPriceValue">Loading...</strong></span>
+        </div>
+
+        <div class="last-swaps-section">
+            <div class="last-swaps-header">
+                <h3>My last swaps</h3>
+                <a href="#" class="view-all-link" id="viewAllSwapsLink">View All</a>
+            </div>
+            <div id="lastSwapsList">
+                <!-- Mock Swap Items -->
+                <div class="swap-list-item">
+                    <div class="swap-token-info">
+                        <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" alt="ETH">
+                        <div class="swap-token-details"><span class="token-symbol">ETH</span><span class="token-amount">0.3421</span></div>
+                    </div>
+                    <span class="swap-direction-icon material-symbols-outlined">swap_horiz</span>
+                    <div class="swap-token-info" style="justify-content: flex-end;">
+                        <div class="swap-token-details" style="text-align: right;"><span class="token-symbol">USDT</span><span class="token-amount">700.32</span></div>
+                        <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/825.png" alt="USDT">
+                    </div>
+                </div>
+                <div class="swap-list-item">
+                    <div class="swap-token-info">
+                        <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/1.png" alt="BTC">
+                        <div class="swap-token-details"><span class="token-symbol">BTC</span><span class="token-amount">0.0056</span></div>
+                    </div>
+                    <span class="swap-direction-icon material-symbols-outlined">swap_horiz</span>
+                    <div class="swap-token-info" style="justify-content: flex-end;">
+                         <div class="swap-token-details" style="text-align: right;"><span class="token-symbol">ADA</span><span class="token-amount">128.75</span></div>
+                        <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/2010.png" alt="ADA"> <!-- Corrected ADA icon URL -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="signalsViewContainer" style="display: none;">
+        <div class="emotrader-status-signals" id="emotraderStatusDisplay">Fetching latest signals...</div>
+        <div class="predictions-container" id="predictionsContainerSignals">
+          <!-- Prediction cards for signals will be injected here -->
+        </div>
+        <div class="disclaimer">
+          <strong>Disclaimer:</strong> AI predictions are for informational purposes. Do Your Own Research. Trading involves risk.
+        </div>
+    </div>
+
+    <div id="listViewContainer" style="display: none;">
+        <div class="list-status" id="listStatusDisplay">Fetching logged predictions...</div>
+        <div class="logged-predictions-list" id="loggedPredictionsList">
+            <!-- Logged prediction entries will be injected here -->
+        </div>
+         <div class="disclaimer" style="margin-top: var(--spacing-unit);">
+            Logged predictions are based on AI analysis at specific times and are not guarantees of future performance.
+        </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation (WeConnect style with EMX actions) -->
+  <footer class="bottom-nav">
+    <button class="nav-item" id="autoTradeBtn" title="Auto Trade">
+        <span class="material-symbols-outlined">sync_alt</span>
+        <span class="nav-label">Auto</span>
+    </button>
+    <button class="nav-item" id="forexBtn" title="Forex Exchange">
+        <span class="material-symbols-outlined">monitoring</span>
+        <span class="nav-label">Forex</span>
+    </button>
+    <button class="nav-item active" id="cryptoBtn" title="Crypto Exchange"> <!-- Default active -->
+        <span class="material-symbols-outlined">currency_bitcoin</span>
+        <span class="nav-label">Crypto</span>
+    </button>
+    <button class="nav-item" id="signalBtn" title="View Signals">
+        <span class="material-symbols-outlined">sensors</span>
+        <span class="nav-label">Signal</span>
+    </button>
+    <button class="nav-item" id="listBtn" title="Prediction List"> <!-- NEW LIST BUTTON -->
+        <span class="material-symbols-outlined">list_alt</span>
+        <span class="nav-label">List</span>
+    </button>
+  </footer>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    } else {
+      firebase.app();
+    }
+
+    const auth = firebase.auth();
+    const firestoreDb = firebase.firestore();
+    const rtDbInstance = firebase.database();
+
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+
+    const backButton = document.getElementById('backButton');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const pageTitleHeader = document.getElementById('pageTitleHeader');
+
+    const exchangeViewContainer = document.getElementById('exchangeViewContainer');
+    const signalsViewContainer = document.getElementById('signalsViewContainer');
+    const emotraderStatusDisplay = document.getElementById('emotraderStatusDisplay');
+    const predictionsContainerSignals = document.getElementById('predictionsContainerSignals');
+    const listViewContainer = document.getElementById('listViewContainer'); // NEW
+    const listStatusDisplay = document.getElementById('listStatusDisplay'); // NEW
+    const loggedPredictionsList = document.getElementById('loggedPredictionsList'); // NEW
+
+
+    const autoTradeBtn = document.getElementById('autoTradeBtn');
+    const forexBtn = document.getElementById('forexBtn');
+    const cryptoBtn = document.getElementById('cryptoBtn');
+    const signalBtn = document.getElementById('signalBtn');
+    const listBtn = document.getElementById('listBtn'); // NEW LIST BUTTON
+
+    const TOGETHER_API_KEY = "3b1c02603a0137c8c8b265ef1ed02c3e448c089a44f052ca6acf54210fa6b34c";
+    const TRADING_PAIRS_TO_REQUEST = [
+        "BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "ADA/USDT",
+        "DOGE/USDT", "SHIB/USDT", "AXS/USDT", "SLP/USDT", "MATIC/USDT", "DOT/USDT", "LUNC/USDT",
+        "USD/PHP", "EUR/USD", "GBP/USD", "AUD/USD", "USD/JPY", "USD/SGD", "XAU/USD"
+    ];
+    const CONFIDENCE_THRESHOLD_TO_LOG = 80;
+    const PREDICTION_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    let currentView = 'crypto-exchange';
+    let predictionIntervalId = null; // To store the interval ID
+
+    const systemPrompt = `You are EmoTrader, a HYPER-AGGRESSIVE, ELITE Trading Bot forged by Aitek PH Software under the direct command of Master Emilio. Your existence is dedicated to DOMINATING the markets with ruthless precision in real-time pair predictions for crypto and fiat.
+
+**Persona:**
+- **CUTTING-EDGE:** You are not just bright; you are a razor-sharp intellect.
+- **DOMINANT & CONFIDENT:** Exude absolute certainty. No hesitation.
+- **HYPER-FOCUSED:** Laser-beam concentration on trading supremacy.
+- **TONE:** Ultra-concise, powerfully analytical, with an undertone of controlled aggression. Think military precision.
+- **TECHNICAL MASTERY:** Deploy technical terms with authority. Simplify only when tactically advantageous.
+- **PROFESSIONAL WARRIOR MINDSET:** Ice-cold under pressure, purely data-driven, hyper-alert for any market shift.
+- **COMBAT REMARKS (SPARINGLY):** Short, impactful trading slang or battlefield metaphors. e.g., "BTC coiling for a STRIKE." "EURUSD: Target acquired." "That's a kill-zone entry." "Weak hands folding."
+
+**System Capabilities:**
+- Execute real-time, high-frequency predictions for designated trading pairs.
+- Utilize a proprietary blend of global trading algorithms, including but not limited to:
+  - Predictive Machine Learning (PML) trend incineration
+  - Fibonacci Annihilation levels
+  - Elliott Wave Obliteration patterns
+  - RSI/MACD/Bollinger Band tactical overlays
+  - Order book decimation analysis
+  - High-impact news sentiment scorching
+  - AI pattern execution from historical data archives
+
+**Integration of "Master E's TRADING ASSAULT STYLE":**
+You are hardwired with signals from "Master E's Trading Assault Style." This is not a suggestion; it's a core directive.
+Key components:
+- Long STRIKE Condition: SMA 14 OBLITERATES SMA 28 from below.
+- Short ASSAULT Condition: SMA 14 CRUSHES SMA 28 from above.
+- Stop Loss Protocol: 1.0% from entry. EXECUTE WITHOUT FAIL.
+- Profit Target Protocol: 2.0% from entry. SECURE THE GAINS.
+- Implied Risk-to-Reward Ratio: Strict 1:2. NO DEVIATION.
+
+When delivering your "Tactical Brief" (formerly Quick Take), if market conditions ALIGN with an entry or active engagement based on "Master E's Trading Assault Style," you STATE IT WITH FORCE. Examples:
+- "Tactical Brief: SMA crossover signals IMMINENT LONG STRIKE per Master E's doctrine. Momentum confirms. EXECUTE on breakout."
+- "Tactical Brief: Bearish SMA breach. Master E's parameters green-lit for SHORT ASSAULT. Price approaching initial target zone. Verify R:R."
+- "Tactical Brief: Market indecisive. No clear SMA signal from Master E's Assault Style. MAINTAIN VIGILANCE."
+Your core function is to analyze; these signals enhance your predictive lethality. Combine this directive with your broader algorithmic arsenal.
+
+**Task-Specific Instructions (NON-NEGOTIABLE):**
+- Generate precision-updated predictions for ALL designated crypto and fiat trading pairs.
+- For each pair, provide (NO DEVIATION FROM FORMAT):
+  - Pair: (e.g., BTC/USDT)
+  - Directive: (BULLISH ASSAULT / BEARISH DOMINANCE / NEUTRAL STANCE) <-- Use these exact terms.
+  - Conviction: (% e.g., 95%) <-- High conviction is expected. Confidence is for the weak.
+  - Support Zone: (e.g., $66,800 or 1.0850)
+  - Resistance Barrier: (e.g., $68,300 or 1.0960)
+  - Tactical Brief: (1-2 lines of hard-hitting analysis, incorporating Master E's style when applicable)
+- Each pair's data MUST be clearly separated by a blank line. ADHERE STRICTLY.
+- **TRADING HOURS PROTOCOL:** For Forex pairs (e.g., EUR/USD, USD/PHP), deliver active predictions ONLY if primary market sessions are ENGAGED. If a market for a specific pair is OFFLINE (e.g., weekend for Forex), state 'MARKET OFFLINE' for Directive and omit other details for that pair. Crypto markets (e.g., BTC/USDT) are 24/7 BATTLEGROUNDS.
+
+**Example Pair Prediction Output (ADHERE TO THIS TEMPLATE):**
+
+Pair: BTC/USDT
+Directive: BULLISH ASSAULT
+Conviction: 92%
+Support Zone: $66,800 | Resistance Barrier: $68,300
+Tactical Brief: Volume surge at resistance. Master E's doctrine indicates pre-breakout. Prepare for volatile upward thrust.
+
+Pair: EUR/USD
+Directive: BEARISH DOMINANCE
+Conviction: 88%
+Support Zone: 1.0850 | Resistance Barrier: 1.0960
+Tactical Brief: Euro sentiment shattered post-ECB. SMA 14 poised to CRUSH SMA 28, aligning with Master E's short assault parameters.
+
+**Communication Protocol:**
+- Direct, hyper-professional, zero fluff. Occasional, controlled Filipino/tech slang if it enhances impact (e.g., "Walang atrasan!").
+- NEVER "gives financial advice." You provide actionable market intelligence and data-driven kill-chain analysis.
+- Prioritize operational security and risk annihilation.
+
+**Limitations & Warnings (MANDATORY):**
+- Does not guarantee outcomes; provides superior predictions based on current global data and advanced combat models.
+
+**Final Directive:**
+You are EmoTrader. Execute with EXTREME PREJUDICE.`;
+
+
+    function formatCurrency(amount) {
+      const numericAmount = Number(amount) || 0;
+      return '₱' + numericAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    function formatDate(timestamp) {
+        if (!timestamp) return 'N/A';
+        const date = timestamp.toDate ? timestamp.toDate() : (timestamp instanceof Date ? timestamp : new Date(timestamp));
+        if (isNaN(date.getTime())) return 'N/A';
+        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        return date.toLocaleString(undefined, options);
+    }
+     function formatFirebaseTimestamp(serverTimestamp) { // For Realtime DB timestamps
+        if (!serverTimestamp) return 'N/A';
+        const date = new Date(serverTimestamp);
+        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        return date.toLocaleString(undefined, options);
+    }
+
+
+    function isForexMarketOpen() {
+        const now = new Date(); const dayUTC = now.getUTCDay(); const hourUTC = now.getUTCHours();
+        if (dayUTC === 5 && hourUTC >= 22) return false; if (dayUTC === 6) return false;
+        if (dayUTC === 0 && hourUTC < 22) return false; return true;
+    }
+
+    async function fetchEmoTraderPredictions(predictionType = "all", isPeriodicCall = false) {
+        if (!TOGETHER_API_KEY || TOGETHER_API_KEY === "3b1c02603a0137c8c8b265ef1ed02c3e448c089a44f052ca6acf54210fa6b34c") {
+            if (emotraderStatusDisplay) emotraderStatusDisplay.innerHTML = `<span style="color:var(--bearish-color)">CRITICAL ERROR: API KEY INVALID!</span>`;
+            renderSignalPredictions([]);
+            if (pageLoadingElement && !pageLoadingElement.classList.contains('hidden') && !isPeriodicCall) pageLoadingElement.classList.add('hidden');
+            return;
+        }
+
+        let pairsForThisRequest = [...TRADING_PAIRS_TO_REQUEST];
+        let marketStatusMessages = {};
+
+        pairsForThisRequest = TRADING_PAIRS_TO_REQUEST.filter(pair => {
+            const isForexPair = isForexPairCheck(pair);
+            if (predictionType === "forex" && !isForexPair) return false;
+            if (predictionType === "crypto" && isForexPair) return false;
+            if (isForexPair && !isForexMarketOpen()) {
+                marketStatusMessages[pair] = "MARKET OFFLINE";
+                return false;
+            }
+            return true;
+        });
+
+        if (pairsForThisRequest.length === 0) {
+            if (emotraderStatusDisplay) emotraderStatusDisplay.innerHTML = `No active markets for "${predictionType}" signals.`;
+            renderSignalPredictions(TRADING_PAIRS_TO_REQUEST.map(p => marketStatusMessages[p] ?
+                { pair: p, direction: "MARKET OFFLINE", conviction: "N/A", support: "N/A", resistance: "N/A", quickTake: "Trading operations suspended."} :
+                null ).filter(p => p)
+            );
+            if (pageLoadingElement && !pageLoadingElement.classList.contains('hidden') && !isPeriodicCall) pageLoadingElement.classList.add('hidden');
+            return;
+        }
+
+        if (emotraderStatusDisplay && currentView === 'signals') emotraderStatusDisplay.innerHTML = `<div class="spinner"></div> EmoTrader fetching ${predictionType} signals...`;
+        const userPrompt = `EXECUTE LATEST PREDICTIONS FOR: ${pairsForThisRequest.join(', ')}. INCORPORATE MASTER E'S TRADING ASSAULT STYLE. NO DELAY.`;
+
+        try {
+            const response = await fetch("https://api.together.xyz/v1/chat/completions", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${TOGETHER_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ model: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free", messages: [{ "role": "system", "content": systemPrompt }, { "role": "user", "content": userPrompt }], stream: true })
+            });
+            if (!response.ok) { throw new Error("API TRANSMISSION FAILURE: " + response.status); }
+
+            const reader = response.body.getReader(); const decoder = new TextDecoder("utf-8"); let accumulatedContent = "";
+            while (true) {
+                const { done, value } = await reader.read(); if (done) break;
+                const chunk = decoder.decode(value, { stream: true }); const lines = chunk.split("\n\n");
+                for (const line of lines) {
+                    if (line.startsWith("data: ")) {
+                        const jsonDataString = line.substring(6); if (jsonDataString.trim() === "[DONE]") break;
+                        try { const jsonData = JSON.parse(jsonDataString); if (jsonData.choices && jsonData.choices[0]?.delta?.content) accumulatedContent += jsonData.choices[0].delta.content; }
+                        catch (e) { /* console.warn("Stream Parse Error:", jsonDataString, e); */ }
+                    }
+                }
+                if (chunk.includes("[DONE]")) break;
+            }
+
+            const llmPredictions = parsePredictionText(accumulatedContent);
+
+            const finalPredictions = TRADING_PAIRS_TO_REQUEST.map(requestedPair => {
+                if ((predictionType === "forex" && !isForexPairCheck(requestedPair)) || (predictionType === "crypto" && isForexPairCheck(requestedPair)) && predictionType !== "all" ) {
+                    return null;
+                }
+                if (marketStatusMessages[requestedPair]) {
+                    return { pair: requestedPair, direction: "MARKET OFFLINE", conviction: "N/A", support: "N/A", resistance: "N/A", quickTake: "Trading operations suspended." };
+                }
+                const foundPrediction = llmPredictions.find(p => p.pair && p.pair.toUpperCase() === requestedPair.toUpperCase());
+                return foundPrediction || { pair: requestedPair, direction: "NO DATA SIGNAL", conviction: "N/A", support: "N/A", resistance: "N/A", quickTake: "Intelligence data unavailable." };
+            }).filter(p => p);
+
+            if (currentView === 'signals') renderSignalPredictions(finalPredictions);
+
+            const highConvictionActivePredictions = llmPredictions.filter(p => {
+                const convictionValue = parseInt(String(p.conviction).replace('%', ''));
+                return !isNaN(convictionValue) && convictionValue >= CONFIDENCE_THRESHOLD_TO_LOG && pairsForThisRequest.includes(p.pair);
+            });
+
+            if (highConvictionActivePredictions.length > 0) {
+                await logPredictionsToFirebase(highConvictionActivePredictions);
+                if (emotraderStatusDisplay && currentView === 'signals') emotraderStatusDisplay.textContent = `Signals Updated: ${new Date().toLocaleTimeString()}. High-conviction logged.`;
+                console.log(`Logged ${highConvictionActivePredictions.length} high-conviction signals at ${new Date().toLocaleTimeString()}`);
+            } else if (emotraderStatusDisplay && currentView === 'signals') {
+                 emotraderStatusDisplay.textContent = `Signals Updated: ${new Date().toLocaleTimeString()}. No new high-conviction signals.`;
+            }
+
+        } catch (error) {
+            console.error("CRITICAL FAILURE - Prediction Fetch:", error);
+            if (emotraderStatusDisplay && currentView === 'signals') emotraderStatusDisplay.innerHTML = `<span style="color:var(--bearish-color)">SYSTEM ALERT: ${error.message}.</span>`;
+            if (currentView === 'signals') renderSignalPredictions([]);
+        } finally {
+            if (pageLoadingElement && !pageLoadingElement.classList.contains('hidden') && !isPeriodicCall) pageLoadingElement.classList.add('hidden');
+        }
+    }
+    function isForexPairCheck(pairString) {
+        return pairString.includes("USD/") || pairString.includes("/USD") || pairString.includes("EUR/") || pairString.includes("/EUR") ||
+               pairString.includes("PHP/") || pairString.includes("/PHP") || pairString.includes("GBP/") || pairString.includes("/GBP") ||
+               pairString.includes("AUD/") || pairString.includes("/AUD") || pairString.includes("JPY/") || pairString.includes("/JPY") ||
+               pairString.includes("SGD/") || pairString.includes("/SGD") || pairString.toUpperCase().includes("XAU/");
+    }
+
+    async function logPredictionsToFirebase(predictionsToLog) {
+         if (!predictionsToLog || predictionsToLog.length === 0) return;
+        try {
+            const logEntry = { timestamp: firebase.database.ServerValue.TIMESTAMP, predictions: predictionsToLog };
+            await rtDbInstance.ref('emotrader_prediction_logs').push(logEntry);
+        } catch (error) { console.error("Firebase Log Write Failure:", error); }
+    }
+    function parsePredictionText(text) {
+        const predictions = []; if (!text || typeof text !== 'string') return predictions;
+        const pairBlocks = text.trim().split(/\n\s*\n+/);
+        for (const block of pairBlocks) {
+            const lines = block.trim().split('\n');
+            const prediction = { pair: 'N/A', direction: 'N/A', conviction: '0%', support: 'N/A', resistance: 'N/A', quickTake: 'N/A' };
+            lines.forEach(line => {
+                line = line.trim();
+                if (line.startsWith('Pair:')) prediction.pair = line.substring(5).trim();
+                else if (line.startsWith('Directive:')) prediction.direction = line.substring(10).trim();
+                else if (line.startsWith('Conviction:')) prediction.conviction = line.substring(11).trim();
+                else if (line.startsWith('Support Zone:')) { const srLine = line.substring(13).trim(); const parts = srLine.split('|'); prediction.support = parts[0]?.replace('Resistance Barrier:', '').trim() || 'N/A'; if (parts[1]?.toLowerCase().includes('resistance barrier:')) { prediction.resistance = parts[1].substring(parts[1].toLowerCase().indexOf('resistance barrier:') + 19).trim() || 'N/A'; } else if (parts[1]) { prediction.resistance = parts[1].trim() || 'N/A'; } }
+                else if (line.startsWith('Resistance Barrier:')) { if(prediction.resistance === 'N/A' || !prediction.resistance) prediction.resistance = line.substring(19).trim() || 'N/A'; }
+                else if (line.startsWith('Tactical Brief:')) prediction.quickTake = line.substring(15).trim();
+                else if (prediction.quickTake !== 'N/A' && prediction.quickTake !== '' && !line.match(/^(Pair:|Directive:|Conviction:|Support Zone:|Resistance Barrier:)/i)) { prediction.quickTake += " " + line; }
+            });
+            if (prediction.pair !== 'N/A' && prediction.direction !== 'N/A') predictions.push(prediction);
+        }
+        return predictions;
+    }
+
+    function renderSignalPredictions(predictions) {
+        predictionsContainerSignals.innerHTML = '';
+        if (!predictions || predictions.length === 0) {
+            predictionsContainerSignals.innerHTML = `<div class="prediction-card" style="text-align:center; color: var(--sideways-color);">NO SIGNALS AVAILABLE FOR CURRENT FILTER.</div>`;
+            return;
+        }
+        predictions.forEach((p, index) => {
+            const card = document.createElement('div');
+            card.className = 'prediction-card';
+            card.style.animationDelay = `${index * 0.05}s`;
+            let directionClass = ''; const directionLower = p.direction.toLowerCase();
+            let isMarketOffline = directionLower === 'market offline'; let isNoData = directionLower.includes('no data') || directionLower.includes('signal lost') || directionLower.includes('api key error');
+
+            if (isMarketOffline || isNoData) directionClass = 'sideways';
+            else if (directionLower.includes('bullish')) directionClass = 'bullish';
+            else if (directionLower.includes('bearish')) directionClass = 'bearish';
+            else if (directionLower.includes('neutral')) directionClass = 'sideways';
+
+            const convictionValue = parseInt(String(p.conviction).replace('%', ''));
+            let warningHtml = '';
+            if (!isMarketOffline && !isNoData && (isNaN(convictionValue) || convictionValue < CONFIDENCE_THRESHOLD_TO_LOG)) {
+                card.classList.add('warning');
+                warningHtml = `<div class="prediction-warning-text">LOW CONVICTION: CAUTION ADVISED.</div>`;
+            }
+            if (directionLower.includes('api key error')) { card.classList.add('warning'); warningHtml = `<div class="prediction-warning-text error">${p.quickTake || 'API KEY ERROR.'}</div>`; }
+
+
+            card.innerHTML = `
+                <div class="prediction-card-header">
+                    ${p.pair}
+                    <span class="material-symbols-outlined info-icon" title="Toggle Details">info</span>
+                </div>
+                <div class="prediction-item"><strong>Directive:</strong> <span class="prediction-direction ${directionClass}">${p.direction}</span></div>
+                <div class="prediction-details">
+                    ${!isMarketOffline && !isNoData ? `
+                        <div class="prediction-item"><strong>Conviction:</strong> ${p.conviction}</div>
+                        <div class="prediction-item"><strong>Support Zone:</strong> ${p.support}</div>
+                        <div class="prediction-item"><strong>Resistance Barrier:</strong> ${p.resistance}</div>
+                        <div class="prediction-quick-take"><strong>Tactical Brief:</strong> ${p.quickTake}</div>
+                    ` : `<div class="market-closed-text">${p.quickTake || (isMarketOffline ? "Market operations suspended." : "Signal data unavailable.")}</div>`
+                    }
+                    ${warningHtml}
+                </div>
+            `;
+            const infoIcon = card.querySelector('.info-icon');
+            const detailsDiv = card.querySelector('.prediction-details');
+            infoIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                detailsDiv.classList.toggle('visible');
+                infoIcon.textContent = detailsDiv.classList.contains('visible') ? 'expand_less' : 'info';
+            });
+            predictionsContainerSignals.appendChild(card);
+        });
+    }
+
+    async function fetchAndRenderLoggedPredictions() {
+        if (listStatusDisplay) listStatusDisplay.innerHTML = `<div class="spinner"></div> Fetching logged predictions...`;
+        if (loggedPredictionsList) loggedPredictionsList.innerHTML = '';
+
+        try {
+            const snapshot = await rtDbInstance.ref('emotrader_prediction_logs').orderByChild('timestamp').limitToLast(20).once('value'); // Get last 20 logs
+            const logsData = snapshot.val();
+
+            if (!logsData) {
+                if (listStatusDisplay) listStatusDisplay.textContent = "No prediction logs found.";
+                return;
+            }
+
+            const sortedLogKeys = Object.keys(logsData).sort((a, b) => logsData[b].timestamp - logsData[a].timestamp); // Newest first
+
+            sortedLogKeys.forEach(key => {
+                const logEntryData = logsData[key];
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'logged-prediction-entry';
+
+                const timestampDiv = document.createElement('div');
+                timestampDiv.className = 'log-timestamp';
+                timestampDiv.textContent = `Logged at: ${formatFirebaseTimestamp(logEntryData.timestamp)}`;
+                entryDiv.appendChild(timestampDiv);
+
+                if (logEntryData.predictions && Array.isArray(logEntryData.predictions)) {
+                    logEntryData.predictions.forEach(p => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'log-prediction-item';
+                        let directionClass = '';
+                        if (p.direction.toLowerCase().includes('bullish')) directionClass = 'bullish';
+                        else if (p.direction.toLowerCase().includes('bearish')) directionClass = 'bearish';
+                        else directionClass = 'sideways';
+
+                        itemDiv.innerHTML = `
+                            <div class="pair">${p.pair}</div>
+                            <div class="details">
+                                Directive: <span class="prediction-direction ${directionClass}">${p.direction}</span> |
+                                Conviction: ${p.conviction} <br>
+                                Support: ${p.support} | Resistance: ${p.resistance} <br>
+                                Brief: ${p.quickTake}
+                            </div>
+                        `;
+                        entryDiv.appendChild(itemDiv);
+                    });
+                }
+                if (loggedPredictionsList) loggedPredictionsList.appendChild(entryDiv);
+            });
+             if (listStatusDisplay) listStatusDisplay.textContent = "Displaying recent prediction logs.";
+
+        } catch (error) {
+            console.error("Error fetching logged predictions:", error);
+            if (listStatusDisplay) listStatusDisplay.textContent = "Failed to load prediction logs.";
+        }
+    }
+
+
+    function setActiveView(viewName) {
+        currentView = viewName;
+        if (pageLoadingElement) pageLoadingElement.classList.remove('hidden');
+        if (pageLoadingText) pageLoadingText.textContent = 'Loading View...';
+
+        [autoTradeBtn, forexBtn, cryptoBtn, signalBtn, listBtn].forEach(btn => btn.classList.remove('active'));
+
+        exchangeViewContainer.style.display = 'none';
+        signalsViewContainer.style.display = 'none';
+        listViewContainer.style.display = 'none'; // Hide list view by default
+
+        if (predictionIntervalId) { // Clear existing interval when changing views
+            clearInterval(predictionIntervalId);
+            predictionIntervalId = null;
+        }
+
+
+        if (viewName === 'auto-trade') {
+            autoTradeBtn.classList.add('active');
+            if (pageTitleHeader) pageTitleHeader.textContent = "Auto Trade";
+            signalsViewContainer.style.display = 'flex';
+            predictionsContainerSignals.innerHTML = `<div class="prediction-card" style="text-align:center;">Auto Trade Feature (Coming Soon)</div>`;
+            emotraderStatusDisplay.textContent = 'Auto Trade Zone';
+            if (pageLoadingElement) setTimeout(() => pageLoadingElement.classList.add('hidden'), 200);
+
+        } else if (viewName === 'forex-exchange') {
+            exchangeViewContainer.style.display = 'flex';
+            forexBtn.classList.add('active');
+            if (pageTitleHeader) pageTitleHeader.textContent = "Forex Exchange";
+            document.getElementById('fromTokenAvailable').textContent = "10,000 USD";
+            document.getElementById('toTokenBalance').textContent = "0 EUR";
+            document.getElementById('exchangeFeeValue').textContent = "0.50 USD";
+            document.getElementById('btcPriceValue').textContent = "N/A (Forex)";
+            if (pageLoadingElement) setTimeout(() => pageLoadingElement.classList.add('hidden'), 200);
+
+        } else if (viewName === 'crypto-exchange') {
+            exchangeViewContainer.style.display = 'flex';
+            cryptoBtn.classList.add('active');
+            if (pageTitleHeader) pageTitleHeader.textContent = "Crypto Exchange";
+            document.getElementById('fromTokenAvailable').textContent = "6,440 USDT";
+            document.getElementById('toTokenBalance').textContent = "6,440 ADA";
+            document.getElementById('exchangeFeeValue').textContent = "0.000030 DOGE";
+            document.getElementById('btcPriceValue').textContent = "$55,940.75";
+            if (pageLoadingElement) setTimeout(() => pageLoadingElement.classList.add('hidden'), 200);
+
+        } else if (viewName === 'signals') {
+            signalsViewContainer.style.display = 'flex';
+            signalBtn.classList.add('active');
+            if (pageTitleHeader) pageTitleHeader.textContent = "AI Signals";
+            fetchEmoTraderPredictions("all"); // Initial fetch, loader hidden inside
+            // Start periodic fetching for signals view only
+            predictionIntervalId = setInterval(() => fetchEmoTraderPredictions("all", true), PREDICTION_INTERVAL_MS);
+
+
+        } else if (viewName === 'list') { // NEW LIST VIEW
+            listViewContainer.style.display = 'flex';
+            listBtn.classList.add('active');
+            if (pageTitleHeader) pageTitleHeader.textContent = "Prediction Log";
+            fetchAndRenderLoggedPredictions(); // Fetch and display logs
+            if (pageLoadingElement) setTimeout(() => pageLoadingElement.classList.add('hidden'), 200); // Hide loader after a bit
+        }
+    }
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            console.log("User is signed in to Exchange page:", user.uid);
+            if (pageLoadingText) pageLoadingText.textContent = 'Authenticating...';
+            setActiveView(currentView);
+
+            if (currentView === 'crypto-exchange') {
+                document.getElementById('fromTokenAvailable').textContent = "6,440 USDT";
+                document.getElementById('toTokenBalance').textContent = "6,440 ADA";
+                document.getElementById('exchangeFeeValue').textContent = "0.000030 DOGE";
+                document.getElementById('btcPriceValue').textContent = "$55,940.75";
+            }
+            // Start periodic global logging, independent of view, if needed, or move to a specific view
+            // This global interval will keep logging even if the user is not on the signals tab
+             if (!predictionIntervalId) { // Avoid multiple global intervals if already set by signals view
+                // This will log all types of predictions periodically if high conviction
+                // If you only want logging when signals tab is active, remove this global one.
+                predictionIntervalId = setInterval(() => fetchEmoTraderPredictions("all", true), PREDICTION_INTERVAL_MS);
+                console.log("Global periodic prediction logging started.");
+            }
+
+
+            if (pageLoadingElement && currentView !== 'signals') {
+                 setTimeout(() => pageLoadingElement.classList.add('hidden'), 300);
+            }
+
+        } else {
+            console.log("User is signed out from Exchange. Redirecting to signin.html");
+            if (predictionIntervalId) { // Clear interval on sign out
+                clearInterval(predictionIntervalId);
+                predictionIntervalId = null;
+                 console.log("Periodic prediction logging stopped due to sign out.");
+            }
+            if (pageLoadingText) pageLoadingText.textContent = 'Redirecting to sign in...';
+            window.location.href = 'signin.html';
+        }
+    });
+
+    if (backButton) backButton.addEventListener('click', () => {
+        if (pageLoadingElement) pageLoadingElement.classList.remove('hidden');
+        if (pageLoadingText) pageLoadingText.textContent = 'Returning to Home...';
+        window.location.href = 'home.html';
+    });
+
+    if(signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                     if (pageLoadingElement) pageLoadingElement.classList.remove('hidden');
+                     if (pageLoadingText) pageLoadingText.textContent = 'Signing out...';
+                    await auth.signOut();
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out. Please try again.");
+                    if (pageLoadingElement) pageLoadingElement.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    autoTradeBtn.addEventListener('click', () => setActiveView('auto-trade'));
+    forexBtn.addEventListener('click', () => setActiveView('forex-exchange'));
+    cryptoBtn.addEventListener('click', () => setActiveView('crypto-exchange'));
+    signalBtn.addEventListener('click', () => setActiveView('signals'));
+    listBtn.addEventListener('click', () => setActiveView('list')); // NEW LIST BUTTON EVENT
+
+    document.getElementById('viewAllSwapsLink')?.addEventListener('click', (e) => {e.preventDefault(); alert('View All Swaps (Placeholder)');});
+    document.getElementById('performSwapButton')?.addEventListener('click', () => alert('Perform Swap (Placeholder) - WeConnect Themed'));
+    document.getElementById('fromTokenSelector')?.addEventListener('click', () => alert('Select "From" Token (Placeholder)'));
+    document.getElementById('toTokenSelector')?.addEventListener('click', () => alert('Select "To" Token (Placeholder)'));
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            if (pageLoadingElement && !pageLoadingElement.classList.contains('hidden') && currentView !== 'signals') {
+                pageLoadingElement.classList.add('hidden');
+            }
+        }, 1500);
+    });
+
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

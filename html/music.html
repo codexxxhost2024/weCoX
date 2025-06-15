@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WeConnect – Music Player</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+<style>
+/* --- CSS Variables --- */
+:root {
+  --wc-primary: #1F3A5C; /* Dark Blue */
+  --wc-primary-darker: #142840;
+  --wc-accent: #4A90E2; /* Lighter Blue */
+  --wc-text-primary: #FFFFFF;
+  --wc-text-secondary: #B0C4DE; /* Light Steel Blue */
+  --wc-text-tertiary: #778899; /* Light Slate Gray */
+  --wc-bg-gradient-start: #0d1b2a;
+  --wc-bg-gradient-mid: #1b263b;
+  --wc-bg-gradient-end: #2a3b50;
+  --wc-surface: rgba(255, 255, 255, 0.05); /* Slightly transparent surface */
+  --wc-surface-hover: rgba(255, 255, 255, 0.1);
+  --wc-border: rgba(255, 255, 255, 0.15);
+  --wc-visualizer-bar: var(--wc-accent);
+  --wc-error: #FF6B6B;
+
+  --spacing-unit: 16px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 50px;
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Base Styles --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(180deg, var(--wc-bg-gradient-start) 0%, var(--wc-bg-gradient-mid) 50%, var(--wc-bg-gradient-end) 100%);
+  color: var(--wc-text-primary);
+  max-width: 450px; /* Slightly wider for player */
+  margin: 0 auto;
+  overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button, input, select {
+  font-family: inherit;
+  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  color: var(--wc-text-primary);
+}
+
+/* --- Header --- */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 56px;
+  padding: 0 var(--spacing-unit);
+  background-color: rgba(0,0,0,0.2); /* Semi-transparent header */
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+}
+.header-left { display: flex; align-items: center; }
+.back-button, .header-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  color: var(--wc-text-secondary); cursor: pointer; background: none; border: none;
+}
+.back-button:hover, .header-icon:hover { color: var(--wc-text-primary); }
+.header-title {
+  font-size: 1.1rem; font-weight: 600; color: var(--wc-text-primary); margin-left: 8px;
+}
+
+/* --- Main Content --- */
+main {
+  padding: var(--spacing-unit);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+  flex-grow: 1; /* Allow main to fill space */
+}
+
+/* --- Player Section --- */
+.player-section {
+  background-color: var(--wc-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-unit);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-unit);
+}
+
+#trackInfo {
+    text-align: center;
+    color: var(--wc-text-secondary);
+    font-size: 0.9rem;
+    min-height: 1.2em; /* Reserve space */
+}
+#trackInfo strong { color: var(--wc-text-primary); }
+
+#visualizerCanvas {
+  width: 100%;
+  height: 80px; /* Adjust height as needed */
+  background-color: rgba(0,0,0,0.1);
+  border-radius: var(--radius-sm);
+}
+
+#audioPlayer {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  margin-top: 5px;
+  /* Basic styling attempt for default controls */
+  filter: invert(1) grayscale(1) brightness(1.2) contrast(0.9);
+}
+#audioPlayer::-webkit-media-controls-panel {
+    background-color: rgba(255,255,255, 0.1);
+    border-radius: var(--radius-sm);
+}
+
+
+/* --- Search Section --- */
+.search-section {
+  background-color: var(--wc-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-unit);
+  box-shadow: var(--shadow);
+}
+.search-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--wc-text-secondary);
+}
+.search-section input[type="search"] {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid var(--wc-border);
+  border-radius: var(--radius-pill);
+  background-color: rgba(0,0,0,0.2);
+  color: var(--wc-text-primary);
+  font-size: 1rem;
+  margin-bottom: 0; /* Remove default margin */
+}
+.search-section input[type="search"]::placeholder { color: var(--wc-text-tertiary); }
+.search-section input[type="search"]:focus {
+  outline: none;
+  border-color: var(--wc-accent);
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+}
+
+/* --- Genre Filters --- */
+.genre-filters-container {
+    margin-top: calc(var(--spacing-unit) * 0.5);
+}
+.genre-filters {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px; /* Space for scrollbar if needed */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+.genre-filters::-webkit-scrollbar { display: none; }
+.genre-filter-btn {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: var(--radius-pill);
+    background-color: var(--wc-surface);
+    color: var(--wc-text-secondary);
+    border: 1px solid var(--wc-border);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.1s;
+}
+.genre-filter-btn:hover {
+    background-color: var(--wc-surface-hover);
+    border-color: var(--wc-accent);
+    color: var(--wc-text-primary);
+}
+.genre-filter-btn.active {
+    background-color: var(--wc-accent);
+    color: var(--wc-text-primary);
+    border-color: var(--wc-accent);
+    font-weight: 600;
+}
+.genre-filter-btn:active { transform: scale(0.95); }
+
+/* --- Results Section --- */
+.results-section {
+  background-color: var(--wc-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-unit);
+  box-shadow: var(--shadow);
+  margin-top: 5px; /* Small gap */
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+.status-text {
+  color: var(--wc-text-tertiary);
+  font-style: italic;
+  text-align: center;
+  margin-bottom: var(--spacing-unit);
+  min-height: 20px;
+}
+.status-text.error { color: var(--wc-error); font-style: normal; }
+
+.music-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-grow: 1;
+  overflow-y: auto; /* Allow list to scroll if needed */
+  max-height: calc(100vh - 450px); /* Adjust max height - approximate */
+}
+
+.music-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(0,0,0,0.1);
+  transition: background-color 0.2s ease-in-out;
+  cursor: pointer;
+  border: 1px solid transparent; /* Prepare for hover border */
+}
+.music-item:hover {
+  background-color: var(--wc-surface-hover);
+  border-color: var(--wc-border);
+}
+.music-item img {
+  width: 45px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-right: 12px;
+}
+.music-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden; /* Prevent text overflow */
+}
+.music-details strong {
+  font-size: 0.95rem;
+  color: var(--wc-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.music-details span {
+  font-size: 0.85rem;
+  color: var(--wc-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.music-item.no-preview { cursor: default; opacity: 0.6; }
+.music-item.no-preview:hover { background-color: rgba(0,0,0,0.1); border-color: transparent;}
+
+
+#loadMoreButton {
+  display: none; /* Hidden by default */
+  margin-top: var(--spacing-unit);
+  padding: 10px 25px;
+  background-color: var(--wc-accent);
+  color: var(--wc-text-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  align-self: center; /* Center button */
+  width: auto; /* Auto width */
+}
+#loadMoreButton:hover:not(:disabled) { background-color: var(--wc-accent-darker); }
+#loadMoreButton:disabled { background-color: var(--wc-text-tertiary); cursor: not-allowed; }
+#loadMoreButton.visible { display: block; }
+
+
+/* --- Loading Indicator --- */
+#loaderOverlay {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+#loaderOverlay.visible {
+  opacity: 1; visibility: visible;
+  transition: opacity 0.3s ease, visibility 0s linear 0s;
+}
+#loaderOverlay .spinner {
+  width: 35px; height: 35px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid var(--wc-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--spacing-unit);
+}
+#loaderOverlay .loader-message { color: var(--wc-text-secondary); font-weight: 500; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+</style>
+</head>
+<body>
+
+<!-- Loader Overlay -->
+<div id="loaderOverlay">
+  <div class="spinner"></div>
+  <p class="loader-message">Loading…</p>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <span class="material-symbols-outlined back-button" id="back">arrow_back_ios</span>
+    <span class="header-title">WeConnect Music</span>
+  </div>
+  <button class="header-icon" id="logout" title="Logout"><span class="material-symbols-outlined">logout</span></button>
+</header>
+
+<!-- Content -->
+<main>
+  <!-- Player Section -->
+  <section class="player-section">
+      <div id="trackInfo">Now Playing: <strong>Die With A Smile</strong> - <span>Keshi</span></div>
+      <canvas id="visualizerCanvas"></canvas>
+      <audio id="audioPlayer" controls autoplay crossorigin="anonymous"></audio> <!-- Added crossorigin -->
+  </section>
+
+  <!-- Search Section -->
+  <section class="search-section">
+    <label for="searchInput">Search Music</label>
+    <input id="searchInput" type="search" placeholder="Artist, Title, Album...">
+  </section>
+
+  <!-- Genre Filters -->
+   <section class="genre-filters-container">
+        <div class="genre-filters">
+            <button class="genre-filter-btn" data-genre="Pop">Pop</button>
+            <button class="genre-filter-btn" data-genre="Rock">Rock</button>
+            <button class="genre-filter-btn" data-genre="Hip-Hop">Hip-Hop</button>
+            <button class="genre-filter-btn" data-genre="Rap">Rap</button>
+            <button class="genre-filter-btn" data-genre="Jazz">Jazz</button>
+            <button class="genre-filter-btn" data-genre="Blues">Blues</button>
+            <button class="genre-filter-btn" data-genre="Electronic">Electronic</button>
+            <button class="genre-filter-btn" data-genre="Classical">Classical</button>
+            <button class="genre-filter-btn" data-genre="R&B">R&B</button>
+            <button class="genre-filter-btn" data-genre="Country">Country</button>
+            <button class="genre-filter-btn" data-genre="Reggae">Reggae</button>
+        </div>
+    </section>
+
+
+  <!-- Results Section -->
+  <section class="results-section">
+    <p class="status-text" id="status">Explore genres or search for music.</p>
+    <div class="music-list" id="resultsList"></div>
+    <button id="loadMoreButton">Load More</button>
+  </section>
+</main>
+
+<script>
+/* ---------- Firebase ---------- */
+const firebaseConfig={
+    apiKey:"AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+    authDomain:"daisy-n7g20a.firebaseapp.com",
+    databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+    projectId:"daisy-n7g20a",
+    storageBucket: "daisy-n7g20a.appspot.com",
+    messagingSenderId: "225362605902",
+    appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+};
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const auth=firebase.auth();
+
+/* ---------- DOM Elements ---------- */
+const loaderOverlay = document.getElementById('loaderOverlay');
+const loaderMessage = loaderOverlay.querySelector('.loader-message');
+const searchInput = document.getElementById('searchInput');
+const statusEl = document.getElementById('status');
+const list = document.getElementById('resultsList');
+const moreBtn = document.getElementById('loadMoreButton');
+const player = document.getElementById('audioPlayer');
+const trackInfoEl = document.getElementById('trackInfo');
+const genreFilterButtons = document.querySelectorAll('.genre-filter-btn');
+const canvas = document.getElementById('visualizerCanvas');
+const canvasCtx = canvas.getContext('2d');
+
+/* ---------- Audio API & Visualizer ---------- */
+let audioCtx;
+let analyser;
+let source;
+let dataArray;
+let bufferLength;
+let visualizerActive = false;
+let animationFrameId = null; // To control the animation loop
+
+function setupAudioContext() {
+    if (!audioCtx) {
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256; // Adjust detail level (power of 2)
+            bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+
+            // Connect player to analyser only once
+            if (!source) {
+                source = audioCtx.createMediaElementSource(player);
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination); // Connect analyser output to destination
+            }
+        } catch (e) {
+            console.error("Web Audio API is not supported or context setup failed", e);
+            canvas.style.display = 'none'; // Hide canvas if API fails
+            visualizerActive = false;
+        }
+    }
+    // Resume context if suspended (important for interaction)
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(err => console.error("AudioContext resume failed:", err));
+    }
+}
+
+function drawVisualizer() {
+    if (!visualizerActive || !analyser || !canvasCtx) return; // Stop drawing if paused or context not ready
+
+    // Request next frame
+    animationFrameId = requestAnimationFrame(drawVisualizer);
+
+    // Get frequency data
+    analyser.getByteFrequencyData(dataArray);
+
+    // Clear canvas
+    canvasCtx.fillStyle = 'rgba(0, 0, 0, 0)'; // Fully transparent clear
+    canvasCtx.clearRect(0, 0, canvas.width, canvas.height); // Use clearRect for full transparency
+
+    const barWidth = (canvas.width / bufferLength) * 1.5;
+    let barHeight;
+    let x = 0;
+    const barColor = getComputedStyle(document.documentElement).getPropertyValue('--wc-visualizer-bar').trim() || '#4A90E2';
+
+    canvasCtx.fillStyle = barColor;
+
+    for(let i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i] * 0.35; // Scale bar height (adjust multiplier)
+
+        // Draw the bar
+        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+
+        x += barWidth + 2; // Add spacing between bars
+    }
+}
+
+function stopVisualizer() {
+     if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+     }
+      // Optionally clear the canvas when stopping
+     if(canvasCtx) {
+        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+     }
+}
+
+
+/* ---------- State ---------- */
+let page = 1;
+let term = '';
+let genre = '';
+let busy = false;
+let totalTracksFound = 0;
+const per = 20;
+
+/* ---------- API switch & URL Builder (FIXED) ---------- */
+const useJamendo = false;
+const jamendoKey = '036dd60c';
+
+const buildURL = (p) => {
+    const offset = (p - 1) * per;
+    const baseTerm = encodeURIComponent(term); // Term is now either search input or genre name
+
+    if (useJamendo) {
+        // Use 'tags' for genre, 'fuzzytags' otherwise? Or always fuzzytags? Using fuzzytags for simplicity.
+        return `https://api.jamendo.com/v3.0/tracks/?client_id=${jamendoKey}&format=json&limit=${per}&offset=${offset}&fuzzytags=${baseTerm}&include=musicinfo`;
+    } else { // iTunes - Corrected: Remove genreId parameter
+        return `https://itunes.apple.com/search?term=${baseTerm}&media=music&entity=song&limit=${per}&offset=${offset}`;
+    }
+};
+
+
+/* ---------- Helpers ---------- */
+const showLoader = L => {
+    loaderMessage.textContent = L;
+    loaderOverlay.classList.add('visible');
+    [searchInput, moreBtn, ...genreFilterButtons].forEach(el => el.disabled = true);
+    busy = true;
+};
+
+const hideLoader = () => {
+    loaderOverlay.classList.remove('visible');
+    [searchInput, ...genreFilterButtons].forEach(el => el.disabled = false);
+    moreBtn.disabled = busy;
+    updateMoreButtonState();
+    busy = false;
+};
+
+const updateMoreButtonState = () => {
+    const itemsDisplayed = list.children.length;
+    if (itemsDisplayed > 0 && itemsDisplayed < totalTracksFound && !busy) {
+        moreBtn.classList.add('visible');
+        moreBtn.disabled = false;
+    } else {
+        moreBtn.classList.remove('visible');
+        moreBtn.disabled = true;
+    }
+};
+
+const guard = (fn) => { if (!busy) fn(); };
+
+/* ---------- Auth ---------- */
+auth.onAuthStateChanged(u => {
+    if (!u) {
+        window.location.href = '/signin.html'; // Redirect to root signin
+    } else {
+        hideLoader(); // Hide initial "Checking session..." loader
+        // Autoplay default track after user is confirmed
+        if (!player.src || player.src !== 'https://weconnect-ph.online/assets/music/DieWithSmile.mp3') {
+           playTrack('https://weconnect-ph.online/assets/music/DieWithSmile.mp3', 'Die With A Smile', 'Keshi', '');
+        }
+    }
+});
+
+document.getElementById('logout').onclick = () => {
+    player.pause();
+    auth.signOut().catch(error => console.error("Sign out error:", error));
+};
+
+
+/* ---------- Fetch ---------- */
+async function fetchPage() {
+    showLoader(page === 1 ? `Searching for “${term}”...` : `Loading page ${page}...`);
+
+    try {
+        // Log the URL being fetched for debugging
+        const requestUrl = buildURL(page);
+        console.log("Fetching URL:", requestUrl);
+
+        const res = await fetch(requestUrl);
+        if (!res.ok) {
+             // Throw specific error for 404
+             if (res.status === 404) {
+                 throw new Error(`Resource not found (404) at ${requestUrl}`);
+             }
+             // Generic HTTP error
+            let errorDetail = `HTTP error: ${res.status} ${res.statusText}`;
+            try {
+                const errorBody = await res.json();
+                 if (errorBody && errorBody.error && errorBody.error.message) {
+                     errorDetail = `API Error: ${errorBody.error.message}`;
+                 } else if (errorBody && errorBody.errors) {
+                      errorDetail = `API Error: ${errorBody.errors.join(', ')}`;
+                 } else if (useJamendo && res.headers.has('X-Error-Message')) {
+                      errorDetail = `Jamendo Error: ${res.headers.get('X-Error-Message')}`;
+                 }
+            } catch(e) { /* Ignore JSON parsing errors if body isn't JSON */ }
+            throw new Error(errorDetail);
+        }
+        const data = await res.json();
+
+        let tracks = [];
+        let currentTotal = 0;
+
+        if (useJamendo) {
+            tracks = data.results || [];
+            if (page === 1) totalTracksFound = parseInt(res.headers.get('X-Total-Count') || tracks.length, 10);
+            currentTotal = tracks.length;
+        } else { // iTunes
+            tracks = data.results || [];
+            if (page === 1) totalTracksFound = data.resultCount || 0;
+            currentTotal = tracks.length;
+        }
+
+        if (page === 1) list.innerHTML = ''; // Clear only for new search/genre click
+
+        if (tracks.length > 0) {
+            tracks.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'music-item';
+
+                const art = useJamendo ? (t.image || t.album_image || '') : t.artworkUrl100;
+                const trackName = useJamendo ? t.name : t.trackName;
+                const artist = useJamendo ? t.artist_name : t.artistName;
+                const album = useJamendo ? t.album_name : t.collectionName;
+                const preview = useJamendo ? t.audio : t.previewUrl;
+
+                div.innerHTML = `<img src="${art || 'placeholder-art.png'}" alt="Album art"><div class="music-details"><strong>${trackName || 'Unknown'}</strong><span>${artist || 'Unknown'} – ${album || 'Unknown'}</span></div>`;
+
+                if (preview) {
+                    div.onclick = () => playTrack(preview, trackName, artist, art);
+                    div.style.cursor = 'pointer';
+                } else {
+                    div.classList.add('no-preview');
+                    div.style.cursor = 'default';
+                }
+                list.appendChild(div);
+            });
+
+            if (currentTotal > 0) page++;
+
+            const itemsDisplayed = list.children.length;
+            statusEl.textContent = `Showing ${itemsDisplayed}${totalTracksFound > 0 ? ` of ${totalTracksFound}` : ''} tracks found for "${term}".`;
+            statusEl.classList.remove('error');
+
+        } else {
+            if (page === 1) {
+                statusEl.textContent = `No tracks found for "${term}".`;
+                totalTracksFound = 0;
+            } else {
+                statusEl.textContent = `No more tracks found for "${term}".`;
+            }
+            statusEl.classList.remove('error');
+        }
+
+    } catch (e) {
+        console.error("Fetch process failed:", e);
+        statusEl.textContent = `Failed to fetch music: ${e.message}`;
+        statusEl.classList.add('error');
+        totalTracksFound = list.children.length; // Prevent further loading on error
+    } finally {
+        hideLoader();
+    }
+}
+
+/* ---------- Player Logic ---------- */
+function playTrack(url, title, artist, artworkUrl) {
+    if (!url) return;
+
+    setupAudioContext(); // Ensure context is ready
+
+    player.src = url;
+    player.play().then(() => {
+        visualizerActive = true;
+        if(animationFrameId === null) drawVisualizer(); // Start visualizer loop if not already running
+    }).catch(e => {
+        console.error("Play error:", e);
+        statusEl.textContent = "Playback error. Tap page to enable audio.";
+        statusEl.classList.add('error');
+        visualizerActive = false;
+        stopVisualizer();
+    });
+
+    // Update track info display
+    trackInfoEl.innerHTML = `Now Playing: <strong>${title || 'Unknown Track'}</strong> - <span>${artist || 'Unknown Artist'}</span>`;
+}
+
+player.onplay = () => {
+    setupAudioContext(); // Resume context if needed
+    visualizerActive = true;
+    if(animationFrameId === null) drawVisualizer(); // Restart visualizer if it was stopped
+};
+
+player.onpause = () => {
+    visualizerActive = false;
+    stopVisualizer(); // Stop visualizer loop when paused
+};
+
+player.onended = () => {
+    visualizerActive = false;
+    stopVisualizer();
+    trackInfoEl.textContent = "Playback finished.";
+};
+
+player.onerror = (e) => {
+    visualizerActive = false;
+    stopVisualizer();
+    console.error("Audio player error:", e);
+    trackInfoEl.textContent = "Error loading track.";
+    statusEl.textContent = "Error playing audio.";
+    statusEl.classList.add('error');
+};
+
+
+/* ---------- UI Actions ---------- */
+const startSearch = () => guard(() => {
+    const currentTerm = searchInput.value.trim();
+    if (!currentTerm) {
+        statusEl.textContent = 'Please enter a search term.';
+        list.innerHTML = '';
+        totalTracksFound = 0;
+        updateMoreButtonState();
+        return;
+    }
+
+    genre = ''; // Clear genre if performing text search
+    genreFilterButtons.forEach(btn => btn.classList.remove('active'));
+
+    term = currentTerm;
+    page = 1;
+    totalTracksFound = 0;
+    fetchPage();
+});
+
+searchInput.onkeypress = e => { if (e.key === 'Enter') startSearch(); };
+
+// Genre Filter Button Logic
+genreFilterButtons.forEach(button => {
+    button.addEventListener('click', () => guard(() => {
+        const selectedGenre = button.dataset.genre;
+        if (!selectedGenre) return; // Ignore if button has no genre
+
+        // If clicking the already active genre, maybe do nothing or refresh?
+        // if (selectedGenre === term) return;
+
+        genre = selectedGenre; // Store genre name (not used in iTunes URL directly now)
+        term = selectedGenre; // Use genre name as the search term
+        searchInput.value = ''; // Clear text search input
+        page = 1;
+        totalTracksFound = 0;
+
+        genreFilterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        fetchPage(); // Fetch based on genre name as term
+    }));
+});
+
+moreBtn.onclick = () => guard(fetchPage);
+
+/* ---------- Navigation ---------- */
+document.getElementById('back').onclick=()=>location.href='tools.html';
+
+/* ---------- Touch-zoom lock ---------- */
+['touchstart','touchmove'].forEach(evt=>document.addEventListener(evt,e=>e.touches.length>1&&e.preventDefault(),{passive:false}));
+let lastTouchEnd=0;
+document.addEventListener('touchend',e=>{
+    const now=Date.now();
+    if(now-lastTouchEnd<=300)e.preventDefault();
+    lastTouchEnd=now;
+},{passive:false});
+
+// Add a general interaction listener to ensure AudioContext can start
+document.body.addEventListener('click', () => {
+    if (player.paused && player.src) { // Only attempt resume if paused and has source
+       setupAudioContext();
+    }
+}, { once: true });
+
+
+/* ---------- Init ---------- */
+showLoader('Initializing...');
+// Autoplay is handled within the onAuthStateChanged callback.
+
+</script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Audio Suite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+
+  <style>
+    /* --- CSS Variables (WeConnect Theme) --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #333; /* Dark Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --success-color: #28a745; /* Green for success/presets */
+      --info-color: #17a2b8;   /* Teal for info/cloud */
+      --spacing-unit: 15px; /* Base spacing */
+      --border-radius: 8px;
+      --border-radius-large: 12px; /* For banners */
+      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --box-shadow-stronger: 0 4px 12px rgba(0, 0, 0, 0.12);
+      --wallet-card-bg: linear-gradient(160deg, #2c3e50 0%, #1d2b3a 100%);
+      --wallet-card-text-primary: #FFFFFF;
+      --wallet-card-text-secondary: #BDC3C7;
+      --wallet-card-chip-bg: linear-gradient(to bottom right, #d1b075, #a88854, #d1b075);
+      --input-border-color: #ced4da;
+    }
+
+    /* --- Base Styles (WeConnect Theme) --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--background-light); color: var(--text-dark); min-height: 100vh; padding-bottom: calc(60px + var(--spacing-unit)); max-width: 420px; margin: 0 auto; overflow-x: hidden; position: relative; }
+    a { color: var(--primary-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--border-radius); transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s; }
+    button:active { transform: translateY(1px) scale(0.98); }
+
+    /* --- Utility Classes (WeConnect Theme) --- */
+    .primary-button { background-color: var(--primary-color); color: #FFFFFF; padding: 10px var(--spacing-unit); font-size: 0.95rem; font-weight: 600; text-align: center; }
+    .primary-button:hover { background-color: #192F4A; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .secondary-button { background-color: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); padding: 10px var(--spacing-unit); font-size: 0.95rem; font-weight: 600; text-align: center; }
+    .secondary-button:hover { background-color: rgba(31, 58, 92, 0.05); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+    /* --- Header (WeConnect Theme) --- */
+    .header { background-color: var(--background-dark); color: var(--text-dark); padding: 10px var(--spacing-unit); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: 56px; }
+    .header-logo-container { display: flex; align-items: center; }
+    .header-logo-img { width: 30px; height: 30px; object-fit: contain; }
+    .header-logo-text { font-size: 1.1rem; font-weight: 600; margin-left: 8px; color: var(--primary-color); }
+    .header-icons-right { display: flex; align-items: center; gap: calc(var(--spacing-unit) * 0.5); }
+    .header-icon { position: relative; cursor: pointer; color: var(--text-medium); display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; transition: background-color 0.2s; }
+    .header-icon:hover { background-color: rgba(0,0,0,0.05); }
+    .header-icon:active { background-color: rgba(0,0,0,0.1); transform: scale(0.95); }
+    .header-icon .material-symbols-outlined { font-size: 24px; }
+    .badge { position: absolute; top: 0px; right: 0px; background-color: #D0021B; color: white; font-size: 10px; font-weight: bold; border-radius: 50%; padding: 2px 5px; min-width: 16px; text-align: center; line-height: 1; display: none; z-index: 1; }
+    .badge.visible { display: block; }
+
+    /* --- Main Content Area (WeConnect Theme) --- */
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: var(--spacing-unit); }
+    .main-content h2 {
+        color: var(--primary-color);
+        font-size: 1.5em; /* Adjusted for main content sections */
+        margin-bottom: var(--spacing-unit);
+        padding-bottom: calc(var(--spacing-unit) * 0.5);
+        border-bottom: 1px solid #e0e0e0;
+    }
+     .main-content h3 {
+        color: var(--text-dark);
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-bottom: calc(var(--spacing-unit) * 0.75);
+    }
+
+
+    /* --- AUDIO ENHANCER SPECIFIC STYLES --- */
+    .audio-tool-section {
+        background-color: var(--background-dark);
+        padding: var(--spacing-unit);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: calc(var(--spacing-unit) * 1.5); /* Increased margin */
+    }
+
+    .audio-tool-section label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500; /* Slightly less bold */
+        color: var(--text-medium);
+        font-size: 0.9rem;
+    }
+
+    .audio-tool-section input[type="file"],
+    .audio-tool-section input[type="range"],
+    .audio-tool-section button {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: var(--spacing-unit);
+        border-radius: calc(var(--border-radius) - 2px); /* Slightly smaller radius */
+        border: 1px solid var(--input-border-color);
+        font-size: 0.9rem;
+        box-sizing: border-box;
+    }
+
+    .audio-tool-section input[type="file"] {
+        background-color: #e8f0fe; /* Light blue accent from theme */
+        border-color: var(--accent-color);
+        color: var(--primary-color);
+        cursor: pointer;
+    }
+    .audio-tool-section input[type="file"]::file-selector-button {
+        background-color: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: calc(var(--border-radius) - 4px);
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+
+    .audio-tool-section input[type="range"] {
+        padding: 0;
+        height: auto;
+        accent-color: var(--accent-color);
+        background: transparent; /* Remove default track background for better cross-browser */
+    }
+    /* Custom Range Slider Track - basic styling */
+    .audio-tool-section input[type="range"]::-webkit-slider-runnable-track {
+        height: 6px;
+        background: #ddd;
+        border-radius: 3px;
+    }
+    .audio-tool-section input[type="range"]::-moz-range-track {
+        height: 6px;
+        background: #ddd;
+        border-radius: 3px;
+    }
+     .audio-tool-section input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        cursor: pointer;
+        margin-top: -6px; /* Align thumb with track */
+    }
+    .audio-tool-section input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+    }
+
+
+    .audio-tool-section button {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 500;
+        border: none;
+    }
+    .audio-tool-section button:hover {
+        background-color: #192F4A; /* Darken primary */
+    }
+    .audio-tool-section button:disabled {
+        background-color: #cccccc;
+        color: #888888;
+        cursor: not-allowed;
+    }
+
+    .audio-controls-grid { /* Renamed from .controls-grid to avoid conflict */
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjusted minmax for smaller screen */
+        gap: var(--spacing-unit);
+    }
+     /* Single column for very small screens if minmax(200px) is too wide */
+    @media (max-width: 480px) { /* Even for 420px theme, this ensures single column if items are wide */
+        .audio-controls-grid {
+             grid-template-columns: 1fr;
+        }
+    }
+
+
+    .audio-control-group { /* Renamed from .control-group */
+        display: flex;
+        flex-direction: column;
+    }
+    .audio-control-group span { /* For slider value display */
+        font-size: 0.85rem;
+        color: var(--text-light);
+        margin-left: 5px;
+        font-weight: normal;
+    }
+
+    .audio-presets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Adjusted for smaller buttons */
+        gap: calc(var(--spacing-unit) * 0.5);
+        margin-top: 10px;
+    }
+    .audio-presets-grid button {
+        background-color: var(--success-color); /* Green from theme vars */
+        font-size: 0.85rem;
+        padding: 8px 10px;
+    }
+    .audio-presets-grid button:hover {
+        background-color: #1e7e34; /* Darker Green */
+    }
+
+    #uploadToCloudBtn {
+        background-color: var(--info-color); /* Teal from theme vars */
+        margin-top: calc(var(--spacing-unit) * 0.5);
+    }
+    #uploadToCloudBtn:hover {
+        background-color: #117a8b; /* Darker Teal */
+    }
+
+    .audio-inline-controls { margin-top: var(--spacing-unit); }
+    .audio-inline-controls label { display: inline-block; margin-right: var(--spacing-unit); font-weight: normal; font-size: 0.9rem; color: var(--text-medium); }
+    .audio-inline-controls input[type="radio"] { margin-right: 5px; width: auto; vertical-align: middle; accent-color: var(--primary-color); }
+
+    .audio-status {
+        margin-top: var(--spacing-unit);
+        padding: var(--spacing-unit);
+        background-color: #e8f0fe; /* Light blue - accent related */
+        border: 1px solid var(--accent-color);
+        border-radius: var(--border-radius);
+        color: var(--primary-color);
+        font-weight: 500;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    .audio-status a { color: var(--primary-color); text-decoration: underline; font-weight: 600; }
+    .audio-status a:hover { color: var(--accent-color); }
+
+    hr.audio-hr {
+        border: 0;
+        border-top: 1px solid #e0e0e0; /* Light border */
+        margin: var(--spacing-unit) 0;
+    }
+
+    /* --- END OF AUDIO ENHANCER SPECIFIC STYLES --- */
+
+
+    /* --- Wallet Card (WeConnect Theme - keeping for context if needed) --- */
+    .income-analytics-card { background: var(--wallet-card-bg); color: var(--wallet-card-text-primary); border-radius: var(--border-radius-large); padding: var(--spacing-unit); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.08); position: relative; overflow: hidden; }
+    .income-analytics-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-unit); }
+    .income-analytics-card .user-info .user-name { color: var(--wallet-card-text-primary); font-weight: 500; font-size: 0.95rem; margin-bottom: 2px; }
+    .income-analytics-card .user-info .user-id { color: var(--wallet-card-text-secondary); font-size: 0.7rem; opacity: 0.8; }
+    .card-chip { width: 36px; height: 26px; background-image: var(--wallet-card-chip-bg); border-radius: 4px; box-shadow: inset 0px 0.5px 1px rgba(0,0,0,0.3), 0px 0.5px 0.5px rgba(255,255,255,0.1); margin-top: 2px;}
+    .income-analytics-card .income-details { display: flex; justify-content: space-around; align-items: flex-start; margin-bottom: var(--spacing-unit); gap: calc(var(--spacing-unit) * 0.5); }
+    .income-analytics-card .income-source { flex: 1; padding: 0 calc(var(--spacing-unit) * 0.25); text-align: center; }
+    .income-analytics-card .income-details .income-amount { color: var(--wallet-card-text-primary); font-size: 1.45rem; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 2px; }
+    .income-analytics-card .income-details .income-label { color: var(--wallet-card-text-secondary); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; }
+    .income-analytics-card .income-actions { display: flex; gap: calc(var(--spacing-unit) * 0.7); }
+    .income-analytics-card .income-actions .primary-button { background-color: rgba(255, 255, 255, 0.1); color: var(--wallet-card-text-primary); border: 1px solid rgba(255, 255, 255, 0.15); font-weight: 500; padding: 8px calc(var(--spacing-unit) * 0.8); border-radius: 6px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.85rem; }
+    .income-analytics-card .income-actions .primary-button .material-symbols-outlined { font-size: 1rem; font-variation-settings: 'wght' 500; }
+    .income-analytics-card .income-actions .primary-button:hover { background-color: rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.3); }
+
+    /* --- Quick Actions (WeConnect Theme) --- */
+    .quick-actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--spacing-unit) * 0.7); }
+    .grid-item { background-color: var(--background-dark); border-radius: var(--border-radius); box-shadow: var(--box-shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(var(--spacing-unit) * 0.6) 5px; cursor: pointer; text-align: center; transition: transform 0.2s ease, box-shadow 0.2s ease; min-height: 85px; text-decoration: none; color: inherit; }
+    .grid-item:hover { transform: translateY(-3px); box-shadow: var(--box-shadow-stronger); }
+    .grid-item:active { transform: scale(0.95) translateY(0px); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+    .grid-item .icon-background { background-color: #e8f0fe; border-radius: 6px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; transition: background-color 0.2s ease; }
+    .grid-item:hover .icon-background { background-color: #d4e3fc; }
+    .grid-item .material-symbols-outlined { font-size: 24px; color: var(--primary-color); }
+    .grid-item .item-label { font-size: 11px; font-weight: 500; color: var(--text-medium); line-height: 1.2; margin-top: 2px; }
+    
+    /* --- Static Ad Banner (WeConnect Theme) --- */
+    .static-ad-banner-container { background-color: var(--background-dark); border-radius: var(--border-radius-large); box-shadow: var(--box-shadow); padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .static-ad-banner-container:hover { transform: translateY(-2px); box-shadow: var(--box-shadow-stronger); }
+    .static-ad-banner-container img { display: block; width: 100%; height: auto; border-radius: var(--border-radius-large); }
+
+    /* --- Info Banner (WeConnect Theme) --- */
+    .info-banner { background-color: #FFFBEB; border: 1px solid #FEEBC8; color: #926319; border-radius: var(--border-radius); padding: calc(var(--spacing-unit) * 0.8) var(--spacing-unit); text-align: center; font-size: 0.9rem; font-weight: 500; }
+    
+    /* --- Loading Spinner (WeConnect Theme) --- */
+    #pageLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+    #pageLoading.hidden { opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+    #pageLoading .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    /* --- Bottom Navigation (WeConnect Theme) --- */
+    .bottom-nav { background-color: var(--background-dark); border-top: 1px solid #e0e0e0; width: 100%; max-width: 420px; display: flex; justify-content: space-around; align-items: center; padding: 5px 0; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 100; height: 60px; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
+    .nav-item { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-light); flex: 1; padding: 10px 0; transition: color 0.2s ease, background-color 0.2s ease, transform 0.1s ease; height: 100%; border-radius: var(--border-radius); margin: 0 2px; }
+    .nav-item.active { color: var(--primary-color); }
+    .nav-item:hover:not(.active) { color: var(--primary-color); background-color: rgba(31, 58, 92, 0.04); }
+    .nav-item:active { transform: scale(0.95); }
+    .nav-item .material-symbols-outlined { font-size: 28px; }
+    .center-button-nav { display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; background-color: var(--background-dark); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); margin-top: -20px; cursor: pointer; border: 3px solid var(--background-light); position: relative; flex-shrink: 0; transition: transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+    .center-button-nav.active { border-color: var(--primary-color); }
+    .center-button-nav:hover:not(.active) { box-shadow: 0 0 0 4px rgba(31, 58, 92, 0.15), 0 2px 5px rgba(0, 0, 0, 0.15); }
+    .center-button-nav:active { transform: scale(0.95); }
+    .center-button-nav img { width: 28px; height: 28px; object-fit: contain; }
+
+  </style>
+</head>
+<body>
+
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <header class="header">
+    <div class="header-logo-container">
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+      <span class="header-logo-text">WeConnect</span>
+    </div>
+    <div class="header-icons-right">
+      <div class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span>
+      </div>
+      <div class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span>
+      </div>
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <!-- Existing WeConnect content (Wallet Card, Quick Actions) can go here or be removed if this page is dedicated to audio -->
+    <!-- For this example, I'll assume the audio tool is the primary content of this specific page -->
+
+    <h2>Audio Creation Suite</h2>
+
+    <div class="audio-tool-section">
+        <h3>Vocal Track</h3>
+        <div class="audio-control-group">
+            <label for="vocalFile">Upload Vocal Audio (WAV, MP3):</label>
+            <input type="file" id="vocalFile" accept="audio/wav, audio/mpeg, audio/x-wav">
+        </div>
+        <div class="audio-controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+            <button id="playVocalBtn" disabled>Play Original</button>
+            <button id="playProcessedVocalBtn" disabled>Play Processed</button>
+        </div>
+    </div>
+
+    <div class="audio-tool-section" id="enhancementControls" style="display: none;">
+        <h3>Vocal Enhancement</h3>
+        <div class="presets-section">
+            <h4>Quick Presets:</h4>
+            <div class="audio-presets-grid">
+                <button id="presetClearVoice">Clear Voice</button>
+                <button id="presetRadioAnnouncer">Radio Announcer</button>
+                <button id="presetPodcastPolish">Podcast Polish</button>
+            </div>
+        </div>
+        <hr class="audio-hr">
+        <div class="audio-controls-grid">
+            <div class="audio-control-group">
+                <label for="hpFilterFreq">High-Pass (Clean): <span id="hpFilterFreqValue">100</span> Hz</label>
+                <input type="range" id="hpFilterFreq" min="20" max="500" value="100" step="1">
+            </div>
+            <div class="audio-control-group">
+                <label for="lpFilterFreq">Low-Pass (Clean): <span id="lpFilterFreqValue">15000</span> Hz</label>
+                <input type="range" id="lpFilterFreq" min="5000" max="20000" value="15000" step="100">
+            </div>
+            <div class="audio-control-group">
+                <label for="eqBassGain">Bass (Enhance): <span id="eqBassGainValue">0</span> dB</label>
+                <input type="range" id="eqBassGain" min="-15" max="15" value="0" step="0.5">
+            </div>
+            <div class="audio-control-group">
+                <label for="eqMidGain">Mid (Enhance): <span id="eqMidGainValue">0</span> dB</label>
+                <input type="range" id="eqMidGain" min="-15" max="15" value="0" step="0.5">
+            </div>
+            <div class="audio-control-group">
+                <label for="eqTrebleGain">Treble (Enhance): <span id="eqTrebleGainValue">0</span> dB</label>
+                <input type="range" id="eqTrebleGain" min="-15" max="15" value="0" step="0.5">
+            </div>
+            <div class="audio-control-group">
+                <label for="compThreshold">Comp. Threshold: <span id="compThresholdValue">-24</span> dBFS</label>
+                <input type="range" id="compThreshold" min="-60" max="0" value="-24" step="1">
+            </div>
+             <div class="audio-control-group">
+                <label for="compRatio">Comp. Ratio: <span id="compRatioValue">12</span>:1</label>
+                <input type="range" id="compRatio" min="1" max="20" value="12" step="0.5">
+            </div>
+            <div class="audio-control-group">
+                <label for="delayTime">Delay Time (Modulate): <span id="delayTimeValue">0</span> s</label>
+                <input type="range" id="delayTime" min="0" max="1" value="0" step="0.01">
+            </div>
+            <div class="audio-control-group">
+                <label for="delayFeedback">Delay Feedback: <span id="delayFeedbackValue">0</span></label>
+                <input type="range" id="delayFeedback" min="0" max="0.9" value="0" step="0.01">
+            </div>
+             <div class="audio-control-group">
+                <label for="vocalVolume">Processed Vocal Vol.: <span id="vocalVolumeValue">1</span></label>
+                <input type="range" id="vocalVolume" min="0" max="2" value="1" step="0.05">
+            </div>
+        </div>
+    </div>
+
+    <div class="audio-tool-section">
+        <h3>Background Music (Optional)</h3>
+        <div class="audio-control-group">
+            <label for="bgMusicFile">Upload Background Music (WAV, MP3):</label>
+            <input type="file" id="bgMusicFile" accept="audio/wav, audio/mpeg, audio/x-wav">
+        </div>
+        <div id="bgMusicControls" style="display: none;">
+            <div class="audio-control-group">
+                <label for="bgMusicVolume">Background Music Vol.: <span id="bgMusicVolumeValue">0.5</span></label>
+                <input type="range" id="bgMusicVolume" min="0" max="1.5" value="0.5" step="0.05">
+            </div>
+            <button id="playBgMusicBtn" disabled>Play BGM (Loops)</button>
+        </div>
+    </div>
+
+    <div class="audio-tool-section">
+        <h3>Save Your Mix</h3>
+        <button id="playMixBtn" disabled>Play Full Mix</button>
+        <button id="exportBtn" disabled>1. Download Mix</button>
+        <button id="uploadToCloudBtn" disabled>2. Upload to WeConnect Cloud</button>
+        <div class="audio-inline-controls">
+            <label>Export Format:</label>
+            <input type="radio" id="formatWav" name="exportFormat" value="wav" checked> <label for="formatWav">WAV</label>
+            <input type="radio" id="formatMp3" name="exportFormat" value="mp3"> <label for="formatMp3">MP3</label>
+        </div>
+    </div>
+    <div id="status" class="audio-status">Ready. Upload a vocal track to begin.</div>
+
+    <!-- Example of how other WeConnect content might be structured if needed, remove if not -->
+    <!--
+    <div class="income-analytics-card"> ... </div>
+    <div class="quick-actions-grid"> ... </div>
+    <div class="static-ad-banner-container" id="staticAdBanner" data-ad-link="https://example.com/static-ad">
+        <img src="assets/banner/ads1.png" alt="Advertisement">
+    </div>
+    <div class="info-banner">
+      Boost your earnings! Check out new affiliate programs in the Network tab.
+    </div>
+    -->
+  </main>
+
+  <div class="bottom-nav">
+    <div class="nav-item" data-target-url="content.html" title="Content"> <span class="material-symbols-outlined">edit_square</span> </div>
+    <div class="nav-item active" data-target-url="audio-tool.html" title="Audio Tool"> <span class="material-symbols-outlined">graphic_eq</span> </div> <!-- Example: Made Audio Tool active -->
+    <div class="center-button-nav" data-target-url="home.html" title="Home"> <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="Home"> </div>
+    <div class="nav-item" data-target-url="business.html" title="Business"> <span class="material-symbols-outlined">business_center</span> </div>
+    <div class="nav-item" data-target-url="userprofile.html" title="Profile"> <span class="material-symbols-outlined">account_circle</span> </div>
+  </div>
+
+  <script>
+    // --- Firebase Config and WeConnect Theme JS (Partial - for context) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const fbStorage = firebase.storage(); // Renamed to avoid conflict with browser 'storage'
+
+    // Example WeConnect JS for page loading and auth state - can be expanded
+    const pageLoadingElement = document.getElementById('pageLoading');
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // User is signed in. You might fetch user-specific data here.
+            if(pageLoadingElement) pageLoadingElement.classList.add('hidden');
+        } else {
+            // No user is signed in. Redirect to sign-in page.
+            // For this demo, we'll just hide the loader.
+            // window.location.href = '/signin.html'; // Uncomment to enforce sign-in
+            if(pageLoadingElement) pageLoadingElement.classList.add('hidden');
+        }
+    });
+    // --- End of WeConnect Theme JS Snippet ---
+
+
+    // --- LameJS (mp3 encoder) STUB ---
+    var lamejs = {
+        Mp3Encoder: function(channels, sampleRate, bitRate) {
+            console.warn("LameJS MP3 Encoder STUB used. MP3 export will NOT be functional. Replace this stub with the full lame.min.js library.");
+            this.encodeBuffer = function(left, right) { 
+                if (channels === 1 && left) return new Int8Array(left.length / 100);
+                if (channels === 2 && left && right) return new Int8Array(left.length / 100);
+                return []; 
+            };
+            this.flush = function() { return new Uint8Array(); };
+        },
+    };
+    // --- END LameJS STUB ---
+
+
+    // --- AUDIO ENHANCER JAVASCRIPT ---
+    const vocalFileInput = document.getElementById('vocalFile');
+    const playVocalBtn = document.getElementById('playVocalBtn');
+    const playProcessedVocalBtn = document.getElementById('playProcessedVocalBtn');
+    const enhancementControlsDiv = document.getElementById('enhancementControls');
+
+    const hpFilterFreqSlider = document.getElementById('hpFilterFreq');
+    const hpFilterFreqValue = document.getElementById('hpFilterFreqValue');
+    const lpFilterFreqSlider = document.getElementById('lpFilterFreq');
+    const lpFilterFreqValue = document.getElementById('lpFilterFreqValue');
+    const eqBassGainSlider = document.getElementById('eqBassGain');
+    const eqBassGainValue = document.getElementById('eqBassGainValue');
+    const eqMidGainSlider = document.getElementById('eqMidGain');
+    const eqMidGainValue = document.getElementById('eqMidGainValue');
+    const eqTrebleGainSlider = document.getElementById('eqTrebleGain');
+    const eqTrebleGainValue = document.getElementById('eqTrebleGainValue');
+    const compThresholdSlider = document.getElementById('compThreshold');
+    const compThresholdValue = document.getElementById('compThresholdValue');
+    const compRatioSlider = document.getElementById('compRatio');
+    const compRatioValue = document.getElementById('compRatioValue');
+    const delayTimeSlider = document.getElementById('delayTime');
+    const delayTimeValue = document.getElementById('delayTimeValue');
+    const delayFeedbackSlider = document.getElementById('delayFeedback');
+    const delayFeedbackValue = document.getElementById('delayFeedbackValue');
+    const vocalVolumeSlider = document.getElementById('vocalVolume');
+    const vocalVolumeValue = document.getElementById('vocalVolumeValue');
+
+    const bgMusicFileInput = document.getElementById('bgMusicFile');
+    const bgMusicControlsDiv = document.getElementById('bgMusicControls');
+    const bgMusicVolumeSlider = document.getElementById('bgMusicVolume');
+    const bgMusicVolumeValue = document.getElementById('bgMusicVolumeValue');
+    const playBgMusicBtn = document.getElementById('playBgMusicBtn');
+
+    const playMixBtn = document.getElementById('playMixBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const uploadToCloudBtn = document.getElementById('uploadToCloudBtn');
+    const formatWavRadio = document.getElementById('formatWav');
+    const formatMp3Radio = document.getElementById('formatMp3');
+    const statusDiv = document.getElementById('status');
+
+    const presetClearVoiceBtn = document.getElementById('presetClearVoice');
+    const presetRadioAnnouncerBtn = document.getElementById('presetRadioAnnouncer');
+    const presetPodcastPolishBtn = document.getElementById('presetPodcastPolish');
+
+    let audioContext;
+    let vocalBuffer;
+    let bgMusicBuffer;
+
+    let currentVocalSource, currentProcessedVocalSource, currentBgMusicSource, currentMixedSources = {};
+    let hpFilter, lpFilter, eqBass, eqMid, eqTreble, compressor, delayNode, delayFeedbackNode, vocalGainNode;
+    let bgMusicGainNode;
+
+    let lastExportedBlob = null;
+    let lastExportedExtension = null;
+    let originalVocalFilename = 'vocal_track';
+
+    const presets = {
+        clearVoice: { hpFilterFreq: 110, lpFilterFreq: 17000, eqBassGain: -1.5, eqMidGain: 2.5, eqTrebleGain: 1.5, compThreshold: -18, compRatio: 4, delayTime: 0, delayFeedback: 0, vocalVolume: 1.0 },
+        radioAnnouncer: { hpFilterFreq: 85, lpFilterFreq: 12500, eqBassGain: 2, eqMidGain: 4, eqTrebleGain: 0.5, compThreshold: -22, compRatio: 8, delayTime: 0, delayFeedback: 0, vocalVolume: 1.0 },
+        podcastPolish: { hpFilterFreq: 95, lpFilterFreq: 16000, eqBassGain: 0.5, eqMidGain: 1.5, eqTrebleGain: 1, compThreshold: -20, compRatio: 3.5, delayTime: 0, delayFeedback: 0, vocalVolume: 1.0 }
+    };
+
+    function getAudioContext() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        return audioContext;
+    }
+
+    function applyPreset(presetName) {
+        const p = presets[presetName]; if (!p) return;
+        const controls = [
+            { s: hpFilterFreqSlider, v: p.hpFilterFreq }, { s: lpFilterFreqSlider, v: p.lpFilterFreq },
+            { s: eqBassGainSlider, v: p.eqBassGain }, { s: eqMidGainSlider, v: p.eqMidGain },
+            { s: eqTrebleGainSlider, v: p.eqTrebleGain }, { s: compThresholdSlider, v: p.compThreshold },
+            { s: compRatioSlider, v: p.compRatio }, { s: delayTimeSlider, v: p.delayTime },
+            { s: delayFeedbackSlider, v: p.delayFeedback }, { s: vocalVolumeSlider, v: p.vocalVolume }
+        ];
+        controls.forEach(c => { c.s.value = c.v; c.s.dispatchEvent(new Event('input')); });
+        statusDiv.textContent = `Preset "${presetName.replace(/([A-Z])/g, ' $1').trim()}" applied.`;
+        uploadToCloudBtn.disabled = true; 
+        lastExportedBlob = null;
+    }
+
+    presetClearVoiceBtn.addEventListener('click', () => applyPreset('clearVoice'));
+    presetRadioAnnouncerBtn.addEventListener('click', () => applyPreset('radioAnnouncer'));
+    presetPodcastPolishBtn.addEventListener('click', () => applyPreset('podcastPolish'));
+
+    function setupSliderListeners() {
+        const sliders = [
+            { el: hpFilterFreqSlider, valEl: hpFilterFreqValue, uFn: updateHpFilter }, { el: lpFilterFreqSlider, valEl: lpFilterFreqValue, uFn: updateLpFilter },
+            { el: eqBassGainSlider, valEl: eqBassGainValue, uFn: updateEqBass }, { el: eqMidGainSlider, valEl: eqMidGainValue, uFn: updateEqMid },
+            { el: eqTrebleGainSlider, valEl: eqTrebleGainValue, uFn: updateEqTreble }, { el: compThresholdSlider, valEl: compThresholdValue, uFn: updateCompressor },
+            { el: compRatioSlider, valEl: compRatioValue, suf: ":1", uFn: updateCompressor }, { el: delayTimeSlider, valEl: delayTimeValue, uFn: updateDelay },
+            { el: delayFeedbackSlider, valEl: delayFeedbackValue, uFn: updateDelay }, { el: vocalVolumeSlider, valEl: vocalVolumeValue, uFn: updateVocalVolume },
+            { el: bgMusicVolumeSlider, valEl: bgMusicVolumeValue, uFn: updateBgMusicVolume }
+        ];
+        sliders.forEach(s => {
+            if (s.el) {
+                s.el.addEventListener('input', () => {
+                    s.valEl.textContent = s.el.value + (s.suf || "");
+                    if (s.uFn) s.uFn();
+                    uploadToCloudBtn.disabled = true; 
+                    lastExportedBlob = null;
+                });
+                s.valEl.textContent = s.el.value + (s.suf || "");
+            }
+        });
+    }
+    setupSliderListeners();
+
+    vocalFileInput.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            originalVocalFilename = file.name.split('.')[0].replace(/\s+/g, '_');
+            statusDiv.textContent = 'Loading vocal...';
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                getAudioContext();
+                vocalBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                playVocalBtn.disabled = false; playProcessedVocalBtn.disabled = false;
+                enhancementControlsDiv.style.display = 'block';
+                exportBtn.disabled = false; playMixBtn.disabled = false; uploadToCloudBtn.disabled = true;
+                statusDiv.textContent = 'Vocal loaded.';
+                initializeVocalProcessingNodes(); updateAllVocalNodeSettings();
+            } catch (e) { statusDiv.textContent = 'Error decoding vocal: ' + e.message; console.error(e); }
+        }
+    });
+
+    bgMusicFileInput.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            statusDiv.textContent = 'Loading background music...';
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                getAudioContext();
+                bgMusicBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                bgMusicControlsDiv.style.display = 'block'; playBgMusicBtn.disabled = false;
+                playMixBtn.disabled = false; exportBtn.disabled = false; uploadToCloudBtn.disabled = true;
+                statusDiv.textContent = 'Background music loaded.';
+                initializeBgMusicNodes(); updateBgMusicVolume();
+            } catch (e) { statusDiv.textContent = 'Error decoding BGM: ' + e.message; console.error(e); }
+        }
+    });
+
+    function stopAllPlayback() {
+        if (currentVocalSource) currentVocalSource.stop();
+        if (currentProcessedVocalSource) currentProcessedVocalSource.stop();
+        if (currentBgMusicSource) { currentBgMusicSource.loop = false; currentBgMusicSource.stop(); }
+        if (currentMixedSources.vocal) currentMixedSources.vocal.stop();
+        if (currentMixedSources.bg) { currentMixedSources.bg.loop = false; currentMixedSources.bg.stop(); }
+        currentVocalSource = null; currentProcessedVocalSource = null; currentBgMusicSource = null; currentMixedSources = {};
+    }
+
+    playVocalBtn.addEventListener('click', () => {
+        if (!vocalBuffer) return; stopAllPlayback(); getAudioContext();
+        currentVocalSource = audioContext.createBufferSource(); currentVocalSource.buffer = vocalBuffer;
+        currentVocalSource.connect(audioContext.destination); currentVocalSource.start(0);
+        statusDiv.textContent = 'Playing original vocal...';
+        currentVocalSource.onended = () => { if (statusDiv.textContent.startsWith('Playing original')) statusDiv.textContent = "Original vocal finished."; };
+    });
+
+    function initializeVocalProcessingNodes() {
+        if (!audioContext) getAudioContext();
+        hpFilter = audioContext.createBiquadFilter(); lpFilter = audioContext.createBiquadFilter();
+        eqBass = audioContext.createBiquadFilter(); eqMid = audioContext.createBiquadFilter(); eqTreble = audioContext.createBiquadFilter();
+        compressor = audioContext.createDynamicsCompressor(); delayNode = audioContext.createDelay(1.0);
+        delayFeedbackNode = audioContext.createGain(); vocalGainNode = audioContext.createGain();
+    }
+    
+    function updateAllVocalNodeSettings() {
+        if (!hpFilter) initializeVocalProcessingNodes();
+        updateHpFilter(); updateLpFilter(); updateEqBass(); updateEqMid(); updateEqTreble();
+        updateCompressor(); updateDelay(); updateVocalVolume();
+    }
+
+    function connectVocalChain(source, dest) {
+        source.connect(hpFilter).connect(lpFilter).connect(eqBass).connect(eqMid).connect(eqTreble).connect(compressor);
+        compressor.connect(delayNode); delayNode.connect(delayFeedbackNode); delayFeedbackNode.connect(delayNode); 
+        delayNode.connect(vocalGainNode); vocalGainNode.connect(dest.destination || dest);
+    }
+
+    playProcessedVocalBtn.addEventListener('click', () => {
+        if (!vocalBuffer) return; if (!hpFilter) initializeVocalProcessingNodes(); 
+        stopAllPlayback(); getAudioContext(); updateAllVocalNodeSettings();
+        currentProcessedVocalSource = audioContext.createBufferSource(); currentProcessedVocalSource.buffer = vocalBuffer;
+        connectVocalChain(currentProcessedVocalSource, audioContext); currentProcessedVocalSource.start(0);
+        statusDiv.textContent = 'Playing processed vocal...';
+        currentProcessedVocalSource.onended = () => { if (statusDiv.textContent.startsWith('Playing processed')) statusDiv.textContent = "Processed vocal finished."; };
+    });
+
+    function initializeBgMusicNodes() { if (!audioContext) getAudioContext(); bgMusicGainNode = audioContext.createGain(); }
+
+    playBgMusicBtn.addEventListener('click', () => {
+        if (!bgMusicBuffer) return; if (!bgMusicGainNode) initializeBgMusicNodes();
+        stopAllPlayback(); getAudioContext(); updateBgMusicVolume();
+        currentBgMusicSource = audioContext.createBufferSource(); currentBgMusicSource.buffer = bgMusicBuffer;
+        currentBgMusicSource.loop = true; currentBgMusicSource.connect(bgMusicGainNode).connect(audioContext.destination);
+        currentBgMusicSource.start(0); statusDiv.textContent = 'Playing BGM (looping)...';
+    });
+
+    playMixBtn.addEventListener('click', () => {
+        if (!vocalBuffer && !bgMusicBuffer) { statusDiv.textContent = "Load audio to play mix."; return; }
+        stopAllPlayback(); getAudioContext(); currentMixedSources = {};
+        if (vocalBuffer) {
+            if (!hpFilter) initializeVocalProcessingNodes(); updateAllVocalNodeSettings();
+            const vSrc = audioContext.createBufferSource(); vSrc.buffer = vocalBuffer;
+            connectVocalChain(vSrc, audioContext); vSrc.start(0); currentMixedSources.vocal = vSrc;
+        }
+        if (bgMusicBuffer) {
+            if (!bgMusicGainNode) initializeBgMusicNodes(); updateBgMusicVolume();
+            const bSrc = audioContext.createBufferSource(); bSrc.buffer = bgMusicBuffer; bSrc.loop = true;
+            bSrc.connect(bgMusicGainNode).connect(audioContext.destination); bSrc.start(0); currentMixedSources.bg = bSrc;
+        }
+        statusDiv.textContent = 'Playing mix...';
+        if (currentMixedSources.vocal) {
+             currentMixedSources.vocal.onended = () => {
+                if (statusDiv.textContent === 'Playing mix...') {
+                     statusDiv.textContent = currentMixedSources.bg ? "Vocal part finished; BGM loops." : "Mix finished.";
+                }
+            };
+        }
+    });
+
+    function updateNodeParam(node, param, value, timeConst = 0.01) {
+        if (node && node[param] && audioContext && node[param] instanceof AudioParam) {
+            node[param].setTargetAtTime(parseFloat(value), audioContext.currentTime, timeConst);
+        }
+    }
+    function updateHpFilter() { if(hpFilter) { hpFilter.type = 'highpass'; updateNodeParam(hpFilter, 'frequency', hpFilterFreqSlider.value); } }
+    function updateLpFilter() { if(lpFilter) { lpFilter.type = 'lowpass'; updateNodeParam(lpFilter, 'frequency', lpFilterFreqSlider.value); } }
+    function updateEqBass() { if(eqBass) { eqBass.type = 'lowshelf'; updateNodeParam(eqBass, 'frequency', 250); updateNodeParam(eqBass, 'gain', eqBassGainSlider.value); } }
+    function updateEqMid() { if(eqMid) { eqMid.type = 'peaking'; updateNodeParam(eqMid, 'frequency', 1000); updateNodeParam(eqMid, 'Q', 1); updateNodeParam(eqMid, 'gain', eqMidGainSlider.value); } }
+    function updateEqTreble() { if(eqTreble) { eqTreble.type = 'highshelf'; updateNodeParam(eqTreble, 'frequency', 4000); updateNodeParam(eqTreble, 'gain', eqTrebleGainSlider.value); } }
+    function updateCompressor() {
+        if (compressor) {
+            updateNodeParam(compressor, 'threshold', compThresholdSlider.value); updateNodeParam(compressor, 'ratio', compRatioSlider.value);
+            updateNodeParam(compressor, 'knee', 30); updateNodeParam(compressor, 'attack', 0.003); updateNodeParam(compressor, 'release', 0.25);
+        }
+    }
+    function updateDelay() {
+        if (delayNode) updateNodeParam(delayNode, 'delayTime', delayTimeSlider.value);
+        if (delayFeedbackNode) updateNodeParam(delayFeedbackNode, 'gain', delayFeedbackSlider.value);
+    }
+    function updateVocalVolume() { if(vocalGainNode) updateNodeParam(vocalGainNode, 'gain', vocalVolumeSlider.value); }
+    function updateBgMusicVolume() { if(bgMusicGainNode) updateNodeParam(bgMusicGainNode, 'gain', bgMusicVolumeSlider.value); }
+
+    function setControlsDisabled(isDisabled) {
+        exportBtn.disabled = isDisabled;
+        playVocalBtn.disabled = isDisabled || !vocalBuffer; 
+        playProcessedVocalBtn.disabled = isDisabled || !vocalBuffer;
+        playBgMusicBtn.disabled = isDisabled || !bgMusicBuffer;
+        playMixBtn.disabled = isDisabled || (!vocalBuffer && !bgMusicBuffer);
+        uploadToCloudBtn.disabled = isDisabled || !lastExportedBlob || !fbStorage;
+    }
+
+    exportBtn.addEventListener('click', async () => {
+        if (!vocalBuffer && !bgMusicBuffer) { statusDiv.textContent = 'Nothing to export.'; return; }
+        statusDiv.textContent = 'Processing & exporting...';
+        setControlsDisabled(true);
+        lastExportedBlob = null; 
+
+        try {
+            const longestDuration = Math.max(vocalBuffer ? vocalBuffer.duration : 0, bgMusicBuffer ? bgMusicBuffer.duration : 0);
+            if (longestDuration === 0) { throw new Error("Audio duration is zero."); }
+            
+            const mainSampleRate = getAudioContext().sampleRate;
+            const numCh = vocalBuffer ? vocalBuffer.numberOfChannels : (bgMusicBuffer ? bgMusicBuffer.numberOfChannels : 2);
+            const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(numCh, Math.ceil(mainSampleRate * longestDuration), mainSampleRate);
+
+            if (vocalBuffer) {
+                const off_hp = offlineCtx.createBiquadFilter(); off_hp.type='highpass'; off_hp.frequency.value=parseFloat(hpFilterFreqSlider.value);
+                const off_lp = offlineCtx.createBiquadFilter(); off_lp.type='lowpass'; off_lp.frequency.value=parseFloat(lpFilterFreqSlider.value);
+                const off_bass = offlineCtx.createBiquadFilter(); off_bass.type='lowshelf'; off_bass.frequency.value=250; off_bass.gain.value=parseFloat(eqBassGainSlider.value);
+                const off_mid = offlineCtx.createBiquadFilter(); off_mid.type='peaking'; off_mid.frequency.value=1000; off_mid.Q.value=1; off_mid.gain.value=parseFloat(eqMidGainSlider.value);
+                const off_treble = offlineCtx.createBiquadFilter(); off_treble.type='highshelf'; off_treble.frequency.value=4000; off_treble.gain.value=parseFloat(eqTrebleGainSlider.value);
+                const off_comp = offlineCtx.createDynamicsCompressor();
+                off_comp.threshold.value=parseFloat(compThresholdSlider.value); off_comp.ratio.value=parseFloat(compRatioSlider.value);
+                off_comp.knee.value=30; off_comp.attack.value=0.003; off_comp.release.value=0.25;
+                const off_delay = offlineCtx.createDelay(1.0); off_delay.delayTime.value=parseFloat(delayTimeSlider.value);
+                const off_fdbk = offlineCtx.createGain(); off_fdbk.gain.value=parseFloat(delayFeedbackSlider.value);
+                const off_vGain = offlineCtx.createGain(); off_vGain.gain.value=parseFloat(vocalVolumeSlider.value);
+                const offVocalSrc = offlineCtx.createBufferSource(); offVocalSrc.buffer = vocalBuffer;
+                offVocalSrc.connect(off_hp).connect(off_lp).connect(off_bass).connect(off_mid).connect(off_treble).connect(off_comp);
+                off_comp.connect(off_delay); off_delay.connect(off_fdbk); off_fdbk.connect(off_delay);
+                off_delay.connect(off_vGain); off_vGain.connect(offlineCtx.destination);
+                offVocalSrc.start(0);
+            }
+            if (bgMusicBuffer) {
+                const offBgSrc = offlineCtx.createBufferSource(); offBgSrc.buffer = bgMusicBuffer;
+                const off_bgGain = offlineCtx.createGain(); off_bgGain.gain.value = parseFloat(bgMusicVolumeSlider.value);
+                offBgSrc.connect(off_bgGain).connect(offlineCtx.destination);
+                offBgSrc.start(0);
+            }
+            
+            const renderedBuffer = await offlineCtx.startRendering();
+            const exportFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+
+            if (exportFormat === 'wav') {
+                lastExportedBlob = bufferToWav(renderedBuffer);
+                lastExportedExtension = 'wav';
+            } else if (exportFormat === 'mp3') {
+                lastExportedBlob = bufferToMp3(renderedBuffer);
+                lastExportedExtension = 'mp3';
+                 if (!lastExportedBlob || lastExportedBlob.size === 0) { 
+                    throw new Error('MP3 export failed (LameJS stub?). Try WAV.');
+                }
+            }
+
+            const downloadUrl = URL.createObjectURL(lastExportedBlob);
+            const a = document.createElement('a');
+            a.style.display = 'none'; a.href = downloadUrl;
+            a.download = `${originalVocalFilename}_mix.${lastExportedExtension}`;
+            document.body.appendChild(a); a.click();
+            URL.revokeObjectURL(downloadUrl); document.body.removeChild(a);
+            statusDiv.textContent = `Mix downloaded. Ready to upload.`;
+            uploadToCloudBtn.disabled = !fbStorage;
+
+        } catch (e) {
+            statusDiv.textContent = 'Export Error: ' + e.message;
+            console.error("Export error:", e);
+            lastExportedBlob = null; uploadToCloudBtn.disabled = true;
+        } finally {
+            setControlsDisabled(false); 
+        }
+    });
+
+    uploadToCloudBtn.addEventListener('click', async () => {
+        if (!lastExportedBlob || !lastExportedExtension) { statusDiv.textContent = "Export mix locally first."; return; }
+        if (!fbStorage) { statusDiv.textContent = "Firebase not ready for upload."; console.error("Firebase storage is not available."); return; }
+
+        statusDiv.textContent = "Starting cloud upload...";
+        setControlsDisabled(true); uploadToCloudBtn.disabled = true;
+
+        const filename = `audio_mixes/weconnect_${originalVocalFilename}_${Date.now()}.${lastExportedExtension}`;
+        const fileRef = fbStorage.ref().child(filename);
+
+        try {
+            const uploadTask = fileRef.put(lastExportedBlob);
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    statusDiv.textContent = `Uploading: ${Math.round(progress)}%`;
+                },
+                (error) => {
+                    console.error("Firebase upload error:", error);
+                    statusDiv.textContent = `Cloud upload FAILED: ${error.code}. Check console & Firebase rules.`;
+                    setControlsDisabled(false); uploadToCloudBtn.disabled = (lastExportedBlob && fbStorage) ? false : true;
+                },
+                async () => {
+                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                    statusDiv.innerHTML = `Mix uploaded! <a href="${downloadURL}" target="_blank">Access File</a>`;
+                    setControlsDisabled(false);
+                }
+            );
+        } catch (e) {
+            statusDiv.textContent = 'Upload Error: ' + e.message;
+            console.error("Upload initiation error:", e);
+            setControlsDisabled(false); uploadToCloudBtn.disabled = (lastExportedBlob && fbStorage) ? false : true;
+        }
+    });
+
+    function bufferToWav(buffer) { /* ... same as before ... */ 
+        const numCh = buffer.numberOfChannels, sampleRate = buffer.sampleRate, bitDepth = 16;
+        let interleaved = numCh === 2 ? interleave(buffer.getChannelData(0), buffer.getChannelData(1)) : buffer.getChannelData(0);
+        const [dataView, dataSize] = encodeWAV(interleaved, numCh, sampleRate, bitDepth);
+        return new Blob([dataView], { type: 'audio/wav' });
+    }
+    function encodeWAV(samples, numCh, sampleRate, bitDepth) { /* ... same as before ... */ 
+        const bytesPerSample = bitDepth/8, blockAlign = numCh*bytesPerSample, byteRate = sampleRate*blockAlign, dataSize = samples.length*bytesPerSample;
+        const buffer = new ArrayBuffer(44 + dataSize); const view = new DataView(buffer);
+        writeString(view,0,'RIFF'); view.setUint32(4,36+dataSize,true); writeString(view,8,'WAVE'); writeString(view,12,'fmt ');
+        view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,numCh,true); view.setUint32(24,sampleRate,true);
+        view.setUint32(28,byteRate,true); view.setUint16(32,blockAlign,true); view.setUint16(34,bitDepth,true);
+        writeString(view,36,'data'); view.setUint32(40,dataSize,true);
+        let offset=44; for(let i=0;i<samples.length;i++){ const s=Math.max(-1,Math.min(1,samples[i])); view.setInt16(offset,s<0?s*0x8000:s*0x7FFF,true); offset+=bytesPerSample; }
+        return [view, dataSize];
+    }
+    function interleave(l, r) { /* ... same as before ... */ const len=l.length+r.length; const res=new Float32Array(len); let i=0,idx=0; while(i<len){res[i++]=l[idx];res[i++]=r[idx];idx++;} return res;}
+    function writeString(v,o,s){for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));}
+
+    function bufferToMp3(audioBuffer) { /* ... same as before ... */ 
+        if (!lamejs || typeof lamejs.Mp3Encoder !== 'function') { throw new Error("LameJS not loaded for MP3."); }
+        try {
+            const numCh = audioBuffer.numberOfChannels, sampleRate = audioBuffer.sampleRate, bitRate = 192;
+            const enc = new lamejs.Mp3Encoder(numCh, sampleRate, bitRate);
+            const pcmL = audioBuffer.getChannelData(0), sampL = new Int16Array(pcmL.length);
+            for(let i=0;i<pcmL.length;i++) sampL[i]=Math.max(-32768,Math.min(32767,pcmL[i]*32767));
+            let sampR; if(numCh>1){const pcmR=audioBuffer.getChannelData(1); sampR=new Int16Array(pcmR.length); for(let i=0;i<pcmR.length;i++)sampR[i]=Math.max(-32768,Math.min(32767,pcmR[i]*32767));}
+            const data = [], blkSz = 1152;
+            for(let i=0;i<sampL.length;i+=blkSz){ const lChunk=sampL.subarray(i,i+blkSz); let mp3b; if(numCh===1)mp3b=enc.encodeBuffer(lChunk); else {const rChunk=sampR.subarray(i,i+blkSz); mp3b=enc.encodeBuffer(lChunk,rChunk);} if(mp3b.length>0)data.push(new Uint8Array(mp3b));}
+            const end=enc.flush(); if(end.length>0)data.push(new Uint8Array(end));
+            if (data.length === 0) { throw new Error("MP3 encoding produced no data."); }
+            return new Blob(data, {type:'audio/mpeg'});
+        } catch (e) { console.error("MP3 LameJS Error:", e); throw e; }
+    }
+
+    // Initial state
+    statusDiv.textContent = 'Ready. Upload a vocal track to begin.';
+    uploadToCloudBtn.disabled = true; 
+    if (!fbStorage) {
+        uploadToCloudBtn.title = "Firebase not available for cloud upload.";
+        console.warn("Firebase Storage not initialized, cloud upload disabled.");
+    }
+     // Make sure the page loading spinner is hidden once all initial JS has run
+    window.addEventListener('load', () => {
+        if(pageLoadingElement && !pageLoadingElement.classList.contains('hidden') && auth.currentUser === null) {
+             // If still loading and no user (implies auth check finished or app is public)
+            setTimeout(() => { // Give auth a bit more time just in case
+                 if(pageLoadingElement) pageLoadingElement.classList.add('hidden');
+            }, 500);
+        }
+    });
+
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

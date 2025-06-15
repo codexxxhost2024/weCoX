@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Welcome - WeConnect</title>
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNTAsNCBDMjQuNSw0IDQsMjQuNSA0LDUwYzAsMjUuNSAyMC41LDQ2IDQ2LDQ2czQ2LTIwLjUgNDYtNDZDMzYuNSwyNC41IDc1LjUsNCA1MCw0ek0yNSwzNSBDMzAuNSwzNSAzNSwzMC41IDM1LDI1YzAtNS41LTQuNS0xMC0xMC0xMFMyNSwxOS41IDI1LDI1QzI1LDMwLjUgMjkuNSwzNSAzMCwzNXpNMTUsNzAgQzE1LDY0LjUgMTkuNSw2MCAyNSw2MGMyLjUsMCA1LDAuOCA3LDIuMkw0MCw1MGwtNy44LTEyQzI5LjcsMzggMjcuNSwzOCAyNSwzOHMtNSwyLjUtNSw1Vjcwek03NSw2NSBDNjkuNSw2NSA2NSw2OS41IDY1LDc1YzAsNS41IDQuNSwxMCAxMCwxMFM4NSw4MC41IDg1LDc1Qzg1LDY5LjUgODAuNSw2NSA3NSw2NXpNODUsMzAgQzg1LDM1LjUgODAuNSw0MCA3NSw0MGMtMi41LDAtNS0wLjgtNy0yLjJMNjAsNTBsNyu4LDEyQzcwLjMsNjIgNzIuNSw2MiA3NSw2MnM1LTIuNSA1LTVWMzB6IiBmaWxsPSIjMWYzYTVjIi8+PC9zdmc+" type="image/svg+xml">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/banner.webm?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" type="video/webm">
+        <!-- You can add an MP4 source as a fallback for wider browser compatibility -->
+        <!-- <source src="path/to/your/video.mp4" type="video/mp4"> -->
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="content-overlay">
+        <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="splash-logo">
+        <h1 class="splash-message">Welcome to WeConnect</h1>
+        <div class="loading-indicator"></div>
+    </div>
+
+    <script src="../js/global.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            const splashDuration = 4000; // Total time for splash screen in milliseconds (e.g., 4 seconds)
+            const fadeOutTime = 2000;   // Duration of the fade-out animation (must match CSS transition)
+
+            // Redirect after the splash duration
+            setTimeout(() => {
+                document.body.classList.add('fade-out');
+                
+                // Wait for the fade-out animation to complete before redirecting
+                setTimeout(() => {
+                    // *** MODIFICATION HERE: Changed 'home.html' to 'signin.html' ***
+                    window.location.href = 'signin.html'; 
+                }, fadeOutTime);
+
+            }, splashDuration - fadeOutTime); // Start fade-out a bit earlier than total duration
+        });
+
+        // Optional: If video fails to load, still proceed after a timeout
+        const videoElement = document.getElementById('bg-video');
+        if (videoElement) {
+            videoElement.addEventListener('error', () => {
+                console.warn('Background video failed to load. Proceeding with fallback.');
+                // You might want to change the background or ensure text is readable
+                document.body.style.backgroundColor = '#1F3A5C'; // Ensure fallback bg is visible
+                // The main timeout will still handle the redirect
+            });
+        }
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('Service worker registration failed:', error);
+                });
+        }
+    </script>
+
+</body>
+</html>

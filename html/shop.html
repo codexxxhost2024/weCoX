@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WeShop - Loading...</title>
+    <meta name="theme-color" content="#1F3A5C"> <!-- WeConnect Theme Color -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols Outlined -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400..700,0..1,-50..200" />
+    <!-- Inter Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400..700,0..1,-50..200" />
+    <link rel="stylesheet" href="../css/styles.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-wrapper">
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-btn" id="menuButton" title="Menu">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <div class="user-info">
+                    <img src="assets/images/default-avatar.png" alt="User" class="profile-pic" id="profilePic">
+                    <div class="greeting">
+                        <span>Hello</span>
+                        <strong id="userNameGreeting">Guest!</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="notification-bell-btn" id="notificationBell" title="Notifications">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <div class="notification-badge hidden" id="notificationBadge"></div>
+                </button>
+                 <a href="userprofile.html" class="profile-btn" title="Profile"> <!-- Changed to anchor -->
+                    <span class="material-symbols-outlined">account_circle</span>
+                </a>
+            </div>
+        </header>
+    </div>
+
+    <main class="container">
+        <!-- Search & Filter Row -->
+        <div class="search-filter-row">
+            <div class="search-bar">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Search here..." id="searchInput">
+            </div>
+            <button class="filter-btn" id="filterButton" title="Filters">
+                <span class="material-symbols-outlined">tune</span>
+            </button>
+        </div>
+
+        <!-- Promo Banner -->
+        <section class="promo-banner">
+             <div class="banner-text">
+                <h2>Best Selling</h2>
+                <p>Comforts & Modern life Stylish Sofa</p>
+                <a href="#" class="view-more-link">
+                    View More <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
+            </div>
+            <div class="banner-image">
+                 <img src="assets/images/sofa-banner.png" alt="Stylish Sofa"> <!-- Placeholder path -->
+                 <div class="sales-tag">MEGA SALE <span>60 % OFF</span></div>
+            </div>
+        </section>
+
+        <!-- Categories -->
+        <div class="categories-container">
+            <div class="categories" id="categoriesContainer">
+                <button class="category active" data-category="all">
+                    <span class="material-symbols-outlined">inventory_2</span> All
+                </button>
+                <button class="category" data-category="Food">
+                    <span class="material-symbols-outlined">restaurant</span> Food
+                </button>
+                <button class="category" data-category="Apparel">
+                    <span class="material-symbols-outlined">apparel</span> Apparel
+                </button>
+                 <button class="category" data-category="Vegetables">
+                    <span class="material-symbols-outlined">eco</span> Vegetables
+                </button>
+                <button class="category" data-category="Groceries">
+                    <span class="material-symbols-outlined">local_grocery_store</span> Groceries
+                </button>
+                 <button class="category" data-category="Digital Products">
+                    <span class="material-symbols-outlined">computer</span> Digital Products
+                 </button>
+                 <button class="category" data-category="Others">
+                     <span class="material-symbols-outlined">category</span> Others
+                 </button>
+            </div>
+        </div>
+
+        <!-- New Arrivals Section -->
+        <section class="product-section">
+            <div class="section-header">
+                <h2 class="section-title">New Arrivals</h2>
+                <a href="#" class="view-all-link" id="viewAllNewArrivals">View All</a>
+            </div>
+            <div class="loading" id="loadingIndicator">
+                <div class="loading-spinner"></div>
+            </div>
+            <div class="error-message" id="errorMessage" style="display: none;"></div>
+            <div class="products-grid" id="productsGrid" style="display: none;">
+                 <!-- Products Loaded Here -->
+            </div>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <span class="material-symbols-outlined">production_quantity_limits</span>
+                <h3>No Products Found</h3>
+                <p>There are currently no products matching your search or filter.</p>
+            </div>
+        </section>
+        <div style="height: 80px;"></div> <!-- Spacer -->
+
+    </main>
+
+    <script>
+        // --- Firebase Configuration (WeConnect) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+
+        // --- Initialize Firebase ---
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const productsCollectionRef = db.collection('weshop_products'); // Correct collection
+        const usersCollectionRef = db.collection('users');
+        const cartItemsCollectionRef = db.collection("cartItems");
+
+        // --- DOM Elements ---
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const emptyState = document.getElementById('emptyState');
+        const productsGrid = document.getElementById('productsGrid');
+        const searchInput = document.getElementById('searchInput');
+        const categoriesContainer = document.getElementById('categoriesContainer');
+        const profilePic = document.getElementById('profilePic');
+        const userNameGreeting = document.getElementById('userNameGreeting');
+        const notificationBadge = document.getElementById('notificationBadge');
+
+        // --- App State ---
+        let currentUser = null;
+        let allProducts = [];
+        let currentCategory = 'all';
+        let unsubscribeCartListener = null;
+
+        // --- Authentication ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log("User logged in:", user.uid);
+                currentUser = user;
+                fetchUserData(user.uid);
+                initializeCartListener(user.uid);
+                initializePage();
+            } else {
+                console.log("No user logged in. Redirecting to signin...");
+                currentUser = null;
+                if (unsubscribeCartListener) unsubscribeCartListener();
+                window.location.href = '/signin.html';
+            }
+        });
+
+        // --- Fetch User Data ---
+        async function fetchUserData(uid) {
+            try {
+                const userDoc = await usersCollectionRef.doc(uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    // Use displayName first, fallback to a generic part of email if needed
+                    const nameToDisplay = userData.displayName || (user.email ? user.email.split('@')[0] : 'User');
+                    userNameGreeting.textContent = `${nameToDisplay}!`;
+                    profilePic.src = userData.photoURL || 'assets/images/default-avatar.png';
+                } else {
+                    userNameGreeting.textContent = (user.email ? user.email.split('@')[0] : 'User') + '!';
+                    profilePic.src = 'assets/images/default-avatar.png';
+                }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                userNameGreeting.textContent = 'User!';
+                profilePic.src = 'assets/images/default-avatar.png';
+            }
+        }
+
+        // --- Cart Listener ---
+        function initializeCartListener(userId) {
+             if (unsubscribeCartListener) unsubscribeCartListener();
+             const query = cartItemsCollectionRef.where("userId", "==", userId);
+             unsubscribeCartListener = query.onSnapshot(snapshot => {
+                 updateCartIcon(snapshot.size);
+             }, error => {
+                 console.error("Error listening to cart updates:", error);
+                 updateCartIcon(0);
+             });
+         }
+
+        // --- Update Cart Icon (Using Notification Badge Element) ---
+        function updateCartIcon(count) {
+            const displayCount = Math.max(0, count);
+            if (notificationBadge) {
+                 if (displayCount > 0) {
+                    notificationBadge.textContent = displayCount > 9 ? '9+' : displayCount.toString();
+                    notificationBadge.classList.remove('hidden');
+                 } else {
+                    //notificationBadge.textContent = '0'; // Not needed if hiding
+                    notificationBadge.classList.add('hidden');
+                 }
+            }
+        }
+
+        // --- Initialize Page ---
+        async function initializePage() {
+            if (!currentUser) return;
+            showLoading();
+            try {
+                allProducts = await fetchProducts();
+                applyFilters(); // Render initial products
+                setupEventListeners();
+            } catch (error) {
+                showError("Could not load store. Please try again later.");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- Fetch Products ---
+        async function fetchProducts() {
+            console.log("Fetching products from 'weshop_products'");
+            try {
+                const snapshot = await productsCollectionRef.where("Status", "==", "active").get();
+                const productsArray = [];
+                snapshot.forEach(doc => productsArray.push({ id: doc.id, ...doc.data() }));
+                console.log(`Fetched ${productsArray.length} active products.`);
+                return productsArray;
+            } catch (error) {
+                console.error("Error fetching products:", error);
+                throw error;
+            }
+        }
+
+        // --- Setup Event Listeners ---
+        function setupEventListeners() {
+            let searchTimeout;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(applyFilters, 300);
+            });
+
+            categoriesContainer.addEventListener('click', (event) => {
+                 const categoryButton = event.target.closest('.category'); // Handle clicks on icon too
+                 if (categoryButton) {
+                     if (categoryButton.classList.contains('active')) return;
+                     categoriesContainer.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
+                     categoryButton.classList.add('active');
+                     currentCategory = categoryButton.dataset.category;
+                     applyFilters();
+                 }
+             });
+
+            productsGrid.addEventListener('click', async (event) => {
+                 const addToCartButton = event.target.closest('.add-to-cart-btn');
+                 const favoriteButton = event.target.closest('.favorite-btn');
+                 const cardLink = event.target.closest('.product-card-link');
+                 const productId = cardLink?.dataset.productId;
+
+                 if (addToCartButton) {
+                     event.preventDefault();
+                     if (!productId) return;
+                     addToCartButton.innerHTML = `<span class="material-symbols-outlined spin" style="font-size: 18px;">autorenew</span>`;
+                     addToCartButton.disabled = true;
+                     await handleAddToCart(productId, addToCartButton);
+                 }
+                 else if (favoriteButton) {
+                     event.preventDefault();
+                     if (!productId) return;
+                     favoriteButton.classList.toggle('favorited');
+                     // Implement favorite logic here
+                     console.log(`Toggled favorite for product: ${productId}`);
+                 }
+             });
+        }
+
+        // --- Handle Add To Cart ---
+        async function handleAddToCart(productId, buttonElement) {
+            if (!currentUser) { showErrorToast("Please sign in first."); buttonElement.innerHTML = `<span class="material-symbols-outlined">shopping_bag</span>`; buttonElement.disabled = false; return; }
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) { showErrorToast("Product details not found."); buttonElement.innerHTML = `<span class="material-symbols-outlined">shopping_bag</span>`; buttonElement.disabled = false; return; }
+
+            const cartItem = { userId: currentUser.uid, productId: product.id, productTitle: product.Title || product.name || 'Product', productPrice: parseFloat(product['Variant Price'] ?? product.price ?? 0), productImage: product['Image Src'] ?? (Array.isArray(product.imageUrls) && product.imageUrls[0]) ?? '', quantity: 1, addedAt: firebase.firestore.FieldValue.serverTimestamp() };
+
+            try {
+                const querySnapshot = await cartItemsCollectionRef.where('userId', '==', currentUser.uid).where('productId', '==', productId).limit(1).get();
+                if (!querySnapshot.empty) {
+                    const docRef = querySnapshot.docs[0].ref;
+                    const currentQuantity = querySnapshot.docs[0].data().quantity || 0;
+                    await docRef.update({ quantity: currentQuantity + 1 });
+                } else { await cartItemsCollectionRef.add(cartItem); }
+                buttonElement.innerHTML = `<span class="material-symbols-outlined">check</span>`;
+                setTimeout(() => { buttonElement.innerHTML = `<span class="material-symbols-outlined">shopping_bag</span>`; buttonElement.disabled = false; }, 1500);
+            } catch (error) { console.error("Error adding/updating cart:", error); showErrorToast("Failed to add item."); buttonElement.innerHTML = `<span class="material-symbols-outlined">shopping_bag</span>`; buttonElement.disabled = false; }
+        }
+        function showErrorToast(message) { alert(message); } // Placeholder
+
+        // --- Apply Filters and Render ---
+        function applyFilters() {
+            const searchTerm = searchInput.value.trim();
+            showLoading();
+            setTimeout(() => {
+                let filtered = filterProductsByCategory(allProducts, currentCategory);
+                filtered = filterProductsBySearch(filtered, searchTerm);
+                renderProducts(filtered);
+                hideLoading();
+            }, 50);
+        }
+
+        // --- Filter Logic ---
+        function filterProductsByCategory(products, category) {
+            if (category === 'all' || category === 'Others') return products; // Treat "Others" like "All" for now
+            const lcCat = category.toLowerCase();
+            return products.filter(p => {
+                const type = (p.Type ?? p.category ?? '').toLowerCase();
+                const pCat = (p['Product Category'] ?? '').toLowerCase();
+                let tagsMatch = false;
+                const tags = p.Tags ?? [];
+                if (Array.isArray(tags)) tagsMatch = tags.some(t => String(t).toLowerCase() === lcCat);
+                else if (typeof tags === 'string') tagsMatch = tags.toLowerCase().split(',').map(t=>t.trim()).includes(lcCat);
+                // Prioritize Type, then Category, then Tags
+                return type === lcCat || pCat.includes(lcCat) || tagsMatch;
+            });
+        }
+         function filterProductsBySearch(products, searchTerm) {
+             if (!searchTerm) return products;
+             const lcSearch = searchTerm.toLowerCase();
+             return products.filter(p => {
+                 const title = (p.Title ?? p.name ?? '').toLowerCase();
+                 const vendor = (p.Vendor ?? '').toLowerCase();
+                 const type = (p.Type ?? p.category ?? '').toLowerCase();
+                 let tagsMatch = false;
+                 const tags = p.Tags ?? [];
+                 if (Array.isArray(tags)) tagsMatch = tags.some(t => String(t).toLowerCase().includes(lcSearch));
+                 else if (typeof tags === 'string') tagsMatch = tags.toLowerCase().includes(lcSearch);
+                 return title.includes(lcSearch) || vendor.includes(lcSearch) || type.includes(lcSearch) || tagsMatch;
+             });
+         }
+
+
+        // --- Render Products ---
+        function renderProducts(products) {
+            productsGrid.innerHTML = ''; // Clear previous items
+            if (!Array.isArray(products)) { showError("Could not display products."); return; }
+            if (products.length === 0) { showEmptyState(); return; }
+
+            products.sort((a, b) => (a.Title || '').localeCompare(b.Title || '')); // Sort A-Z
+
+            const fragment = document.createDocumentFragment();
+            products.forEach(product => {
+                const cardElement = createProductCardElement(product);
+                fragment.appendChild(cardElement);
+            });
+            productsGrid.appendChild(fragment);
+            productsGrid.style.display = 'grid';
+            emptyState.style.display = 'none';
+            errorMessage.style.display = 'none';
+        }
+
+        // --- Create Product Card HTML Element ---
+        function createProductCardElement(product) {
+            const imageSrc = product['Image Src'] ?? (Array.isArray(product.imageUrls) && product.imageUrls.length > 0 ? product.imageUrls[0] : null) ?? 'assets/images/placeholder.svg'; // Use your placeholder path
+            const title = product.Title ?? product.name ?? 'Product';
+
+            const productLink = document.createElement('a');
+            productLink.className = 'product-card-link';
+            productLink.href = `product-details.html?id=${product.id}`;
+            productLink.dataset.productId = product.id;
+
+            productLink.innerHTML = `
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="${imageSrc}" alt="${title}" loading="lazy" onerror="this.onerror=null; this.src='assets/images/placeholder.svg';">
+                    </div>
+                    <button class="favorite-btn" title="Favorite">
+                         <span class="material-symbols-outlined">favorite</span>
+                    </button>
+                    <div class="product-details">
+                        <div class="product-title">${title}</div>
+                    </div>
+                     <button class="add-to-cart-btn" title="Add to Cart">
+                         <span class="material-symbols-outlined">shopping_bag</span>
+                     </button>
+                </div>
+            `;
+            return productLink;
+        }
+
+        // --- UI State Functions ---
+        function showLoading() { loadingIndicator.style.display = 'flex'; productsGrid.style.display = 'none'; errorMessage.style.display = 'none'; emptyState.style.display = 'none'; }
+        function hideLoading() { loadingIndicator.style.display = 'none'; }
+        function showError(message = "An error occurred.") { hideLoading(); errorMessage.textContent = message; errorMessage.style.display = 'block'; productsGrid.style.display = 'none'; emptyState.style.display = 'none'; }
+        function showEmptyState(msg = "No Products Found", subMsg = "No products match your filter or search.") { hideLoading(); emptyState.querySelector('h3').textContent = msg; emptyState.querySelector('p').textContent = subMsg; emptyState.style.display = 'flex'; productsGrid.style.display = 'none'; errorMessage.style.display = 'none'; }
+
+        // --- Prevent Zoom ---
+        document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+        document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+        let lastTap = 0; document.addEventListener('touchend', (e) => { const currentTime = new Date().getTime(); const tapLength = currentTime - lastTap; if (tapLength < 300 && tapLength > 0) e.preventDefault(); lastTap = currentTime; }, false);
+
+    </script>
+    <!-- Bootstrap JS (Remove if not using Bootstrap components like modals/offcanvas) -->
+    <!-- <script src="assets/js/bootstrap.bundle.min.js"></script> -->
+
+</body>
+</html>

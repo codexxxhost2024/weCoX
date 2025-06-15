@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNTAsNCBDMjQuNSw0IDQsMjQuNSA0LDUwYzAsMjUuNSAyMC41LDQ2IDQ2LDQ2czQ2LTIwLjUgNDYtNDZDMzYuNSwyNC41IDc1LjUsNCA1MCw0ek0yNSwzNSBDMzAuNSwzNSAzNSwzMC41IDM1LDI1YzAtNS41LTQuNS0xMC0xMC0xMFMyNSwxOS41IDI1LDI1QzI1LDMwLjUgMjkuNSwzNSAzMCwzNXpNMTUsNzAgQzE1LDY0LjUgMTkuNSw2MCAyNSw2MGMyLjUsMCA1LDAuOCA3LDIuMkw0MCw1MGwtNy44LTEyQzI5LjcsMzggMjcuNSwzOCAyNSwzOHMtNSwyLjUtNSw1Vjcwek03NSw2NSBDNjkuNSw2NSA2NSw2OS41IDY1LDc1YzAsNS41IDQuNSwxMCAxMCwxMFM4NSw4MC41IDg1LDc1Qzg1LDY5LjUgODAuNSw2NSA3NSw2NXpNODUsMzAgQzg1LDM1LjUgODAuNSw0MCA3NSw0MGMtMi41LDAtNS0wLjgtNy0yLjJMNjAsNTBsNyu4LDEyQzcwLjMsNjIgNzIuNSw2MiA3NSw2MnM1LTIuNSA1LTVWMzB6IiBmaWxsPSIjMWYzYTVjIi8+PC9zdmc+" type="image/svg+xml">
+  
+  <!-- Preconnect to Google Fonts domains -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap">
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --primary-color-darker: #162a40;
+      --background-light: #f4f6f9; /* Slightly cooler Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #2c3e50; /* Darker, more saturated Text */
+      --text-medium: #555e68; /* Medium Text */
+      --text-light: #7f8c9a; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --spacing-unit: 15px; /* Base spacing */
+      --border-radius: 8px;
+      --border-radius-large: 12px; /* For banners */
+      
+      /* Refined Shadows */
+      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --box-shadow-stronger: 0 6px 16px rgba(0, 0, 0, 0.08);
+      --box-shadow-interactive: 0 4px 10px rgba(31, 58, 92, 0.1);
+      --box-shadow-focus: 0 0 0 3px rgba(31, 58, 92, 0.15);
+
+      /* Wallet Card Specifics */
+      --wallet-card-bg: linear-gradient(150deg, #34495e 0%, #2c3e50 40%, #1e2b38 100%);
+      --wallet-card-text-primary: #FFFFFF;
+      --wallet-card-text-secondary: #abb8c3; /* Softer secondary text */
+      --wallet-card-chip-bg: linear-gradient(135deg, #e8cfa1 0%, #d1b075 50%, #c09f6a 100%);
+      --wallet-card-chip-shadow: inset 0 0 1px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.1);
+
+      /* Transitions */
+      --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-interactive: 0.2s ease-out;
+      --transition-bounce: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* --- Base Styles --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background-color: var(--background-light); 
+      color: var(--text-dark); 
+      min-height: 100vh; 
+      padding-bottom: calc(60px + var(--spacing-unit) + 10px); /* Added a bit more bottom padding */
+      max-width: 420px; 
+      margin: 0 auto; 
+      overflow-x: hidden; 
+      position: relative; 
+      opacity: 1; 
+      transition: opacity 0.5s ease-out; 
+    }
+    a { color: var(--primary-color); text-decoration: none; transition: color var(--transition-interactive); }
+    a:hover { color: var(--primary-color-darker); text-decoration: none; } /* Remove underline for cleaner look, rely on color change */
+    button { 
+      font-family: inherit; 
+      cursor: pointer; 
+      border: none; 
+      border-radius: var(--border-radius); 
+      transition: background-color var(--transition-interactive), transform var(--transition-interactive), box-shadow var(--transition-smooth); 
+    }
+    button:active { transform: translateY(1px) scale(0.97); box-shadow: none; }
+
+    /* --- Utility Classes --- */
+    .primary-button { 
+      background-color: var(--primary-color); 
+      color: #FFFFFF; 
+      padding: 10px var(--spacing-unit); 
+      font-size: 0.95rem; 
+      font-weight: 600; 
+      text-align: center; 
+    }
+    .primary-button:hover { background-color: var(--primary-color-darker); box-shadow: var(--box-shadow-interactive); }
+    .secondary-button { 
+      background-color: transparent; 
+      color: var(--primary-color); 
+      border: 1px solid var(--primary-color); 
+      padding: 10px var(--spacing-unit); 
+      font-size: 0.95rem; 
+      font-weight: 600; 
+      text-align: center; 
+    }
+    .secondary-button:hover { background-color: rgba(31, 58, 92, 0.05); box-shadow: var(--box-shadow); }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+
+    /* --- Header --- */
+    .header { 
+      background-color: var(--background-dark); 
+      color: var(--text-dark); 
+      padding: 0 var(--spacing-unit); 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07); 
+      height: 56px; 
+    }
+    .header-logo-container { display: flex; align-items: center; }
+    .header-logo-img { width: 30px; height: 30px; object-fit: contain; }
+    .header-logo-text { font-size: 1.1rem; font-weight: 700; margin-left: 8px; color: var(--primary-color); letter-spacing: -0.3px; }
+    .header-icons-right { display: flex; align-items: center; gap: calc(var(--spacing-unit) * 0.25); }
+    .header-icon { 
+      position: relative; 
+      cursor: pointer; 
+      color: var(--text-medium); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      width: 40px; 
+      height: 40px; 
+      border-radius: 50%; 
+      transition: background-color var(--transition-interactive), color var(--transition-interactive); 
+    }
+    .header-icon:hover { background-color: rgba(31, 58, 92, 0.07); color: var(--primary-color); }
+    .header-icon:active { background-color: rgba(31, 58, 92, 0.1); transform: scale(0.92); }
+    .header-icon .material-symbols-outlined { font-size: 24px; }
+    .badge { 
+      position: absolute; 
+      top: 2px; right: 2px; 
+      background-color: #E74C3C; 
+      color: white; 
+      font-size: 10px; 
+      font-weight: bold; 
+      border-radius: 50%; 
+      padding: 0px 4px; 
+      min-width: 16px; 
+      height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1; 
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      display: none; 
+      z-index: 1; 
+    }
+    .badge.visible { display: flex; }
+
+    /* --- Main Content Area --- */
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: calc(var(--spacing-unit) * 1.2); }
+
+    /* --- Wallet Card --- */
+    .income-analytics-card {
+      background: var(--wallet-card-bg);
+      color: var(--wallet-card-text-primary);
+      border-radius: var(--border-radius-large);
+      padding: var(--spacing-unit);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05); /* Enhanced shadow */
+      position: relative;
+      overflow: hidden;
+    }
+     .income-analytics-card::before { /* Subtle pattern/texture overlay */
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-image: radial-gradient(circle at top left, rgba(255,255,255,0.05) 0%, transparent 30%),
+                          radial-gradient(circle at bottom right, rgba(255,255,255,0.03) 0%, transparent 25%);
+        pointer-events: none;
+        z-index: 0;
+     }
+    .income-analytics-card-header, .income-details, .income-actions { position: relative; z-index: 1; }
+    .income-analytics-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: calc(var(--spacing-unit) * 1.2);
+    }
+    .income-analytics-card .user-info .user-name { color: var(--wallet-card-text-primary); font-weight: 500; font-size: 1rem; margin-bottom: 3px; }
+    .income-analytics-card .user-info .user-id { color: var(--wallet-card-text-secondary); font-size: 0.75rem; opacity: 0.85; }
+    .card-chip { 
+      width: 40px; height: 28px; 
+      background-image: var(--wallet-card-chip-bg); 
+      border-radius: 5px; 
+      box-shadow: var(--wallet-card-chip-shadow);
+      border: 1px solid rgba(0,0,0,0.05);
+      margin-top: 2px;
+    }
+    .income-analytics-card .income-details {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      margin-bottom: calc(var(--spacing-unit) * 1.2);
+      gap: calc(var(--spacing-unit) * 0.5);
+    }
+     .income-analytics-card .income-source {
+         flex: 1;
+         padding: 0 calc(var(--spacing-unit) * 0.3);
+         text-align: center;
+     }
+    .income-analytics-card .income-details .income-amount {
+      color: var(--wallet-card-text-primary);
+      font-size: 1.5rem; /* Slightly larger */
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      margin-bottom: 3px;
+    }
+    .income-analytics-card .income-details .income-label {
+      color: var(--wallet-card-text-secondary);
+      font-size: 0.7rem; /* Slightly larger */
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      opacity: 0.9;
+    }
+    .income-analytics-card .income-actions {
+        display: flex;
+        gap: calc(var(--spacing-unit) * 0.8);
+    }
+    .income-analytics-card .income-actions .primary-button {
+      background-color: rgba(255, 255, 255, 0.12);
+      color: var(--wallet-card-text-primary);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-weight: 500;
+      padding: 9px calc(var(--spacing-unit) * 0.9);
+      border-radius: 7px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-size: 0.9rem;
+      transition: background-color var(--transition-interactive), border-color var(--transition-interactive), transform var(--transition-interactive);
+    }
+    .income-analytics-card .income-actions .primary-button .material-symbols-outlined {
+        font-size: 1.1rem; /* Slightly larger icon */
+        font-variation-settings: 'wght' 500;
+    }
+    .income-analytics-card .income-actions .primary-button:hover { background-color: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.35); }
+    .income-analytics-card .income-actions .primary-button:active { transform: scale(0.96) translateY(0); background-color: rgba(255,255,255,0.15); }
+
+    /* --- Quick Actions --- */
+    .quick-actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--spacing-unit) * 0.8); }
+    .grid-item { 
+      background-color: var(--background-dark); 
+      border-radius: var(--border-radius); 
+      box-shadow: var(--box-shadow); 
+      display: flex; flex-direction: column; 
+      align-items: center; justify-content: center; 
+      padding: calc(var(--spacing-unit) * 0.7) 5px; 
+      cursor: pointer; text-align: center; 
+      transition: transform var(--transition-bounce), box-shadow var(--transition-smooth); 
+      min-height: 90px; 
+      text-decoration: none; color: inherit; 
+      border: 1px solid transparent; /* For hover effect consistency */
+    }
+    .grid-item:hover { 
+      transform: translateY(-4px) scale(1.02); 
+      box-shadow: var(--box-shadow-stronger); 
+      border-color: rgba(31, 58, 92, 0.1);
+    }
+    .grid-item:active { 
+      transform: scale(0.94) translateY(0px); 
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); 
+    }
+    .grid-item .icon-background { 
+      background-color: #eef2f9; /* Lighter, cooler blue */
+      border-radius: 8px; /* More rounded */
+      width: 42px; height: 42px; 
+      display: flex; align-items: center; justify-content: center; 
+      margin-bottom: 6px; 
+      transition: background-color var(--transition-interactive), transform var(--transition-interactive); 
+    }
+    .grid-item:hover .icon-background { background-color: #e0e9f5; transform: scale(1.05); }
+    .grid-item .material-symbols-outlined { font-size: 24px; color: var(--primary-color); transition: color var(--transition-interactive); }
+    .grid-item:hover .material-symbols-outlined { color: var(--primary-color-darker); }
+    .grid-item .item-label { font-size: 11px; font-weight: 500; color: var(--text-medium); line-height: 1.25; margin-top: 3px; }
+    
+    /* --- Static Ad Banner --- */
+    .static-ad-banner-container {
+        background-color: var(--background-dark);
+        border-radius: var(--border-radius-large);
+        box-shadow: var(--box-shadow);
+        padding: 0;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform var(--transition-bounce), box-shadow var(--transition-smooth);
+    }
+    .static-ad-banner-container:hover {
+        transform: translateY(-3px) scale(1.01);
+        box-shadow: var(--box-shadow-stronger);
+    }
+    .static-ad-banner-container img {
+        display: block;
+        width: 100%;
+        height: auto; /* Maintain aspect ratio */
+        border-radius: var(--border-radius-large); /* Ensure image respects container radius */
+    }
+
+    /* --- Info Banner --- */
+    .info-banner { 
+      background-color: #FEF9E7; /* Softer Yellow */
+      border: 1px solid #FAD7A0; 
+      color: #AF640C; /* Darker text for better contrast */
+      border-radius: var(--border-radius); 
+      padding: calc(var(--spacing-unit) * 0.8) var(--spacing-unit); 
+      text-align: center; 
+      font-size: 0.9rem; 
+      font-weight: 500; 
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    }
+    
+    /* --- Loading Spinner --- */
+    #pageLoading { 
+      position: fixed; top: 0; left: 0; 
+      width: 100%; height: 100%; 
+      background-color: rgba(244, 246, 249, 0.95); /* Match light bg with opacity */
+      display: flex; flex-direction: column; justify-content: center; align-items: center; 
+      z-index: 1001; 
+      transition: opacity 0.4s var(--transition-smooth), visibility 0s linear 0.4s; 
+    }
+    #pageLoading.hidden { opacity: 0; visibility: hidden; transition: opacity 0.4s var(--transition-smooth), visibility 0s linear 0s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+    #pageLoading .spinner { 
+      border: 4px solid #e0e6ed; /* Softer secondary color */
+      border-top: 4px solid var(--primary-color); 
+      border-radius: 50%; width: 32px; height: 32px; 
+      animation: spin 0.8s linear infinite; margin-bottom: 15px; 
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* --- Body Fade Out for Auth Redirect --- */
+    body.auth-redirect-fade-out {
+        opacity: 0;
+    }
+    
+    /* --- Bottom Navigation --- */
+    .bottom-nav { 
+      background-color: var(--background-dark); 
+      border-top: 1px solid #dde2e7; /* Softer border */
+      width: 100%; max-width: 420px; 
+      display: flex; justify-content: space-around; align-items: center; 
+      padding: 5px 0; 
+      position: fixed; bottom: 0; left: 50%; 
+      transform: translateX(-50%); 
+      z-index: 100; height: 60px; 
+      box-shadow: 0 -3px 10px rgba(0,0,0,0.05); /* Softer, more spread shadow */
+    }
+    .nav-item { 
+      display: flex; align-items: center; justify-content: center; 
+      cursor: pointer; color: var(--text-light); 
+      flex: 1; padding: 10px 0; 
+      transition: color var(--transition-interactive), background-color var(--transition-interactive), transform var(--transition-interactive); 
+      height: 100%; 
+      border-radius: var(--border-radius); 
+      margin: 0 2px; 
+      position: relative; /* For potential future indicator */
+    }
+    .nav-item.active { color: var(--primary-color); }
+    .nav-item.active::after { /* Subtle active indicator */
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 6px;
+        background-color: var(--primary-color);
+        border-radius: 50%;
+        opacity: 0;
+        animation: fadeInIndicator 0.3s ease forwards;
+    }
+    @keyframes fadeInIndicator { to { opacity: 1; } }
+
+    .nav-item:hover:not(.active) { color: var(--primary-color); background-color: rgba(31, 58, 92, 0.05); }
+    .nav-item:active { transform: scale(0.93); }
+    .nav-item .material-symbols-outlined { font-size: 28px; }
+    
+    .center-button-nav { 
+      display: flex; align-items: center; justify-content: center; 
+      width: 52px; height: 52px; /* Slightly larger */
+      border-radius: 50%; 
+      background-color: var(--background-dark); 
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12); 
+      margin-top: -22px; /* Adjust for size */
+      cursor: pointer; 
+      border: 3px solid var(--background-light); 
+      position: relative; flex-shrink: 0; 
+      transition: transform var(--transition-bounce), box-shadow var(--transition-smooth), border-color var(--transition-smooth); 
+    }
+    .center-button-nav.active { border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color), 0 3px 8px rgba(0,0,0,0.12); }
+    .center-button-nav:hover:not(.active) { box-shadow: 0 0 0 4px rgba(31, 58, 92, 0.1), 0 3px 8px rgba(0, 0, 0, 0.12); }
+    .center-button-nav:active { transform: scale(0.94); }
+    .center-button-nav img { width: 28px; height: 28px; object-fit: contain; }
+
+  </style>
+</head>
+<body>
+
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <header class="header">
+    <div class="header-logo-container">
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+      <span class="header-logo-text">WeConnect</span>
+    </div>
+    <div class="header-icons-right">
+      <div class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span>
+      </div>
+      <div class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span>
+      </div>
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="income-analytics-card"> <!-- This is the Wallet Card -->
+      <div class="income-analytics-card-header">
+        <div class="user-info">
+            <div class="user-name" id="userName">Welcome, Loading...</div>
+            <div class="user-id" id="memberId">ID: Loading...</div>
+        </div>
+        <div class="card-chip"></div>
+      </div>
+      <div class="income-details">
+        <div class="income-source">
+          <div class="income-amount" id="unilevelIncome">₱0.00</div>
+          <div class="income-label">Wallet Balance</div>
+        </div>
+        <div class="income-source">
+           <div class="income-amount" id="tokenBalance">0.00</div>
+           <div class="income-label">WCX Token</div>
+        </div>
+      </div>
+      <div class="income-actions">
+        <button id="historyButton" class="primary-button">
+            <span class="material-symbols-outlined">history</span>
+            History
+        </button>
+        <button id="connectButton" class="primary-button">
+            <span class="material-symbols-outlined">link</span>
+            Connect
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Actions Grid -->
+    <div class="quick-actions-grid">
+      <div class="grid-item" data-action="content-guru" title="Content Guru"><div class="icon-background"> <span class="material-symbols-outlined">auto_awesome</span> </div> <div class="item-label">Guru</div></div>
+      <div class="grid-item" data-action="media" title="Manage Media"><div class="icon-background"> <span class="material-symbols-outlined">perm_media</span> </div> <div class="item-label">Media</div></div>
+      <div class="grid-item" data-action="analytics" title="Performance Analytics"><div class="icon-background"> <span class="material-symbols-outlined">analytics</span> </div> <div class="item-label">Analytics</div></div>
+      <div class="grid-item" data-action="community" title="Community/Network"><div class="icon-background"> <span class="material-symbols-outlined">groups</span> </div> <div class="item-label">Community</div></div>
+      <div class="grid-item" data-action="monetization" title="Earnings"><div class="icon-background"> <span class="material-symbols-outlined">payments</span> </div> <div class="item-label">Earnings</div></div>
+      <div class="grid-item" data-action="affiliates" title="Affiliates & Referrals"><div class="icon-background"> <span class="material-symbols-outlined">link</span> </div> <div class="item-label">Affiliates</div></div>
+      <div class="grid-item" data-action="trading" title="Trading"><div class="icon-background"> <span class="material-symbols-outlined">monitoring</span> </div> <div class="item-label">Trading</div></div>
+      <div class="grid-item" data-action="automation" title="Marketing Automation"><div class="icon-background"> <span class="material-symbols-outlined">auto_mode</span> </div> <div class="item-label">Auto-Blog</div></div>
+      <div class="grid-item" data-action="academy" title="WeConnect Academy"><div class="icon-background"> <span class="material-symbols-outlined">school</span> </div> <div class="item-label">Academy</div></div>
+      <div class="grid-item" data-action="marketplace" title="Marketplace"><div class="icon-background"> <span class="material-symbols-outlined">storefront</span> </div> <div class="item-label">Shop</div></div>
+      <div class="grid-item" data-action="agents" title="Manage Agents"><div class="icon-background"> <span class="material-symbols-outlined">support_agent</span> </div> <div class="item-label">Agents</div></div>
+      <div class="grid-item" data-action="support" title="Help & Support"><div class="icon-background"> <span class="material-symbols-outlined">help_center</span> </div> <div class="item-label">CSR</div></div>
+    </div>
+
+    <!-- Static Ad Banner (Now After Quick Actions - "Bottom Most Area" Ad) -->
+    <div class="static-ad-banner-container" id="staticAdBanner" data-ad-link="https://example.com/static-ad">
+        <img src="data:image/svg+xml;charset=UTF8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22300%22%20height%3D%22100%22%20viewBox%3D%220%200%20300%20100%22%3E%3Crect%20fill%3D%22%23eeeeee%22%20width%3D%22300%22%20height%3D%22100%22%2F%3E%3Ctext%20fill%3D%22%23777777%22%20font-family%3D%22sans-serif%22%20font-size%3D%2216%22%20dy%3D%2210.5%22%20font-weight%3D%22normal%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%3EAdvertisement%20Banner%3C%2Ftext%3E%3C%2Fsvg%3E" alt="Advertisement" loading="lazy">
+    </div>
+    
+    <div class="info-banner">
+      Boost your earnings! Check out new affiliate programs in the Network tab.
+    </div>
+  </main>
+
+  <div class="bottom-nav">
+    <div class="nav-item" data-target-url="content.html" title="Content"> <span class="material-symbols-outlined">edit_square</span> </div>
+    <div class="nav-item" data-target-url="tools.html" title="Tools"> <span class="material-symbols-outlined">build</span> </div>
+    <div class="center-button-nav active" data-target-url="home.html" title="Home"> <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="Home"> </div>
+    <div class="nav-item" data-target-url="business.html" title="Business"> <span class="material-symbols-outlined">business_center</span> </div>
+    <div class="nav-item" data-target-url="userprofile.html" title="Profile"> <span class="material-symbols-outlined">account_circle</span> </div>
+  </div>
+
+  <!-- Firebase SDKs - Deferred and moved to end of body -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
+
+  <script>
+    // Wait for Firebase SDKs to load due to 'defer'
+    document.addEventListener('DOMContentLoaded', () => {
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+         };
+
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } else { firebase.app(); }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const userNameElement = document.getElementById('userName');
+        const memberIdElement = document.getElementById('memberId');
+        const walletBalanceElement = document.getElementById('unilevelIncome');
+        const tokenBalanceDisplayElement = document.getElementById('tokenBalance');
+        const pageLoadingElement = document.getElementById('pageLoading');
+        const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+        const notificationsIcon = document.getElementById('notificationsIcon');
+        const messagesIcon = document.getElementById('messagesIcon');
+        const notificationBadge = document.getElementById('notificationBadge');
+        const messageBadge = document.getElementById('messageBadge');
+        const signOutIcon = document.getElementById('signOutIcon');
+        const historyButton = document.getElementById('historyButton');
+        const connectButton = document.getElementById('connectButton');
+        const staticAdBanner = document.getElementById('staticAdBanner');
+
+
+        // --- Haptic Feedback Function ---
+        function triggerHapticFeedback(type = 'medium') {
+            if (window.navigator.vibrate) {
+                let duration = 50; // Default medium: 50ms
+                if (type === 'light') duration = 20;
+                else if (type === 'strong') duration = 100;
+                else if (type === 'selection') duration = 10;
+                window.navigator.vibrate(duration);
+            }
+        }
+
+        function formatCurrency(amount, includeSymbol = true) {
+          const numericAmount = Number(amount) || 0;
+          const formatted = numericAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return includeSymbol ? '₱' + formatted : formatted;
+        }
+
+        // --- Device ID Management ---
+        function getOrGenerateDeviceId() {
+            let deviceId = localStorage.getItem('weconnect_deviceId');
+            if (!deviceId) {
+                // Basic UUID v4 generator
+                deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                localStorage.setItem('weconnect_deviceId', deviceId);
+                console.log('Generated new Device ID:', deviceId);
+            }
+            return deviceId;
+        }
+
+        async function updateUserProfileWithDeviceId(userId, deviceId) {
+            if (!userId || !deviceId) {
+                console.log('User ID or Device ID missing for profile update.');
+                return;
+            }
+            const userDocRef = db.collection('users').doc(userId);
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const userDoc = await transaction.get(userDocRef);
+                    let updateData = {
+                        lastLoginDeviceId: deviceId,
+                        profileLastUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    if (!userDoc.exists) {
+                        transaction.set(userDocRef, { 
+                            deviceIds: [deviceId], 
+                            lastLoginDeviceId: deviceId,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                            profileLastUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true }); 
+                        console.log('Device ID added to a newly referenced or merged user profile.');
+                        return;
+                    }
+
+                    const userData = userDoc.data();
+                    const deviceIds = userData.deviceIds || [];
+
+                    if (!deviceIds.includes(deviceId)) {
+                        updateData.deviceIds = firebase.firestore.FieldValue.arrayUnion(deviceId);
+                        console.log('Adding new Device ID to user profile.');
+                    } else {
+                        console.log('Device ID already associated with user profile. Updating last login device.');
+                    }
+                    transaction.update(userDocRef, updateData);
+                });
+            } catch (error) {
+                console.error("Error updating user profile with device ID:", error);
+            }
+        }
+
+
+        async function fetchAndDisplayUserData(user) {
+            try {
+                const userDocRef = db.collection('users').doc(user.uid);
+                const userDoc = await userDocRef.get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    const displayName = user.displayName || userData.displayName || userData.name || 'User';
+                    if(userNameElement) userNameElement.textContent = `${displayName}`;
+                    if(memberIdElement) memberIdElement.textContent = `ID: ${userData.memberId || 'N/A'}`;
+                    if(walletBalanceElement) walletBalanceElement.textContent = formatCurrency(userData.balance !== undefined ? userData.balance : userData.unilevel_income);
+                    if(tokenBalanceDisplayElement) tokenBalanceDisplayElement.textContent = formatCurrency(userData.token_balance, false);
+                    
+                    if (notificationBadge) {
+                         const notificationsCount = Math.floor(Math.random() * 5); 
+                         if (notificationsCount > 0) { notificationBadge.textContent = notificationsCount; notificationBadge.classList.add('visible'); }
+                         else { notificationBadge.classList.remove('visible'); }
+                    }
+                    if (messageBadge) {
+                         const messagesCount = Math.floor(Math.random() * 3); 
+                          if (messagesCount > 0) { messageBadge.textContent = messagesCount; messageBadge.classList.add('visible'); }
+                          else { messageBadge.classList.remove('visible'); }
+                    }
+                    
+                    setTimeout(() => { if(pageLoadingElement) pageLoadingElement.classList.add('hidden'); }, 200);
+
+                } else {
+                    console.warn("User document not found for UID:", user.uid);
+                    const initialUserData = {
+                        displayName: user.displayName || user.email || 'New User',
+                        email: user.email,
+                        memberId: `WEC-${user.uid.substring(0, 6).toUpperCase()}`,
+                        balance: 0,
+                        token_balance: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    };
+                    await userDocRef.set(initialUserData, { merge: true });
+                    console.log("Created initial user document for UID:", user.uid);
+                    if(userNameElement) userNameElement.textContent = `${initialUserData.displayName}`;
+                    if(memberIdElement) memberIdElement.textContent = `ID: ${initialUserData.memberId}`;
+                    if(walletBalanceElement) walletBalanceElement.textContent = formatCurrency(0);
+                    if(tokenBalanceDisplayElement) tokenBalanceDisplayElement.textContent = formatCurrency(0, false);
+
+                    if(pageLoadingText) pageLoadingText.textContent = 'User data initialized.';
+                     setTimeout(() => { if(pageLoadingElement) pageLoadingElement.classList.add('hidden'); }, 500);
+                }
+            } catch (error) {
+                console.error("Error fetching or initializing user data:", error);
+                if(userNameElement) userNameElement.textContent = `${user.displayName || 'User'}`;
+                if(memberIdElement) memberIdElement.textContent = `ID: Error`;
+                if(walletBalanceElement) walletBalanceElement.textContent = formatCurrency(0);
+                if(tokenBalanceDisplayElement) tokenBalanceDisplayElement.textContent = formatCurrency(0, false);
+                if(pageLoadingText) pageLoadingText.textContent = 'Error loading data.';
+                setTimeout(() => { if(pageLoadingElement) pageLoadingElement.classList.add('hidden'); }, 500);
+            }
+        }
+        
+        auth.onAuthStateChanged(async (user) => {
+            const currentDeviceId = getOrGenerateDeviceId(); 
+            console.log('Current session Device ID:', currentDeviceId);
+
+            if (user) {
+                document.body.style.opacity = '1'; 
+                document.body.classList.remove('auth-redirect-fade-out');
+                if(pageLoadingElement && !pageLoadingElement.classList.contains('hidden')) {
+                    if(pageLoadingText) pageLoadingText.textContent = 'Fetching your data...';
+                }
+                
+                await fetchAndDisplayUserData(user); 
+                await updateUserProfileWithDeviceId(user.uid, currentDeviceId);
+
+            } else {
+                if (pageLoadingElement) {
+                    pageLoadingElement.classList.remove('hidden');
+                    pageLoadingElement.style.opacity = '1';
+                    if (pageLoadingText) {
+                        pageLoadingText.textContent = 'Redirecting to sign in...';
+                    }
+                }
+                document.body.classList.add('auth-redirect-fade-out');
+                setTimeout(() => {
+                    window.location.href = 'signin.html';
+                }, 500); 
+            }
+        });
+
+        if (notificationsIcon) {
+            notificationsIcon.addEventListener('click', () => { 
+                triggerHapticFeedback('light');
+                window.location.href = 'notifications.html'; 
+            });
+        }
+        if (messagesIcon) {
+            messagesIcon.addEventListener('click', () => { 
+                triggerHapticFeedback('light');
+                window.location.href = 'messages.html'; 
+            });
+        }
+        if(signOutIcon) {
+            signOutIcon.addEventListener('click', async () => {
+                triggerHapticFeedback('light');
+                if (confirm("Are you sure you want to sign out?")) {
+                    try {
+                        if(pageLoadingElement) {
+                            pageLoadingElement.classList.remove('hidden'); 
+                            pageLoadingElement.style.opacity = '1';
+                        }
+                        if(pageLoadingText) pageLoadingText.textContent = 'Signing out...';
+                        await auth.signOut();
+                    } catch (error) {
+                        console.error("Error signing out:", error); alert("Failed to sign out. Please try again.");
+                        if(pageLoadingElement) pageLoadingElement.classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        if(historyButton) {
+            historyButton.addEventListener('click', () => {
+                triggerHapticFeedback();
+                window.location.href = 'transaction-history.html';
+            });
+        }
+        if(connectButton) {
+            connectButton.addEventListener('click', () => {
+                triggerHapticFeedback();
+                window.location.href = 'wallet-connect.html';
+            });
+        }
+
+        document.querySelectorAll('.bottom-nav .nav-item, .bottom-nav .center-button-nav').forEach(item => {
+            item.addEventListener('click', () => {
+                triggerHapticFeedback('selection'); 
+                const targetUrl = item.dataset.targetUrl;
+                if (targetUrl && !item.classList.contains('active')) { window.location.href = targetUrl; }
+                else if (item.classList.contains('active')) { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+            });
+        });
+
+        document.querySelectorAll('.quick-actions-grid .grid-item').forEach(item => {
+            item.addEventListener('click', () => {
+                triggerHapticFeedback(); 
+                const action = item.dataset.action;
+                const title = item.getAttribute('title') || action;
+                const actionMap = {
+                    'content-guru': 'content-guru.html', 
+                    'media': 'media.html',
+                    'analytics': 'analytics.html', 
+                    'community': 'network.html',
+                    'monetization': 'earnings.html', 
+                    'affiliates': 'affiliates.html',
+                    'trading': 'trading.html', 
+                    'automation': 'automation.html',
+                    'academy': 'academy.html',
+                    'marketplace': 'storefront/index.html',
+                    'agents': 'agents.html',
+                    'support': 'agents-list.html'
+                };
+                const targetUrl = actionMap[action];
+                if (targetUrl) { window.location.href = targetUrl; }
+                else { console.warn(`Action "${title}" clicked! Navigation path not defined for action: ${action}`); }
+            });
+        });
+
+        if (staticAdBanner && staticAdBanner.dataset.adLink) {
+            staticAdBanner.addEventListener('click', () => {
+                triggerHapticFeedback('light');
+                window.open(staticAdBanner.dataset.adLink, '_blank'); 
+            });
+        }
+
+        // Prevent zoom scripts
+        document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+        document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) event.preventDefault();
+          lastTouchEnd = now;
+        }, { passive: false });
+    }); // End of DOMContentLoaded listener
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

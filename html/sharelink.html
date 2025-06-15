@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Share Profile</title>
+  <!-- Disable Zoom -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+  <!-- Font Awesome for Social Icons (Optional but recommended) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --secondary-color: #4A90E2; /* Blue Accent */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #2c3e50; /* Darker Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --border-color: #e0e0e0; /* Subtle Border */
+      --spacing-unit: 16px; /* Base spacing */
+      --border-radius: 10px; /* Slightly softer radius */
+      --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+      --header-height: 60px; /* Define header height */
+      --bottom-nav-height: 65px; /* Define bottom nav height */
+       --success-color: #2ecc71;
+       --success-background: #eafaf1;
+    }
+
+    /* --- Base Styles --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+     html, body {
+        overscroll-behavior-y: contain; /* Prevents pull-to-refresh */
+        overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-top: var(--header-height); /* Space for sticky header */
+      padding-bottom: calc(var(--bottom-nav-height) + var(--spacing-unit)); /* Space for bottom nav */
+      max-width: 430px; /* Slightly wider common mobile width */
+      margin: 0 auto;
+      position: relative;
+    }
+    a { color: var(--secondary-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--border-radius); transition: background-color 0.3s, transform 0.1s; }
+    button:active { transform: scale(0.98); } /* More subtle active effect */
+    input, textarea, select { font-family: inherit; } /* Ensure form elements inherit font */
+
+    /* --- Utility Classes --- */
+    .primary-button {
+      background-color: var(--primary-color); color: #FFFFFF; padding: 12px var(--spacing-unit); /* Larger padding */
+      font-size: 1rem; font-weight: 600; text-align: center; width: 100%; /* Full width often useful */
+    }
+    .primary-button:hover { background-color: #192F4A; }
+    .primary-button:disabled { background-color: #bdc3c7; cursor: not-allowed; } /* Greyed out disabled */
+    .secondary-button {
+        background-color: #fff; color: var(--primary-color); padding: 10px var(--spacing-unit);
+        font-size: 0.9rem; font-weight: 600; text-align: center; width: 100%;
+        border: 1px solid var(--primary-color);
+    }
+    .secondary-button:hover { background-color: #f8f9fa; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; /* Better vertical align */ }
+
+    /* --- Header (Sticky) --- */
+     .header {
+        background-color: var(--background-dark); padding: 0 var(--spacing-unit); /* Use padding for sides */
+        display: flex; align-items: center; justify-content: space-between;
+        position: fixed; /* Make header sticky */
+        top: 0;
+        left: 50%; /* Center fixed header */
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 430px; /* Match body max-width */
+        z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: var(--header-height);
+        border-bottom: 1px solid var(--border-color);
+    }
+    .header-logo-container { display: flex; align-items: center; }
+    .header-logo-img { width: 32px; height: 32px; object-fit: contain; }
+    .header-logo-text { font-size: 1.2rem; font-weight: 700; margin-left: 10px; color: var(--primary-color); }
+    .header-icons-right { display: flex; align-items: center; gap: calc(var(--spacing-unit) / 2); } /* Reduced gap */
+    .header-icon {
+      position: relative; cursor: pointer; color: var(--text-medium);
+      display: flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; border-radius: 50%; /* Circular background on hover/focus */
+      transition: background-color 0.2s ease;
+      text-decoration: none; /* For link icons */
+    }
+    .header-icon:hover, .header-icon:focus { background-color: #f0f0f0; color: var(--primary-color); }
+    .header-icon .material-symbols-outlined { font-size: 26px; }
+    .badge {
+      position: absolute; top: 5px; right: 5px; background-color: #E74C3C; /* Red */
+      color: white; font-size: 10px; font-weight: bold; border-radius: 50%;
+      padding: 2px 5px; min-width: 16px; text-align: center; line-height: 1.1;
+      display: none; z-index: 1; border: 1px solid white; /* Make badge pop */
+    }
+    .badge.visible { display: block; }
+
+    /* --- Main Content Area --- */
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: var(--spacing-unit); align-items: center; }
+
+    /* --- Share Card --- */
+     .share-card {
+        background-color: var(--background-dark);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        padding: calc(var(--spacing-unit) * 1.5);
+        margin-bottom: var(--spacing-unit);
+        text-align: center;
+        width: 100%;
+     }
+      .share-card h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: var(--spacing-unit);
+      }
+       .share-card p {
+         font-size: 1rem;
+         color: var(--text-medium);
+         line-height: 1.6;
+         margin-bottom: calc(var(--spacing-unit) * 1.5);
+       }
+        .share-link-container {
+            display: flex;
+            align-items: center;
+            background-color: var(--background-light);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 10px;
+            margin-bottom: var(--spacing-unit);
+        }
+        .share-link-input {
+            flex-grow: 1;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            padding-right: 10px;
+             -webkit-user-select: all; /* Enable selection */
+             -moz-user-select: all;
+             -ms-user-select: all;
+             user-select: all;
+        }
+         .share-link-input:focus { outline: none; }
+        .copy-button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+         .copy-button:hover { background-color: #3a7bc8; }
+         .copy-button .material-symbols-outlined {
+             font-size: 16px; margin-right: 4px;
+         }
+          #copyFeedback {
+             font-size: 0.85rem;
+             color: var(--success-color);
+             margin-top: -10px;
+             margin-bottom: 10px;
+             height: 1.2em; /* Reserve space */
+             opacity: 0;
+             transition: opacity 0.3s ease;
+          }
+          #copyFeedback.visible { opacity: 1; }
+
+        /* --- Share Options --- */
+        .share-options {
+            margin-top: calc(var(--spacing-unit) * 1.5);
+        }
+         .share-options h3 {
+             font-size: 1rem;
+             font-weight: 600;
+             color: var(--text-medium);
+             margin-bottom: var(--spacing-unit);
+         }
+         .share-buttons-container {
+             display: flex;
+             justify-content: center;
+             gap: var(--spacing-unit);
+             flex-wrap: wrap;
+         }
+         .share-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 70px; /* Fixed width */
+            height: 70px; /* Fixed height */
+            border-radius: var(--border-radius);
+            background-color: var(--background-light);
+            border: 1px solid var(--border-color);
+            color: var(--text-medium);
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s, transform 0.1s;
+         }
+         .share-button:hover {
+             background-color: #e9ebee;
+             color: var(--primary-color);
+         }
+         .share-button:active { transform: scale(0.95); }
+         .share-button .fab, .share-button .fas, .share-button .material-symbols-outlined {
+             font-size: 24px;
+             margin-bottom: 5px;
+         }
+          .share-button span {
+             font-size: 0.75rem;
+             font-weight: 500;
+          }
+            /* Specific hover colors (optional) */
+            .share-button.whatsapp:hover { background-color: #e0f7e4; color: #25D366; border-color: #a7e8b9; }
+            .share-button.facebook:hover { background-color: #dde8fb; color: #1877F2; border-color: #adc9f7; }
+            .share-button.twitter:hover { background-color: #e0f3fc; color: #1DA1F2; border-color: #a8dcf9; }
+            .share-button.email:hover { background-color: #fdecea; color: #dd4b39; border-color: #f8c3bd; } /* Example email */
+
+
+
+    /* --- Loading Indicator --- */
+    #pageLoading {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(255, 255, 255, 0.95); /* Slightly more opaque */
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        opacity: 1; /* Visible by default */
+        visibility: visible;
+    }
+    #pageLoading.hidden { opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); margin-top: 15px; }
+    #pageLoading .spinner {
+      border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color);
+      border-radius: 50%; width: 35px; height: 35px; /* Slightly larger */
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* --- Bottom Navigation --- */
+    .bottom-nav {
+      background-color: var(--background-dark); border-top: 1px solid var(--border-color);
+      width: 100%; max-width: 430px; display: flex; justify-content: space-around;
+      align-items: center; padding: 5px 0; position: fixed; bottom: 0;
+      left: 50%; transform: translateX(-50%); z-index: 100; height: var(--bottom-nav-height);
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.08);
+    }
+    .nav-item {
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-light); flex: 1; padding: 10px 0;
+      transition: color 0.2s ease; height: 100%;
+      text-decoration: none; /* Remove underline from links */
+    }
+    .nav-item.active { color: var(--primary-color); font-weight: 600; }
+    .nav-item .material-symbols-outlined { font-size: 30px; /* Slightly larger icons */ }
+
+    .center-button-nav {
+      display: flex; align-items: center; justify-content: center;
+      width: 55px; height: 55px; border-radius: 50%; /* Slightly larger */
+      background-color: var(--background-dark); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); /* Enhanced shadow */
+      margin-top: -25px; cursor: pointer; border: 4px solid var(--background-light); /* Thicker border */
+      position: relative; flex-shrink: 0; transition: border-color 0.2s ease, transform 0.2s ease;
+      text-decoration: none; /* Remove underline from links */
+    }
+    .center-button-nav:hover { transform: translateY(-2px); }
+    .center-button-nav.active { border-color: var(--secondary-color); /* Use accent color */ }
+    .center-button-nav img { width: 30px; height: 30px; object-fit: contain; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading" class="hidden"> <!-- Initially hidden -->
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo-container">
+       <a href="home.html" style="display: flex; align-items: center; text-decoration: none;">
+         <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+         <span class="header-logo-text">WeConnect</span>
+       </a>
+    </div>
+    <div class="header-icons-right">
+       <!-- Back Arrow -->
+       <a href="userprofile.html" class="header-icon" title="Back to Profile" style="margin-right: auto; margin-left: -5px;"> <!-- Position left -->
+         <span class="material-symbols-outlined">arrow_back_ios_new</span>
+       </a>
+      <a href="notifications.html" class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span>
+      </a>
+      <a href="messages.html" class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span>
+      </a>
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content - Share Link Page -->
+  <main class="main-content">
+
+    <div class="share-card">
+      <h2>Share Your Profile</h2>
+      <p>Let others connect with you easily by sharing your unique WeConnect profile link.</p>
+
+      <div class="share-link-container">
+        <input type="text" class="share-link-input" id="profileLinkInput" value="Loading link..." readonly>
+        <button class="copy-button" id="copyButton">
+          <span class="material-symbols-outlined">content_copy</span> Copy
+        </button>
+      </div>
+       <div id="copyFeedback">Link copied!</div>
+
+      <div class="share-options">
+        <h3>Share via</h3>
+        <div class="share-buttons-container">
+            <!-- Use Font Awesome icons for brands -->
+             <a href="#" id="shareWhatsapp" class="share-button whatsapp" target="_blank" rel="noopener noreferrer">
+                 <i class="fab fa-whatsapp"></i>
+                 <span>WhatsApp</span>
+             </a>
+             <a href="#" id="shareFacebook" class="share-button facebook" target="_blank" rel="noopener noreferrer">
+                 <i class="fab fa-facebook-f"></i>
+                 <span>Facebook</span>
+             </a>
+             <a href="#" id="shareTwitter" class="share-button twitter" target="_blank" rel="noopener noreferrer">
+                  <i class="fab fa-x-twitter"></i> <!-- Updated X icon -->
+                 <span>X</span>
+             </a>
+              <a href="#" id="shareEmail" class="share-button email">
+                 <i class="fas fa-envelope"></i>
+                 <span>Email</span>
+             </a>
+              <!-- Native Share API Button (if supported) -->
+              <button id="nativeShareButton" class="share-button" style="display: none;"> <!-- Hidden by default -->
+                  <span class="material-symbols-outlined">share</span>
+                  <span>More</span>
+              </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <a href="content.html" class="nav-item" title="Content">
+      <span class="material-symbols-outlined">edit_square</span>
+    </a>
+    <a href="tools.html" class="nav-item" title="Tools">
+      <span class="material-symbols-outlined">build</span>
+    </a>
+    <a href="home.html" class="center-button-nav" title="Home">
+        <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="Home">
+    </a>
+    <a href="business.html" class="nav-item" title="Business">
+      <span class="material-symbols-outlined">business_center</span>
+    </a>
+    <a href="userprofile.html" class="nav-item active" title="Profile"> <!-- Keep profile active -->
+      <span class="material-symbols-outlined">account_circle</span>
+    </a>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    // Initialize Firebase App
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    } else {
+      firebase.app();
+    }
+
+    // Get Firebase service instances
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const profileLinkInput = document.getElementById('profileLinkInput');
+    const copyButton = document.getElementById('copyButton');
+    const copyFeedback = document.getElementById('copyFeedback');
+    const shareWhatsapp = document.getElementById('shareWhatsapp');
+    const shareFacebook = document.getElementById('shareFacebook');
+    const shareTwitter = document.getElementById('shareTwitter');
+    const shareEmail = document.getElementById('shareEmail');
+    const nativeShareButton = document.getElementById('nativeShareButton');
+
+
+    let currentUser = null;
+    let profileLink = ''; // Store the generated profile link
+    let userName = 'User'; // Store user name for sharing
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            userName = user.displayName || 'User';
+            console.log("User is signed in:", user.uid);
+            generateProfileLink(user.uid); // Generate the link based on UID or username
+             // TODO: Fetch badge counts if needed
+        } else {
+            currentUser = null;
+            profileLink = '';
+            userName = 'User';
+            console.log("User is signed out. Redirecting to signin.html");
+            window.location.href = 'signin.html';
+        }
+    });
+
+    // --- Generate Profile Link ---
+    function generateProfileLink(userId) {
+        // TODO: Determine your profile URL structure.
+        // Option 1: Use User ID (Simple, unique)
+         profileLink = `${window.location.origin}/profile.html?uid=${userId}`;
+        // Option 2: Use a username (Requires fetching/storing username from Firestore)
+        // Fetch username first, then construct link:
+        // profileLink = `${window.location.origin}/u/${username}`;
+
+         profileLinkInput.value = profileLink;
+         updateShareLinks(); // Update all share buttons with the link
+    }
+
+    // --- Copy to Clipboard ---
+    copyButton.addEventListener('click', () => {
+        if (!profileLink) return;
+
+        navigator.clipboard.writeText(profileLink).then(() => {
+            console.log("Link copied to clipboard:", profileLink);
+            copyFeedback.textContent = 'Link copied!';
+            copyFeedback.classList.add('visible');
+            copyButton.textContent = 'Copied!';
+             copyButton.disabled = true; // Briefly disable
+
+            setTimeout(() => {
+                 copyFeedback.classList.remove('visible');
+                 copyButton.textContent = 'Copy'; // Reset button text
+                 copyButton.disabled = false;
+                 copyButton.innerHTML = '<span class="material-symbols-outlined">content_copy</span> Copy'; // Restore icon
+            }, 2000); // Hide feedback after 2 seconds
+        }).catch(err => {
+            console.error('Failed to copy link: ', err);
+            copyFeedback.textContent = 'Copy failed!';
+            copyFeedback.classList.add('visible');
+             setTimeout(() => { copyFeedback.classList.remove('visible'); }, 2000);
+             // Fallback for older browsers (less reliable)
+             try {
+                 profileLinkInput.select();
+                 document.execCommand('copy');
+                 // Show success feedback as above
+             } catch (execErr) {
+                 console.error('Fallback copy failed:', execErr);
+                 alert('Could not copy the link automatically. Please select and copy it manually.');
+             }
+        });
+    });
+
+    // --- Update Share Links ---
+    function updateShareLinks() {
+        if (!profileLink) return;
+        const shareText = encodeURIComponent(`Check out ${userName}'s profile on WeConnect: ${profileLink}`);
+        const shareTitle = encodeURIComponent(`WeConnect Profile: ${userName}`); // For email/native share
+
+        shareWhatsapp.href = `https://wa.me/?text=${shareText}`;
+        shareFacebook.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileLink)}&quote=${shareText}`;
+        shareTwitter.href = `https://twitter.com/intent/tweet?text=${shareText}`;
+         shareEmail.href = `mailto:?subject=${shareTitle}&body=${shareText}`;
+
+         // Check for Web Share API support
+         if (navigator.share) {
+             nativeShareButton.style.display = 'flex'; // Show the 'More' button
+             nativeShareButton.onclick = async () => {
+                 try {
+                     await navigator.share({
+                         title: shareTitle,
+                         text: `Check out ${userName}'s profile on WeConnect!`,
+                         url: profileLink,
+                     });
+                     console.log('Successful share via native API');
+                 } catch (error) {
+                     console.error('Error sharing via native API:', error);
+                     // Don't alert, user likely cancelled
+                 }
+             };
+         } else {
+             nativeShareButton.style.display = 'none';
+         }
+    }
+
+
+    // --- Sign Out Logic ---
+    if (signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                    pageLoadingElement.classList.remove('hidden');
+                    pageLoadingText.textContent = 'Signing out...';
+                    await auth.signOut();
+                    // onAuthStateChanged handles redirect
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out. Please try again.");
+                    pageLoadingElement.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    // Prevent multi-touch zoom / double-tap zoom
+    document.addEventListener('touchstart', (event) => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (event) => {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) { // Detect double-tap
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // Prevent scroll restoration issues on back navigation (optional but can help)
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - AI Image Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; --background-light: #f0f2f5; --background-dark: #ffffff;
+      --text-dark: #333; --text-medium: #555; --text-light: #777; --accent-color: #4A90E2;
+      --spacing-unit: 15px; --border-radius: 8px; --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --error-color: #D0021B; --success-color: #28a745; --warning-color: #f5a623;
+    }
+    /* --- Base Styles --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif; background-color: var(--background-light);
+      color: var(--text-dark); min-height: 100vh;
+      max-width: 420px; margin: 0 auto; overflow-x: hidden; position: relative;
+    }
+    a { color: var(--primary-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--border-radius); transition: background-color 0.3s, transform 0.1s, opacity 0.3s; }
+    button:active { transform: translateY(1px); }
+    input, textarea, select { font-family: inherit; padding: 10px; border: 1px solid #ccc; border-radius: var(--border-radius); width: 100%; font-size: 0.95rem; margin-bottom: var(--spacing-unit); }
+    textarea { resize: vertical; min-height: 80px; }
+    label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-medium); }
+    /* --- Utility Classes --- */
+    .primary-button { background-color: var(--primary-color); color: #FFFFFF; padding: 12px var(--spacing-unit); font-size: 1rem; font-weight: 600; text-align: center; width: 100%; }
+    .primary-button:hover { background-color: #192F4A; }
+    .primary-button:disabled { background-color: #a0aec0; cursor: not-allowed; opacity: 0.7; }
+
+    .secondary-button {
+        background-color: var(--accent-color); color: #FFFFFF; padding: 10px var(--spacing-unit);
+        font-size: 0.95rem; font-weight: 500; text-align: center; width: auto;
+        display: inline-flex; align-items: center; justify-content: center;
+        margin-top: 15px; cursor: pointer;
+    }
+    .secondary-button:hover { background-color: #3a7bc8; }
+    .secondary-button:disabled { background-color: #a0aec0; cursor: not-allowed; opacity: 0.7; }
+
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+    .error-message { color: var(--error-color); font-size: 0.85rem; margin-top: -10px; margin-bottom: 10px; }
+    .success-message { color: var(--success-color); font-size: 0.85rem; margin-bottom: 10px; }
+    .warning-message { color: var(--warning-color); font-size: 0.85rem; margin-top: 10px; margin-bottom: 10px;} /* Style for warning/cooldown */
+
+    /* --- Header --- */
+    .header { background-color: var(--background-dark); padding: 0 var(--spacing-unit); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: 56px; }
+    .header-left { display: flex; align-items: center; }
+    .back-button { color: var(--text-medium); padding: 10px; margin-left: -10px; cursor: pointer; display: flex; align-items: center; }
+    .header-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin-left: 8px; }
+    .header-icons-right { display: flex; align-items: center; gap: var(--spacing-unit); }
+    .header-icon { position: relative; cursor: pointer; color: var(--text-medium); display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: -8px; }
+    .header-icon .material-symbols-outlined { font-size: 24px; }
+    /* --- Main Content Area --- */
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: var(--spacing-unit); }
+    .tool-card { background-color: var(--background-dark); border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: var(--spacing-unit); }
+    .result-area { margin-top: var(--spacing-unit); text-align: center; }
+    .result-area h3 { font-size: 1rem; font-weight: 600; margin-bottom: 10px; color: var(--primary-color); text-align: left; }
+    .generated-image-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 50px; /* Ensure space even when placeholder is shown */ }
+    .generated-image-container img { max-width: 100%; height: auto; border-radius: var(--border-radius); border: 1px solid #eee; background-color: #f9f9f9; }
+    .placeholder-text { color: var(--text-light); font-style: italic; text-align: center; padding: 20px; width: 100%; }
+    /* --- Loading Indicator --- */
+    #pageLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s; opacity: 0; visibility: hidden; }
+    #pageLoading.visible { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+    #pageLoading .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* --- Sample Prompts Styling --- */
+    .sample-prompts-container {
+      margin-top: calc(var(--spacing-unit) * 1.5); padding-top: var(--spacing-unit);
+      border-top: 1px solid #eee;
+    }
+    .sample-prompts-container h4 {
+      font-size: 0.95rem; font-weight: 600; color: var(--text-medium); margin-bottom: 10px;
+    }
+    .sample-prompt-item {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 10px; margin-bottom: 12px; background-color: #f9f9f9;
+      padding: 10px; border-radius: calc(var(--border-radius) / 2); border: 1px solid #e5e5e5;
+    }
+    .sample-prompt-text {
+      flex-grow: 1; font-size: 0.85rem; color: var(--text-dark);
+      line-height: 1.4; word-break: break-word;
+    }
+    .copy-prompt-button {
+      flex-shrink: 0; background-color: transparent; color: var(--accent-color);
+      padding: 4px 6px; font-size: 0.8rem; font-weight: 500;
+      border: 1px solid var(--accent-color); border-radius: 4px;
+      display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    }
+    .copy-prompt-button .material-symbols-outlined { font-size: 16px; }
+    .copy-prompt-button:hover { background-color: rgba(74, 144, 226, 0.1); }
+    .copy-prompt-button.copied {
+       background-color: var(--success-color); border-color: var(--success-color); color: #fff;
+    }
+    .copy-prompt-button.copied .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <span class="material-symbols-outlined back-button" id="backButton">arrow_back_ios</span>
+      <span class="header-title">AI Image Generator</span>
+    </div>
+    <div class="header-icons-right">
+      <div id="signOutIcon" class="header-icon">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="tool-card">
+      <form id="imageGeneratorForm">
+        <label for="promptInput">Image Prompt:</label>
+        <textarea id="promptInput" name="prompt" placeholder="Describe the image you want to create..." required></textarea>
+        <div id="promptError" class="error-message"></div>
+
+        <button type="submit" id="generateButton" class="primary-button">
+          <span class="material-symbols-outlined" style="font-size: 20px; margin-right: 5px;">auto_awesome</span>Generate Image
+        </button>
+        <div id="apiError" class="error-message" style="margin-top: 10px;"></div>
+        <div id="cooldownMessage" class="warning-message" style="display: none;"></div> <!-- Cooldown message area -->
+
+
+        <!-- Sample Prompts Section -->
+        <div class="sample-prompts-container">
+          <h4>Sample Prompts (Thumbnail Ideas):</h4>
+
+          <div class="sample-prompt-item">
+            <span class="sample-prompt-text">Hyper-realistic YouTube thumbnail: Extreme close-up of a person's shocked face, eyes wide, illuminated by the bright glow of a smartphone screen reflecting complex data charts. Cinematic, dramatic lighting, shallow depth of field, 8K detail, 16:9 aspect ratio.</span>
+            <button type="button" class="copy-prompt-button" data-prompt="Hyper-realistic YouTube thumbnail: Extreme close-up of a person's shocked face, eyes wide, illuminated by the bright glow of a smartphone screen reflecting complex data charts. Cinematic, dramatic lighting, shallow depth of field, 8K detail, 16:9 aspect ratio.">
+              <span class="material-symbols-outlined">content_copy</span>Copy
+            </button>
+          </div>
+
+          <div class="sample-prompt-item">
+            <span class="sample-prompt-text">Photorealistic YouTube thumbnail: Mysterious hooded figure seen from behind, standing before a massive, ancient glowing portal in a dark, misty forest. Cinematic volumetric lighting, high contrast, sense of awe and mystery, ultra-detailed environment, 16:9 aspect ratio.</span>
+            <button type="button" class="copy-prompt-button" data-prompt="Photorealistic YouTube thumbnail: Mysterious hooded figure seen from behind, standing before a massive, ancient glowing portal in a dark, misty forest. Cinematic volumetric lighting, high contrast, sense of awe and mystery, ultra-detailed environment, 16:9 aspect ratio.">
+              <span class="material-symbols-outlined">content_copy</span>Copy
+            </button>
+          </div>
+
+          <div class="sample-prompt-item">
+            <span class="sample-prompt-text">Head-turning YouTube thumbnail: Ultra-realistic close-up of a single, perfect water droplet hitting a surface, creating intricate ripples frozen in time. Macro photography style, dramatic side lighting, crystal clear detail, vibrant contrasting colors, minimalist background, 16:9 aspect ratio.</span>
+            <button type="button" class="copy-prompt-button" data-prompt="Head-turning YouTube thumbnail: Ultra-realistic close-up of a single, perfect water droplet hitting a surface, creating intricate ripples frozen in time. Macro photography style, dramatic side lighting, crystal clear detail, vibrant contrasting colors, minimalist background, 16:9 aspect ratio.">
+              <span class="material-symbols-outlined">content_copy</span>Copy
+            </button>
+          </div>
+        </div>
+        <!-- End Sample Prompts Section -->
+
+      </form>
+    </div>
+
+    <div class="tool-card result-area">
+        <h3>Generated Image</h3>
+        <div id="imageResultContainer" class="generated-image-container">
+            <p class="placeholder-text">Your generated image will appear here.</p>
+            <!-- Generated image will be added here -->
+        </div>
+        <!-- Download Button - Initially hidden -->
+        <button id="downloadButton" class="secondary-button" style="display: none;">
+            <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 5px;">download</span>Download Image
+        </button>
+    </div>
+  </main>
+
+  <script>
+    // --- !!! WARNING: API Key exposed in client-side code. NOT FOR PRODUCTION. ---
+    const TOGETHER_API_KEY = "144f137285e61f4f20c3af158629a0aaee85f131c8a48cd5ffdd0e6477898407"; // USE YOUR KEY & SECURE IT
+    const TOGETHER_API_URL = "https://api.together.xyz/v1/images/generations";
+    const IMAGE_MODEL = "black-forest-labs/FLUX.1-schnell-Free";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // USE YOUR ACTUAL CONFIG
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    // Initialize Firebase App
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const backButton = document.getElementById('backButton');
+    const imageGeneratorForm = document.getElementById('imageGeneratorForm');
+    const promptInput = document.getElementById('promptInput');
+    const generateButton = document.getElementById('generateButton');
+    const imageResultContainer = document.getElementById('imageResultContainer');
+    const promptError = document.getElementById('promptError');
+    const apiError = document.getElementById('apiError');
+    const cooldownMessage = document.getElementById('cooldownMessage'); // Cooldown message element
+    const downloadButton = document.getElementById('downloadButton');
+    const copyPromptButtons = document.querySelectorAll('.copy-prompt-button');
+
+    // --- Rate Limiting Variables ---
+    let lastGenerationTime = 0; // Timestamp of the last generation attempt
+    const GENERATION_COOLDOWN_MS = 60 * 1000; // 60 seconds in milliseconds
+
+    // Store current image data URL globally in this scope for the download handler
+    let currentImageDataUrl = null;
+
+    // --- Loading Indicator Functions ---
+    const showLoading = (text = 'Loading...') => {
+        pageLoadingText.textContent = text;
+        pageLoadingElement.classList.add('visible');
+        generateButton.disabled = true; // Disable generate button while loading
+        downloadButton.disabled = true; // Disable download while loading
+    };
+    const hideLoading = () => {
+        pageLoadingElement.classList.remove('visible');
+        // Only re-enable generate button if cooldown IS NOT active
+        const now = Date.now();
+        if (now - lastGenerationTime >= GENERATION_COOLDOWN_MS) {
+             generateButton.disabled = false;
+        } else {
+            // Start timer to re-enable button after cooldown
+            scheduleButtonEnable();
+        }
+        // Only enable download button if an image exists
+        downloadButton.disabled = !currentImageDataUrl;
+    };
+
+    // --- Helper to schedule Generate button enable after cooldown ---
+    let enableButtonTimeout = null;
+    const scheduleButtonEnable = () => {
+        clearTimeout(enableButtonTimeout); // Clear existing timer if any
+        const now = Date.now();
+        const timeRemaining = GENERATION_COOLDOWN_MS - (now - lastGenerationTime);
+
+        if (timeRemaining > 0) {
+            generateButton.disabled = true; // Ensure it's disabled
+            cooldownMessage.textContent = `Please wait ${Math.ceil(timeRemaining / 1000)} more seconds to generate again.`;
+            cooldownMessage.style.display = 'block';
+
+            enableButtonTimeout = setTimeout(() => {
+                generateButton.disabled = false;
+                cooldownMessage.style.display = 'none';
+                 cooldownMessage.textContent = '';
+                console.log("Cooldown finished. Generate button enabled.");
+            }, timeRemaining);
+        } else {
+            // Should not happen if called correctly, but handle anyway
+            generateButton.disabled = false;
+            cooldownMessage.style.display = 'none';
+            cooldownMessage.textContent = '';
+        }
+    };
+
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+        if (!user) {
+            console.log("User is signed out. Redirecting...");
+            window.location.href = 'signin.html';
+        } else {
+            console.log("User is signed in:", user.uid);
+            // Check cooldown status on load in case page was refreshed during cooldown
+             scheduleButtonEnable();
+        }
+    });
+
+    // --- Sign Out Logic ---
+    if (signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                    showLoading('Signing out...');
+                    await auth.signOut();
+                    // No redirect needed here, onAuthStateChanged handles it
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out.");
+                    hideLoading(); // Hide loading on error, but user should be redirected anyway
+                }
+            }
+        });
+    }
+
+    // --- Back Button Navigation ---
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            window.location.href = 'tools.html';
+        });
+    }
+
+    // --- Download Image Function ---
+    const handleDownload = () => {
+        if (!currentImageDataUrl) {
+            console.error("No image data URL available for download.");
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = currentImageDataUrl;
+        const promptText = promptInput.value.trim().substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = promptText ? `generated_${promptText}.png` : 'generated_image.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+    downloadButton.addEventListener('click', handleDownload);
+
+
+    // --- Image Generation Logic (Using Together AI with Rate Limiting) ---
+    imageGeneratorForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        promptError.textContent = '';
+        apiError.textContent = '';
+        cooldownMessage.style.display = 'none'; // Hide cooldown message initially
+
+        // --- Rate Limiting Check ---
+        const now = Date.now();
+        const timeSinceLast = now - lastGenerationTime;
+
+        if (timeSinceLast < GENERATION_COOLDOWN_MS) {
+            const remainingSeconds = Math.ceil((GENERATION_COOLDOWN_MS - timeSinceLast) / 1000);
+            cooldownMessage.textContent = `Please wait ${remainingSeconds} more seconds to generate again.`;
+            cooldownMessage.style.display = 'block';
+            console.warn(`Rate limit hit. Time remaining: ${remainingSeconds}s`);
+            generateButton.disabled = true; // Ensure button is disabled
+            scheduleButtonEnable(); // Start timer to re-enable
+            return; // Stop the generation process
+        }
+        // --- End Rate Limiting Check ---
+
+
+        const prompt = promptInput.value.trim();
+        if (!prompt) {
+            promptError.textContent = 'Please enter an image prompt.';
+            promptInput.focus();
+            return;
+        }
+
+        // --- Rate limit passed, proceed with generation ---
+        lastGenerationTime = now; // <<< UPDATE LAST GENERATION TIME HERE
+        generateButton.disabled = true; // Disable button immediately
+        scheduleButtonEnable(); // Start cooldown timer display and eventual re-enable
+
+        showLoading('Generating image...'); // Show spinner etc.
+        imageResultContainer.innerHTML = '<p class="placeholder-text">Generating image...</p>';
+        downloadButton.style.display = 'none';
+        currentImageDataUrl = null;
+
+
+        let width = 1024;
+        let height = 1024;
+        if (prompt.toLowerCase().includes('16:9') || prompt.toLowerCase().includes('widescreen') || prompt.toLowerCase().includes('landscape') || prompt.toLowerCase().includes('thumbnail')) {
+             width = 1344; height = 768;
+             console.log("Detected landscape/thumbnail aspect ratio hint. Requesting:", width, "x", height);
+        } else if (prompt.toLowerCase().includes('9:16') || prompt.toLowerCase().includes('portrait') || prompt.toLowerCase().includes('vertical')) {
+             width = 768; height = 1344;
+             console.log("Detected portrait aspect ratio hint. Requesting:", width, "x", height);
+        } else {
+             width = 1024; height = 1024;
+             console.log("Defaulting to square aspect ratio:", width, "x", height);
+        }
+
+        const requestBody = {
+            model: IMAGE_MODEL,
+            prompt: prompt,
+            width: width, height: height,
+            steps: 4, n: 1,
+            response_format: "b64_json",
+        };
+
+        try {
+            const response = await fetch(TOGETHER_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${TOGETHER_API_KEY}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const jsonData = await response.json();
+
+            if (!response.ok) {
+                 const errorDetails = jsonData?.error?.message || jsonData?.detail || jsonData?.message || `HTTP error! Status: ${response.status}`;
+                 console.error("API Error Response:", jsonData);
+                 // Don't reset lastGenerationTime on API error, cooldown still applies
+                 throw new Error(`API Error: ${errorDetails}`);
+            }
+
+            const imageData = jsonData?.data?.[0]?.b64_json;
+
+            if (imageData) {
+                 currentImageDataUrl = `data:image/png;base64,${imageData}`;
+                 imageResultContainer.innerHTML = `<img src="${currentImageDataUrl}" alt="Generated Image: ${prompt.substring(0, 50)}...">`;
+                 downloadButton.style.display = 'inline-flex';
+                 // Download button enabling is handled in hideLoading
+            } else {
+                 console.error("Image generation response structure unexpected:", jsonData);
+                 // Don't reset lastGenerationTime on API error
+                 throw new Error('Base64 image data (b64_json) not found in the API response.');
+            }
+
+        } catch (error) {
+            console.error('Image Generation Error:', error);
+            apiError.textContent = `Failed to generate image: ${error.message}`;
+            imageResultContainer.innerHTML = `<p class="placeholder-text error-message">Could not generate image. ${error.message.includes('safety filter') ? 'The prompt might violate safety guidelines.' : ''}</p>`;
+            downloadButton.style.display = 'none';
+            currentImageDataUrl = null;
+            // NOTE: lastGenerationTime is NOT reset on error, the cooldown period still applies
+            // to prevent spamming attempts even if they fail.
+        } finally {
+            hideLoading(); // Handles enabling download button and checks button cooldown
+        }
+    });
+
+    // --- Copy Prompt Button Logic ---
+    copyPromptButtons.forEach(button => {
+      button.addEventListener('click', async (e) => {
+        const buttonElement = e.currentTarget;
+        const promptText = buttonElement.dataset.prompt;
+        if (!promptText) return;
+
+        try {
+          await navigator.clipboard.writeText(promptText);
+          promptInput.value = promptText;
+          promptInput.focus();
+          promptInput.scrollTop = 0;
+
+          const originalText = buttonElement.innerHTML;
+          const iconSpan = '<span class="material-symbols-outlined">done</span>';
+          buttonElement.innerHTML = `${iconSpan}Copied!`;
+          buttonElement.classList.add('copied');
+          buttonElement.disabled = true;
+
+          setTimeout(() => {
+            buttonElement.innerHTML = originalText;
+            buttonElement.classList.remove('copied');
+            buttonElement.disabled = false;
+          }, 1500);
+
+        } catch (err) {
+          console.error('Failed to copy prompt: ', err);
+          alert("Failed to copy prompt to clipboard.");
+        }
+      });
+    });
+
+
+    // --- Prevent multi-touch zoom ---
+    document.addEventListener('touchstart', (event) => { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', (event) => { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (event) => { const now = Date.now(); if (now - lastTouchEnd <= 300) event.preventDefault(); lastTouchEnd = now; }, { passive: false });
+
+    // Initial check for cooldown on page load (useful for refresh)
+    scheduleButtonEnable();
+
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

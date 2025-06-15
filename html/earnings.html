@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WeConnect - Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/assets/images/logo/panyero.png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #18385e;
+        }
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        .balance-card {
+            background: linear-gradient(135deg, #2a4d76 0%, #18385e 100%) !important;
+        }
+        .w-10.h-10.rounded-full.bg-white.flex.items-center.justify-center .material-icons {
+            color: var(--primary-color) !important;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px; /* Default font size for the body */
+        }
+        .data-box {
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .data-box.affiliate {
+            background: linear-gradient(135deg, #b575b9, #652969);
+            color: white;
+        }
+        .data-box.network {
+            background: linear-gradient(135deg, #e0995f, #b05919);
+            color: white;
+        }
+        .data-number {
+            font-size: 20px; /* Reduced from 24px */
+            font-weight: bold;
+        }
+        .data-label {
+            font-size: 12px; /* Reduced from 14px */
+        }
+        .share-link {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .share-link input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-size: 12px; /* Reduced from 14px */
+        }
+        .analytics-container {
+            margin-top: 20px;
+            border-radius: 10px;
+            padding: 15px;
+            background-color: white;
+        }
+        .analytics-title {
+            font-size: 16px; /* Reduced from 18px */
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .analytics-date {
+            font-size: 12px; /* Reduced from 14px */
+            color: #666;
+        }
+        .analytics-chart {
+            height: 100px;
+            background-color: #eee;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-end;
+            overflow: hidden;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+        .bar {
+            width: 45%;
+            background-color: #ccc;
+            margin: 0 2.5%;
+            position: relative;
+            border-radius: 5px 5px 0 0;
+        }
+        .bar.views {
+            background-color: #752f78;
+        }
+        .bar.registered {
+            background-color: #c47530;
+        }
+        .bar-value {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #333;
+            font-size: 10px; /* Reduced from 12px */
+        }
+        .bar-label {
+            text-align: center;
+            font-size: 10px; /* Reduced from 12px */
+            margin-top: 5px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .legend-color.views {
+            background-color: #752f78;
+        }
+        .legend-color.registered {
+            background-color: #c47530;
+        }
+        .legend-text {
+            font-size: 10px; /* Reduced from 12px */
+        }
+        .unilevel-container {
+            margin-top: 20px;
+            border-radius: 10px;
+            padding: 15px;
+            background-color: white;
+        }
+        .unilevel-title {
+            font-size: 16px; /* Reduced from 18px */
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .unilevel-level {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .unilevel-item {
+            display: inline-block;
+            margin: 0 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            font-size: 12px; /* Reduced from 14px */
+        }
+        .balance-card {
+            background: linear-gradient(135deg, #2a4d76 0%, #18385e 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .balance-title {
+            font-size: 16px; /* Reduced from 18px */
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .balance-amount {
+            font-size: 20px; /* Reduced from 22px */
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .balance-label {
+            font-size: 12px; /* Reduced from 14px */
+        }
+        .token-balance {
+            font-size: 20px; /* Reduced from 22px */
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        /* Share Menu Styles */
+        .share-menu {
+            position: fixed;
+            bottom: -100%; /* Start hidden */
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            transition: bottom 0.3s ease-in-out; /* Smooth transition */
+            z-index: 1000;
+            max-width: 420px; /* Consistent with mobile app width */
+            margin: 0 auto; /* Center if wider screen */
+        }
+        .share-menu.show {
+            bottom: 0; /* Slide in */
+        }
+        .share-menu .share-icons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* Keep 4 columns for aesthetics */
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .share-menu .share-icons .icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; /* Center content vertically */
+            cursor: pointer;
+            text-align: center; /* Ensure text below icon is centered */
+            min-height: 60px; /* Ensure consistent height for icons + text */
+        }
+        .share-menu .share-icons .icon span {
+            font-size: 12px; 
+            margin-top: 5px;
+            color: #333; /* Ensure text color is readable */
+        }
+        .share-menu .share-icons .icon .material-icons {
+            font-size: 28px; /* Slightly larger icons */
+            width: 32px;   /* Adjust width/height for larger icons */
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color); /* Use primary color for icons */
+            background-color: #f0f2f5; /* Light background for icon */
+            border-radius: 50%; /* Circular background */
+            padding: 8px; /* Padding inside the circle */
+        }
+        .close-icon {
+            font-size: 24px; /* Make close icon more prominent */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555; /* Standard close icon color */
+        }
+        .close-icon:hover {
+            color: #000; /* Darker on hover */
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen" style="max-width: 420px; margin: 0 auto;">
+    <header class="bg-primary text-white p-4 text-lg font-semibold flex items-center justify-between sticky top-0 z-50">
+        <span class="material-icons cursor-pointer" onclick="window.history.back()">
+            arrow_back
+        </span>
+        <div class="flex-1 text-center">
+            Account Overview
+        </div>
+        <span class="material-icons">
+            calendar_today
+        </span>
+    </header>
+
+    <main class="p-4 flex-1">
+        <!-- Combined Wallet Balance and Token Balance Card -->
+        <div class="balance-card">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="balance-amount" id="currentBalance">₱0.00</div>
+                    <div class="balance-label">Wallet Balance</div>
+                    <div class="token-balance" id="tokenBalance">0 WCX</div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                        <span class="material-icons text-primary">account_balance_wallet</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                        <span class="material-icons text-primary">toll</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Affiliate and Network Overview -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="data-box affiliate">
+                <div class="data-number" id="affiliateRewards">₱0.00</div>
+                <div class="data-label">Rewards</div>
+            </div>
+            <div class="data-box network">
+                <div class="data-number" id="networkAffiliates">0</div>
+                <div class="data-label">Affiliates</div>
+            </div>
+        </div>
+
+        <!-- Share & Earn -->
+        <div class="bg-white rounded-lg shadow p-4 mb-6">
+            <h2 class="text-xl font-semibold mb-2">Share & Earn</h2>
+            <div class="share-link flex items-center gap-2">
+                <input type="text" id="shareUrl" readonly class="flex-1 p-2 border border-gray-300 rounded-lg">
+                <button onclick="copyShareLink()" class="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center">
+                    <span class="material-icons text-sm mr-1">content_copy</span> Copy
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">Click "Copy" to copy your link and open sharing options.</p>
+        </div>
+
+        <!-- Analytics for Sharing -->
+        <div class="analytics-container">
+            <div class="flex justify-between items-center mb-3">
+                <div class="analytics-title">Analytics for Sharing</div>
+                <div class="analytics-date" id="currentDate"></div>
+            </div>
+            <div class="analytics-chart">
+                <div class="bar views" style="height: 60%;"><span class="bar-value" id="linkViews">0</span></div>
+                <div class="bar registered" style="height: 40%;"><span class="bar-value" id="registeredViews">0</span></div>
+            </div>
+            <div class="flex justify-around">
+                <div class="bar-label">Views</div>
+                <div class="bar-label">Registered</div>
+            </div>
+            <div class="legend mt-2">
+                <div class="legend-item">
+                    <div class="legend-color views"></div>
+                    <span class="legend-text">Total Link Views</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color registered"></div>
+                    <span class="legend-text">Registered Users</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Genealogy Overview and Chart -->
+        <div class="unilevel-container mt-6">
+             <div class="unilevel-title">Affiliate Network Genealogy (Levels 1-5)</div>
+             <div class="flex justify-center mt-4" style="height: 200px;"> <!-- Added explicit height for chart container -->
+                <canvas id="genealogyChart"></canvas> <!-- Removed fixed width/height, let Chart.js handle responsive -->
+             </div>
+        </div>
+    </main>
+
+    <!-- Share Menu -->
+    <div class="share-menu" id="shareMenu">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Share Via</h2>
+            <span class="material-icons close-icon" onclick="hideShareMenu()">close</span>
+        </div>
+        <div class="share-icons">
+            <div class="icon" onclick="shareVia('facebook')">
+                <span class="material-icons">facebook</span>
+                <span>Facebook</span>
+            </div>
+            <!-- WhatsApp Removed -->
+            <div class="icon" onclick="shareVia('telegram')">
+                <span class="material-icons">telegram</span>
+                <span>Telegram</span>
+            </div>
+            <!-- Viber Removed -->
+            <div class="icon" onclick="shareVia('sms')">
+                <span class="material-icons">sms</span>
+                <span>SMS</span>
+            </div>
+            <div class="icon" onclick="shareVia('email')">
+                <span class="material-icons">email</span>
+                <span>Email</span>
+            </div>
+            <!-- Instagram Removed -->
+            <!-- Twitter Removed -->
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        function displayCurrentDate() {
+            const today = new Date();
+            const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+            const currentDateEl = document.getElementById('currentDate');
+            if (currentDateEl) currentDateEl.textContent = formattedDate;
+        }
+
+        function generateShareLink(phoneNumber) {
+            const shareUrl = `https://weconnect-ph.online/signup.html?ref=${phoneNumber}`;
+            const shareUrlInput = document.getElementById('shareUrl');
+            if (shareUrlInput) shareUrlInput.value = shareUrl;
+            return shareUrl;
+        }
+
+        function copyShareLink() {
+            const shareUrlInput = document.getElementById('shareUrl');
+            if (!shareUrlInput || !shareUrlInput.value) {
+                alert('Share link is not available yet.');
+                return;
+            }
+            shareUrlInput.select();
+            shareUrlInput.setSelectionRange(0, 99999); // For mobile devices
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('Share link copied!');
+                    showShareMenu();
+                } else {
+                    alert('Failed to copy the link. Please try manually.');
+                }
+            } catch (err) {
+                alert('Oops, unable to copy. Please try manually.');
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+        }
+
+        function showShareMenu() {
+            const shareMenu = document.getElementById('shareMenu');
+            if (shareMenu) shareMenu.classList.add('show');
+        }
+
+        function hideShareMenu() {
+            const shareMenu = document.getElementById('shareMenu');
+            if (shareMenu) shareMenu.classList.remove('show');
+        }
+
+        function shareVia(platform) {
+            const shareUrlElement = document.getElementById('shareUrl');
+            if (!shareUrlElement) {
+                console.error("Error: shareUrl element not found in the DOM.");
+                alert("Could not find the URL to share. Please ensure the 'shareUrl' input field exists.");
+                return;
+            }
+            const shareUrl = shareUrlElement.value;
+
+            if (!shareUrl) {
+                console.warn("Warning: shareUrl is empty.");
+                alert("Please enter a URL to share.");
+                return;
+            }
+
+            let shareLink = '';
+
+            switch (platform) {
+                case 'facebook':
+                    shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+                    break;
+                case 'telegram':
+                    shareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Check this out!')}`;
+                    break;
+                case 'sms':
+                    shareLink = `sms:?body=${encodeURIComponent('Check this out: ' + shareUrl)}`;
+                    break;
+                case 'email':
+                    const emailSubject = "Interesting Link";
+                    shareLink = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent('Hi,\n\nI found this interesting and thought you might like it:\n' + shareUrl + '\n\nBest,')}`;
+                    break;
+                default:
+                    console.warn(`Unsupported share platform: ${platform}`);
+                    alert(`Sharing via ${platform} is not currently supported.`);
+                    return;
+            }
+
+            if (shareLink) {
+                window.open(shareLink, '_blank');
+            }
+
+            if (typeof hideShareMenu === 'function') {
+                hideShareMenu();
+            } else {
+                console.warn("hideShareMenu function is not defined.");
+            }
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'signin.html'; // Ensure this path is correct
+                return;
+            }
+
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    const currentBalance = userData.balance || 0;
+                    const tokenBalance = userData.token_balance || 0;
+                    const affiliateRewards = userData.unilevel_income || 0;
+                    
+                    const currentBalanceEl = document.getElementById('currentBalance');
+                    const tokenBalanceEl = document.getElementById('tokenBalance');
+                    const affiliateRewardsEl = document.getElementById('affiliateRewards');
+
+                    if (currentBalanceEl) currentBalanceEl.textContent = `₱${currentBalance.toFixed(2)}`;
+                    if (tokenBalanceEl) tokenBalanceEl.textContent = `${tokenBalance} WCX`;
+                    if (affiliateRewardsEl) affiliateRewardsEl.textContent = `₱${affiliateRewards.toFixed(2)}`;
+
+                    const phoneNumber = userData.phoneNumber || user.uid; // Fallback to UID if phone number not present
+                    generateShareLink(phoneNumber);
+                } else {
+                    console.error("User document does not exist for UID:", user.uid);
+                    alert("Your account data could not be found. Please contact support.");
+                }
+            } catch (error) {
+                console.error("Error fetching user core data: ", error);
+                alert("An error occurred while loading your account data. Please try again later.");
+            }
+
+            try {
+                const usersSnapshot = await db.collection('users').where('sponsorUserId', '==', user.uid).get();
+                const sponsoredUserCount = usersSnapshot.size;
+                const networkAffiliatesEl = document.getElementById('networkAffiliates');
+                if (networkAffiliatesEl) networkAffiliatesEl.textContent = sponsoredUserCount;
+            } catch (error) {
+                console.error("Error fetching sponsored users count: ", error);
+                const networkAffiliatesEl = document.getElementById('networkAffiliates');
+                if (networkAffiliatesEl) networkAffiliatesEl.textContent = "Error";
+            }
+
+            try {
+                const linkAnalyticsSnapshot = await db.collection('link_analytics')
+                    .where('userId', '==', user.uid).get();
+                let totalViews = 0;
+                let totalRegistered = 0;
+
+                linkAnalyticsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalViews += data.views || 0;
+                    totalRegistered += data.registered || 0;
+                });
+                
+                const linkViewsEl = document.getElementById('linkViews');
+                const registeredViewsEl = document.getElementById('registeredViews');
+
+                if(linkViewsEl) linkViewsEl.textContent = totalViews;
+                if(registeredViewsEl) registeredViewsEl.textContent = totalRegistered;
+
+            } catch (error) {
+                console.error("Error fetching Link Analytics data: ", error);
+                const linkViewsEl = document.getElementById('linkViews');
+                const registeredViewsEl = document.getElementById('registeredViews');
+                if(linkViewsEl) linkViewsEl.textContent = "Error";
+                if(registeredViewsEl) registeredViewsEl.textContent = "Error";
+            }
+
+            async function fetchGenealogyDataLevels(currentUserId, maxLevel = 5) {
+                let levels = {};
+                let currentLevelIds = [currentUserId];
+
+                for (let level = 1; level <= maxLevel; level++) {
+                    if (currentLevelIds.length === 0) {
+                        levels[`level${level}`] = 0;
+                        continue;
+                    }
+                    
+                    let nextLevelIds = [];
+                    let countForThisLevel = 0;
+
+                    // Process in chunks if currentLevelIds is large to avoid exceeding 'in' query limits
+                    const CHUNK_SIZE = 10; // Firestore 'in' query limit
+                    for (let i = 0; i < currentLevelIds.length; i += CHUNK_SIZE) {
+                        const chunk = currentLevelIds.slice(i, i + CHUNK_SIZE);
+                        if (chunk.length > 0) { // Ensure chunk is not empty
+                             const affiliatesSnapshot = await db.collection('users').where('sponsorUserId', 'in', chunk).get();
+                             countForThisLevel += affiliatesSnapshot.docs.length; // This counts direct downlines of the current chunk
+                             affiliatesSnapshot.docs.forEach(doc => nextLevelIds.push(doc.id));
+                        }
+                    }
+                    
+                    // For level 1, we count direct downlines of the main user (currentUserId)
+                    if (level === 1) {
+                        const L1Snapshot = await db.collection('users').where('sponsorUserId', '==', currentUserId).get();
+                        levels[`level${level}`] = L1Snapshot.docs.length;
+                        nextLevelIds = L1Snapshot.docs.map(doc => doc.id); // These are actual L1 UIDs
+                    } else {
+                        // For L2+, currentLevelIds are the UIDs of the previous level.
+                        // We need to count how many *they* sponsored.
+                        let countForHigherLevels = 0;
+                        let actualNextLevelIdsForHigher = [];
+                         for (let j = 0; j < currentLevelIds.length; j += CHUNK_SIZE) {
+                            const higherLevelChunk = currentLevelIds.slice(j, j + CHUNK_SIZE);
+                            if (higherLevelChunk.length > 0) {
+                                 const sponsoredByChunkSnapshot = await db.collection('users').where('sponsorUserId', 'in', higherLevelChunk).get();
+                                 countForHigherLevels += sponsoredByChunkSnapshot.docs.length;
+                                 sponsoredByChunkSnapshot.docs.forEach(doc => actualNextLevelIdsForHigher.push(doc.id));
+                            }
+                        }
+                        levels[`level${level}`] = countForHigherLevels;
+                        nextLevelIds = actualNextLevelIdsForHigher; // these are the UIDs for the next level's calculation
+                    }
+                    currentLevelIds = [...new Set(nextLevelIds)]; // Prepare for next iteration, remove duplicates
+                }
+                return levels;
+            }
+
+
+            function renderGenealogyChart(affiliatesData) {
+                const ctx = document.getElementById('genealogyChart');
+                if (!ctx) {
+                    console.error("Genealogy chart canvas not found!");
+                    return;
+                }
+                const context = ctx.getContext('2d');
+                if (window.myGenealogyChart instanceof Chart) { // Destroy previous chart instance if exists
+                    window.myGenealogyChart.destroy();
+                }
+                window.myGenealogyChart = new Chart(context, {
+                    type: 'bar', // Changed to bar chart for better level representation
+                    data: {
+                        labels: ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
+                        datasets: [{
+                            label: 'Affiliates per Level',
+                            data: [
+                                affiliatesData.level1 || 0,
+                                affiliatesData.level2 || 0,
+                                affiliatesData.level3 || 0,
+                                affiliatesData.level4 || 0,
+                                affiliatesData.level5 || 0
+                            ],
+                            backgroundColor: [ // Different color for each bar
+                                'rgba(54, 162, 235, 0.6)',
+                                'rgba(255, 206, 86, 0.6)',
+                                'rgba(75, 192, 192, 0.6)',
+                                'rgba(153, 102, 255, 0.6)',
+                                'rgba(255, 159, 64, 0.6)'
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1, // Ensure y-axis shows whole numbers
+                                    precision: 0  // No decimal places
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false // Can hide legend if only one dataset
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Initial calls
+            displayCurrentDate();
+            fetchGenealogyDataLevels(user.uid, 5)
+                .then(affiliatesData => {
+                    renderGenealogyChart(affiliatesData);
+                })
+                .catch(error => {
+                    console.error("Error processing genealogy data for chart:", error);
+                });
+        });
+    </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

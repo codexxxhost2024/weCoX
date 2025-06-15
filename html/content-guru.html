@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Mobile-first, No Zoom Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Content Workflow (Protected)</title>
+
+    <style>
+        /* Basic reset for mobile-first full screen */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Prevent scrolling on the body */
+            font-family: sans-serif; /* Basic font */
+            background-color: #f0f0f0; /* Light background for login prompt */
+        }
+
+        /* Styles for the login prompt */
+        #login-prompt {
+            display: flex; /* Use flexbox for centering */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Full viewport height */
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #login-prompt button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        /* Iframe styles - hidden by default */
+        #workflow-iframe {
+            display: none; /* Hide initially */
+            width: 100vw;
+            height: 100vh;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Placeholder for Login Prompt -->
+    <div id="login-prompt">
+        <h2>Access Denied</h2>
+        <p>Please log in to access this workflow.</p>
+        <button id="login-button">Login</button>
+    </div>
+
+    <!-- The Iframe (hidden initially) -->
+    <iframe
+      id="workflow-iframe"
+      src="https://workflow.getmindpal.com/automated-60-sec-portrait-video-generation-qsq812jiozckdbof"
+      allow="microphone"
+      style="width: 100vw; height: 100vh; border: none;"
+      frameborder="0"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+      <!--
+        IMPORTANT: sandbox attribute restricts iframe capabilities.
+        - We ALLOW scripts, same-origin requests, forms, modals.
+        - We implicitly DENY popups by NOT including 'allow-popups'.
+      -->
+    ></iframe>
+    <!-- End Iframe -->
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Add other SDKs like Firestore if needed -->
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // IMPORTANT: Keep keys secure in production! Consider environment variables.
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Get references to DOM elements
+        const loginPrompt = document.getElementById('login-prompt');
+        const loginButton = document.getElementById('login-button');
+        const iframe = document.getElementById('workflow-iframe');
+
+        // --- Authentication Logic ---
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in.
+                console.log("User is logged in:", user.uid);
+                loginPrompt.style.display = 'none'; // Hide login prompt
+                iframe.style.display = 'block';     // Show iframe
+            } else {
+                // User is signed out.
+                console.log("User is logged out.");
+                loginPrompt.style.display = 'flex'; // Show login prompt (using flex for centering)
+                iframe.style.display = 'none';    // Hide iframe
+            }
+        });
+
+        // --- Login Button Action ---
+        // TODO: Implement your desired Firebase login method here!
+        loginButton.addEventListener('click', () => {
+            // Example using Google Sign-In Popup (Requires enabling Google Auth in Firebase Console)
+            // const provider = new firebase.auth.GoogleAuthProvider();
+            // auth.signInWithPopup(provider)
+            //   .then((result) => {
+            //     console.log("Login successful:", result.user);
+            //     // onAuthStateChanged will automatically handle showing the iframe
+            //   }).catch((error) => {
+            //     console.error("Login failed:", error);
+            //     alert(`Login failed: ${error.message}`);
+            //   });
+
+            // Placeholder action - replace with actual login
+            alert("Login button clicked! Implement Firebase sign-in method here (e.g., Google, Email/Password).");
+
+             // Example: Redirect to a dedicated login page
+             // window.location.href = '/login.html';
+        });
+
+    </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

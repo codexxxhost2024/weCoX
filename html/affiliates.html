@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Affiliate Program</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#1F3A5C">
+  <meta name="description" content="WeConnect - Affiliate Program">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WeConnect">
+  <!-- PWA Manifest (assuming manifest.json and icons exist at root) -->
+  <link rel="manifest" href="/manifest.json">
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Modern Flat Design Variables from signin.html */
+    :root {
+      --primary: #1F3A5C;
+      --primary-light: #4A90E2;
+      --secondary: #f8f9fa; /* Lighter background for body */
+      --text: #2c3e50;
+      --text-light: #7f8c9a;
+      --border: #e0e6ed;
+      --success: #4CAF50;
+      --error: #E74C3C;
+      --white: #ffffff;
+      --shadow: 0 2px 10px rgba(0,0,0,0.08);
+      --soft-gray: #f5f5f5; /* For input background */
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; /* Consistent font */
+    }
+    
+    body {
+      background-color: var(--secondary);
+      min-height: 100vh;
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 600; /* Consistent heading weight */
+      color: var(--primary); /* Consistent heading color */
+    }
+    
+    /* Header styles */
+    .header {
+      background: var(--white);
+      box-shadow: var(--shadow);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .header-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: var(--text);
+    }
+    
+    .header-link i { /* Font Awesome icon for back */
+      font-size: 20px;
+      margin-right: 8px;
+    }
+    
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .header-actions button {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      padding: 8px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .header-actions button:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    
+    /* Main container */
+    .main-content {
+      max-width: 480px; /* Slightly wider than signin form for content */
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    
+    /* Card styles (consistent with signin.html) */
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+    }
+    
+    /* Input styles (consistent with signin.html) */
+    input[type="text"], input[type="email"], input[type="password"], textarea, select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      color: var(--text);
+      background-color: var(--soft-gray); /* Lighter input background */
+      transition: all 0.2s;
+    }
+    
+    input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+      background-color: var(--white);
+    }
+    
+    /* Primary button style */
+    .btn-primary {
+      background: var(--primary);
+      color: var(--white);
+      padding: 14px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-primary:hover {
+      background: #162a40;
+    }
+    
+    .btn-primary:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    /* Copy button specific style */
+    .copy-button {
+      background: var(--soft-gray);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .copy-button:hover {
+        background: #e0e0e0;
+    }
+
+    .copy-button:disabled {
+        background-color: #cccccc;
+        color: #888;
+        cursor: not-allowed;
+    }
+    
+    /* Stats cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .stats-card {
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      border-left: 4px solid var(--primary-light);
+      text-align: center;
+    }
+    
+    .stats-card p {
+      font-size: 13px;
+      color: var(--text-light);
+      margin-bottom: 4px;
+    }
+    
+    .stats-card .count {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Share buttons */
+    .share-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* Adjusted for more flexible sizing */
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .share-grid button {
+        height: 60px; /* Make buttons square */
+        width: 100%;
+        border-radius: 12px; /* Slightly rounded corners */
+        border: none;
+        color: var(--white);
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .share-grid button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .share-grid .btn-facebook { background-color: #3b5998; }
+    .share-grid .btn-twitter { background-color: #1da1f2; }
+    .share-grid .btn-linkedin { background-color: #0077b5; }
+    .share-grid .btn-whatsapp { background-color: #25d366; }
+    .share-grid .btn-telegram { background-color: #0088cc; }
+
+    /* How It Works Section */
+    .how-it-works-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+    }
+
+    .how-it-works-card {
+        background-color: var(--soft-gray);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* Soft inner shadow */
+    }
+
+    .how-it-works-card .icon-circle {
+        background-color: rgba(31, 58, 92, 0.1); /* Primary-based lighter background */
+        color: var(--primary);
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin: 0 auto 15px;
+    }
+    
+    .how-it-works-card h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+
+    .how-it-works-card p {
+        font-size: 13px;
+        color: var(--text-light);
+    }
+
+    /* Referral list */
+    .referral-item {
+        background: var(--white);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .referral-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .referral-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .referral-info h3 {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+
+    .referral-info p {
+        font-size: 13px;
+        color: var(--text-light);
+    }
+
+    .referral-commission {
+        text-align: right;
+    }
+
+    .referral-commission .label {
+        font-size: 11px;
+        color: var(--text-light);
+        margin-bottom: 2px;
+    }
+
+    .referral-commission .amount {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--success);
+    }
+
+    /* Empty referrals message */
+    .empty-referrals {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-light);
+        font-size: 15px;
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.85); /* Slightly less transparent */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    .loading-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid rgba(31, 58, 92, 0.2); /* Primary-based border */
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Robust Notification Style (from signin.html) */
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(120%);
+      transition: transform 0.3s ease-in-out;
+      z-index: 1001;
+      min-width: 200px;
+      max-width: calc(100% - 40px);
+    }
+    
+    .notification.active {
+      transform: translateX(0);
+    }
+    
+    .notification-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .notification-success .notification-icon {
+      background: var(--success);
+      color: white;
+    }
+    
+    .notification-error .notification-icon {
+      background: var(--error);
+      color: white;
+    }
+    
+    .notification-message {
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    /* Error Message Box */
+    .error-box {
+      background-color: rgba(231, 76, 60, 0.1);
+      color: var(--error);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      border: 1px solid rgba(231, 76, 60, 0.2);
+    }
+    
+    .error-box i {
+      font-size: 20px;
+    }
+    
+    /* Page transition animation */
+    .page-transition {
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Prevent zoom on multi-touch */
+    * { touch-action: manipulation; }
+    
+    html, body {
+      overflow-x: hidden;
+      max-width: 100%;
+      touch-action: pan-y;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 0 15px;
+      }
+
+      .header {
+          padding: 12px 15px;
+      }
+      
+      .card {
+        padding: 20px;
+      }
+
+      .stats-card .count {
+          font-size: 20px;
+      }
+
+      .how-it-works-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .notification {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: unset;
+        transform: translateY(120%);
+      }
+      .notification.active {
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+  </div>
+  
+  <!-- Header -->
+  <header class="header">
+    <a href="home.html" class="header-link">
+      <i class="fas fa-arrow-left"></i>
+      <h1>Affiliate Program</h1>
+    </a>
+    <div class="header-actions">
+      <button id="refresh-button" onclick="updateAffiliateStats()">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+    </div>
+  </header>
+  
+  <main class="main-content pb-20">
+    <!-- Error message -->
+    <div id="error-message" class="error-box hidden">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="error-text"></span>
+    </div>
+    
+    <!-- Intro Card -->
+    <div class="card">
+      <h2 style="color: var(--text); font-size: 20px; margin-bottom: 12px;">Earn While You Share</h2>
+      <p style="color: var(--text-light); font-size: 15px; margin-bottom: 20px;">
+        Share WeConnect with your friends and family, and earn a commission for each person who signs up using your affiliate link.
+      </p>
+      
+      <!-- Affiliate Link Section -->
+      <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+        <div style="padding: 12px 16px; background-color: var(--soft-gray); border-bottom: 1px solid var(--border);">
+          <h3 style="font-weight: 500; font-size: 16px; color: var(--text);">Your Affiliate Link</h3>
+        </div>
+        <div style="padding: 16px;">
+          <div style="display: flex; margin-bottom: 12px;">
+            <input id="affiliate-link" type="text" style="border-radius: 8px 0 0 8px; border-right: none;" readonly>
+            <button id="copy-button" class="copy-button" onclick="copyAffiliateLink()">
+              Copy
+            </button>
+          </div>
+          <p style="font-size: 14px; color: var(--text-light);">
+            Your affiliate code: <span id="affiliate-code" style="font-weight: 600; color: var(--primary);">Loading...</span>
+          </p>
+        </div>
+      </div>
+      
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stats-card">
+          <p>Clicks</p>
+          <p id="clicks-count" class="count">0</p>
+        </div>
+        <div class="stats-card">
+          <p>Signups</p>
+          <p id="signups-count" class="count">0</p>
+        </div>
+        <div class="stats-card">
+          <p>Earnings</p>
+          <p id="earnings-count" class="count">$0.00</p>
+        </div>
+      </div>
+      
+      <!-- Share Buttons -->
+      <div style="margin-top: 20px;">
+        <h3 style="font-weight: 500; font-size: 16px; margin-bottom: 15px; color: var(--text);">Share with Others</h3>
+        <div class="share-grid">
+          <button class="btn-facebook" onclick="shareToSocial('facebook')">
+            <i class="fab fa-facebook-f"></i>
+          </button>
+          <button class="btn-twitter" onclick="shareToSocial('twitter')">
+            <i class="fab fa-twitter"></i>
+          </button>
+          <button class="btn-linkedin" onclick="shareToSocial('linkedin')">
+            <i class="fab fa-linkedin-in"></i>
+          </button>
+          <button class="btn-whatsapp" onclick="shareToSocial('whatsapp')">
+            <i class="fab fa-whatsapp"></i>
+          </button>
+          <button class="btn-telegram" onclick="shareToSocial('telegram')">
+            <i class="fab fa-telegram-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- How It Works Card -->
+    <div class="card">
+      <h2 style="color: var(--text); font-size: 20px; margin-bottom: 20px;">How It Works</h2>
+      <div class="how-it-works-grid">
+        <div class="how-it-works-card">
+          <div class="icon-circle">
+            <i class="fas fa-share-alt"></i>
+          </div>
+          <h3 style="color: var(--text);">1. Share your link</h3>
+          <p>Share your unique affiliate link with friends, family, or on social media.</p>
+        </div>
+        <div class="how-it-works-card">
+          <div class="icon-circle">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <h3 style="color: var(--text);">2. Friends sign up</h3>
+          <p>When someone clicks your link and signs up, they're connected to your account.</p>
+        </div>
+        <div class="how-it-works-card">
+          <div class="icon-circle">
+            <i class="fas fa-dollar-sign"></i>
+          </div>
+          <h3 style="color: var(--text);">3. Earn commissions</h3>
+          <p>Earn $5 for each new user who signs up and completes their profile.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Your Referrals -->
+    <div class="card">
+      <h2 style="color: var(--text); font-size: 20px; margin-bottom: 20px;">Your Referrals</h2>
+      <div id="referrals-container">
+        <!-- Loading skeletons -->
+        <div class="referral-item" style="opacity: 0.5; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;">
+            <div style="flex-grow: 1;">
+                <div style="background-color: var(--soft-gray); height: 16px; width: 60%; border-radius: 4px; margin-bottom: 6px;"></div>
+                <div style="background-color: var(--soft-gray); height: 12px; width: 40%; border-radius: 4px;"></div>
+            </div>
+            <div style="text-align: right;">
+                <div style="background-color: var(--soft-gray); height: 12px; width: 50px; border-radius: 4px; margin-bottom: 4px;"></div>
+                <div style="background-color: var(--soft-gray); height: 18px; width: 60px; border-radius: 4px;"></div>
+            </div>
+        </div>
+        <div class="referral-item" style="opacity: 0.5; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite 0.5s;">
+            <div style="flex-grow: 1;">
+                <div style="background-color: var(--soft-gray); height: 16px; width: 70%; border-radius: 4px; margin-bottom: 6px;"></div>
+                <div style="background-color: var(--soft-gray); height: 12px; width: 50%; border-radius: 4px;"></div>
+            </div>
+            <div style="text-align: right;">
+                <div style="background-color: var(--soft-gray); height: 12px; width: 50px; border-radius: 4px; margin-bottom: 4px;"></div>
+                <div style="background-color: var(--soft-gray); height: 18px; width: 60px; border-radius: 4px;"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Comment Log Style Notification -->
+  <div class="notification" id="notification">
+    <div class="notification-icon">
+      <i class="fas fa-check"></i>
+    </div>
+    <div class="notification-message" id="notificationMessage"></div>
+  </div>
+  
+  <!-- Firebase SDKs (v8.10.1) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+  <script>
+    // Firebase configuration (consistent with signin.html & signup.html)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+      authDomain: "daisy-n7g20a.firebaseapp.com",
+      databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+      projectId: "daisy-n7g20a",
+      storageBucket: "daisy-n7g20a.appspot.com",
+      messagingSenderId: "225362605902",
+      appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    // DOM Elements
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const errorMessageDiv = document.getElementById('error-message');
+    const errorTextSpan = document.getElementById('error-text');
+    const affiliateCodeSpan = document.getElementById('affiliate-code');
+    const affiliateLinkInput = document.getElementById('affiliate-link');
+    const clicksCountSpan = document.getElementById('clicks-count');
+    const signupsCountSpan = document.getElementById('signups-count');
+    const earningsCountSpan = document.getElementById('earnings-count');
+    const referralsContainer = document.getElementById('referrals-container');
+    const copyButton = document.getElementById('copy-button');
+
+    // Notification elements
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notificationMessage');
+    let notificationTimeout;
+
+    // Robust Notification Handling (copied from signin.html)
+    function showNotification(message, type = 'success') {
+      if (notificationTimeout) {
+        clearTimeout(notificationTimeout);
+      }
+      notification.className = `notification notification-${type}`;
+      notification.querySelector('.notification-icon i').className = 
+        type === 'success' ? 'fas fa-check' : 'fas fa-exclamation';
+      notificationMessage.textContent = message;
+      notification.classList.add('active');
+      
+      notificationTimeout = setTimeout(() => {
+        notification.classList.remove('active');
+      }, 3000);
+    }
+
+    // Function to display errors
+    function displayError(message) {
+        errorTextSpan.textContent = message;
+        errorMessageDiv.classList.remove('hidden');
+        showNotification(message, 'error');
+    }
+
+    // Function to hide errors
+    function hideError() {
+        errorMessageDiv.classList.add('hidden');
+        errorTextSpan.textContent = '';
+    }
+    
+    async function updateAffiliateStats() {
+      loadingOverlay.classList.add('active');
+      hideError(); // Clear previous errors
+      
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          window.location.href = 'signin.html'; // Redirect to signin page
+          return;
+        }
+        
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        const userData = userDoc.data();
+        
+        if (!userData) {
+          displayError("User data not found. Please try logging in again.");
+          return;
+        }
+        
+        // Use memberId as affiliate code
+        const affiliateCode = userData.memberId || 'N/A'; // Fallback
+        const userPhoneNumber = userData.phoneNumber; // Used to find direct referrals
+
+        affiliateCodeSpan.textContent = affiliateCode;
+        affiliateLinkInput.value = `https://app.weconnect-ph.online/signup.html?ref=${affiliateCode}`;
+        
+        // Update stats from user's document
+        clicksCountSpan.textContent = 0; // Clicks not tracked by Firestore directly in this setup
+        signupsCountSpan.textContent = userData.total_affiliates || 0;
+        earningsCountSpan.textContent = `$${(userData.unilevel_income || 0).toFixed(2)}`;
+        
+        // Get direct referrals where their sponsorUserId matches current user's UID
+        const referralsQuery = db.collection("users").where("sponsorUserId", "==", user.uid);
+        const referralsSnapshot = await referralsQuery.get();
+        
+        referralsContainer.innerHTML = ''; // Clear previous referrals
+        
+        if (referralsSnapshot.empty) {
+          referralsContainer.innerHTML = `<div class="empty-referrals"><p>No referrals yet. Share your affiliate link to start earning!</p></div>`;
+        } else {
+          referralsSnapshot.forEach((refDoc) => {
+            const referral = refDoc.data();
+            const createdAt = referral.createdAt ? new Date(referral.createdAt.seconds * 1000) : new Date();
+            const displayName = referral.displayName || referral.email || 'New User'; // Fallback name
+            const commission = (referral.is_verified && referral.is_pin_created) ? 5 : 0; // Example commission logic
+            
+            const referralCard = document.createElement('div');
+            referralCard.className = 'referral-item';
+            referralCard.innerHTML = `
+              <div class="referral-info">
+                <h3>${displayName}</h3>
+                <p>Joined ${createdAt.toLocaleDateString()}</p>
+              </div>
+              <div class="referral-commission">
+                <p class="label">Commission</p>
+                <p class="amount">$${commission.toFixed(2)}</p>
+              </div>`;
+            referralsContainer.appendChild(referralCard);
+          });
+        }
+        showNotification("Affiliate data updated successfully!");
+        
+      } catch (error) {
+        console.error("Error updating affiliate stats:", error);
+        let errorMessage = "Failed to load affiliate data. Please try again.";
+        if (error.code === 'permission-denied') {
+            errorMessage = "Access denied. You might not have permission to view this data.";
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        displayError(errorMessage);
+      } finally {
+        loadingOverlay.classList.remove('active');
+      }
+    }
+    
+    // Copy affiliate link to clipboard
+    window.copyAffiliateLink = function() {
+      const linkInput = document.getElementById('affiliate-link');
+      linkInput.select();
+      linkInput.setSelectionRange(0, 99999); /* For mobile devices */
+      try {
+        document.execCommand('copy');
+        showNotification('Affiliate link copied to clipboard!');
+        copyButton.textContent = 'Copied!';
+        copyButton.disabled = true;
+        setTimeout(() => {
+            copyButton.textContent = 'Copy';
+            copyButton.disabled = false;
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+        showNotification('Failed to copy link. Please copy manually.', 'error');
+      }
+    }
+    
+    // Share to various platforms
+    window.shareToSocial = function(platform) {
+      const affiliateLink = affiliateLinkInput.value;
+      const message = `Join WeConnect and start earning today! Use my affiliate link`;
+      let shareUrl = '';
+      
+      switch(platform) {
+        case 'facebook':
+          shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(affiliateLink)}"e=${encodeURIComponent(message)}`;
+          break;
+        case 'twitter':
+          shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)} ${encodeURIComponent(affiliateLink)}`;
+          break;
+        case 'linkedin':
+          shareUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(affiliateLink)}&title=${encodeURIComponent('WeConnect Affiliate Program')}&summary=${encodeURIComponent(message)}`;
+          break;
+        case 'whatsapp':
+          shareUrl = `https://wa.me/?text=${encodeURIComponent(message + ' ' + affiliateLink)}`;
+          break;
+        case 'telegram':
+          shareUrl = `https://t.me/share/url?url=${encodeURIComponent(affiliateLink)}&text=${encodeURIComponent(message)}`;
+          break;
+        default:
+            console.warn("Unknown share platform:", platform);
+            showNotification('Unsupported sharing platform.', 'error');
+            return;
+      }
+      
+      if (shareUrl) {
+        window.open(shareUrl, '_blank');
+      }
+    }
+    
+    // Check authentication state on page load
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        updateAffiliateStats(); // Fetch and display data if user is authenticated
+      } else {
+        window.location.href = 'signin.html'; // Redirect to signin if not authenticated
+      }
+    });
+
+    // Page transition and prevent zoom on multi-touch
+    document.addEventListener('DOMContentLoaded', () => document.body.classList.add('page-transition'));
+    document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

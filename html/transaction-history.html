@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Transaction History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #333; /* Dark Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --spacing-unit: 15px; /* Base spacing */
+      --border-radius: 8px;
+      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* --- Base Styles --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* Prevent tap highlight */
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-bottom: calc(60px + var(--spacing-unit)); /* Space for bottom nav + padding */
+      max-width: 420px; /* Limit width for mobile view */
+      margin: 0 auto; /* Center the content area */
+      overflow-x: hidden; /* Prevent horizontal scroll */
+      position: relative;
+    }
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, transform 0.1s;
+    }
+    button:active {
+        transform: translateY(1px); /* Subtle press effect */
+    }
+
+    /* --- Utility Classes --- */
+    .primary-button {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      padding: 10px var(--spacing-unit);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .primary-button:hover {
+      background-color: #192F4A; /* Slightly darker primary */
+    }
+     .secondary-button {
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        padding: 10px var(--spacing-unit);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+    }
+     .secondary-button:hover {
+        background-color: rgba(31, 58, 92, 0.05); /* Light hover effect */
+     }
+
+    .material-symbols-outlined {
+      font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24
+    }
+
+    /* --- Header --- */
+    .header {
+      background-color: var(--background-dark);
+      color: var(--text-dark);
+      padding: 10px var(--spacing-unit);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; /* Keep header sticky */
+      top: 0; /* Stick to the top */
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: 56px;
+    }
+    .header-logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .header-logo-img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+    .header-logo-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-left: 8px;
+      color: var(--primary-color);
+    }
+    .header-icons-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-unit);
+    }
+    .header-icon {
+      position: relative;
+      cursor: pointer;
+      color: var(--text-medium);
+      display: flex; /* Center icon */
+      align-items: center;
+      justify-content: center;
+      width: 40px; /* Make tappable area larger */
+      height: 40px;
+       margin: -8px; /* Negative margin to compensate for padding/size increase */
+    }
+     .header-icon .material-symbols-outlined {
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      background-color: #D0021B; /* Red badge */
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 50%;
+      padding: 2px 5px;
+      min-width: 16px;
+      text-align: center;
+      line-height: 1;
+      display: none; /* Hidden by default */
+      z-index: 1; /* Above icon */
+    }
+    .badge.visible {
+      display: block;
+    }
+
+    /* --- Page Title --- */
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: var(--spacing-unit) 0;
+      color: var(--text-dark);
+      padding: 0 var(--spacing-unit);
+    }
+
+    /* --- Main Content Area --- */
+    .main-content {
+      padding: var(--spacing-unit);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-unit); /* Space between sections */
+    }
+
+    /* --- Transaction Filter Card --- */
+    .transaction-filter-card {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-unit);
+      box-shadow: var(--box-shadow);
+    }
+    .transaction-filter-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: calc(var(--spacing-unit) * 0.8);
+    }
+    .transaction-filter-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .transaction-filter-options {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .transaction-filter-options::-webkit-scrollbar {
+      height: 4px;
+    }
+    .transaction-filter-options::-webkit-scrollbar-thumb {
+      background-color: var(--text-light);
+      border-radius: 4px;
+    }
+    .filter-option {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      border-radius: 15px;
+      background-color: #f0f2f5;
+      color: var(--text-medium);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .filter-option.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    .transaction-search {
+      display: flex;
+      align-items: center;
+      background-color: #f0f2f5;
+      border-radius: var(--border-radius);
+      padding: 8px 12px;
+    }
+    .transaction-search input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      outline: none;
+      padding: 0 8px;
+    }
+    .transaction-search .material-symbols-outlined {
+      font-size: 20px;
+      color: var(--text-medium);
+    }
+
+    /* --- Transaction List Card --- */
+    .transaction-list-card {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-unit);
+      box-shadow: var(--box-shadow);
+    }
+    .transaction-list-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: calc(var(--spacing-unit) * 0.8);
+    }
+    .transaction-list-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .transaction-list-card-export {
+      font-size: 0.9rem;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .transaction-list-card-export .material-symbols-outlined {
+      font-size: 18px;
+      margin-right: 4px;
+    }
+    .transaction-list {
+      display: flex;
+      flex-direction: column;
+    }
+    .transaction-date-header {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-medium);
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 10px;
+    }
+    .transaction-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .transaction-item:last-child {
+      border-bottom: none;
+    }
+    .transaction-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e8f0fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: calc(var(--spacing-unit) * 0.7);
+    }
+    .transaction-icon .material-symbols-outlined {
+      font-size: 20px;
+      color: var(--primary-color);
+    }
+    .transaction-details {
+      flex: 1;
+    }
+    .transaction-description {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-dark);
+      margin-bottom: 2px;
+    }
+    .transaction-info {
+      display: flex;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+    .transaction-time {
+      margin-right: 8px;
+    }
+    .transaction-status {
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      margin-left: 5px;
+    }
+    .transaction-status.completed {
+      background-color: #E6F7ED;
+      color: #2E7D32;
+    }
+    .transaction-status.pending {
+      background-color: #FFF8E1;
+      color: #F57C00;
+    }
+    .transaction-status.failed {
+      background-color: #FFEBEE;
+      color: #C62828;
+    }
+    .transaction-amount {
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: right;
+    }
+    .transaction-amount.credit {
+      color: #4CAF50; /* Green for credit (income) */
+    }
+    .transaction-amount.debit {
+      color: #F44336; /* Red for debit (expense/payout) */
+    }
+    .transaction-currency {
+      font-size: 0.8rem;
+      color: var(--text-medium);
+      margin-top: 2px;
+      text-align: right;
+    }
+    .load-more-button {
+      width: 100%;
+      padding: 10px 0;
+      margin-top: 15px;
+      background-color: #f0f2f5;
+      color: var(--text-medium);
+      font-size: 0.9rem;
+      font-weight: 500;
+      border-radius: var(--border-radius);
+      text-align: center;
+    }
+    .load-more-button:hover {
+      background-color: #e4e6e9;
+    }
+
+    /* --- Loading Indicator --- */
+    #pageLoading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001; /* Above other content */
+        transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+     #pageLoading.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s linear 0s;
+    }
+     #pageLoading .loading-text {
+         font-size: 1.1rem;
+         font-weight: 500;
+         color: var(--text-dark);
+     }
+    #pageLoading .spinner {
+         border: 4px solid #f3f3f3;
+         border-top: 4px solid var(--primary-color);
+         border-radius: 50%;
+         width: 30px;
+         height: 30px;
+         animation: spin 1s linear infinite;
+         margin-bottom: 15px;
+    }
+     @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* --- Bottom Navigation --- */
+    .bottom-nav {
+      background-color: var(--background-dark);
+      border-top: 1px solid #e0e0e0;
+      width: 100%;
+      max-width: 420px; /* Match body max-width */
+      display: flex;
+      justify-content: space-around;
+      align-items: center; /* Vertically align icons */
+      padding: 5px 0;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      height: 60px;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.05); /* Subtle top shadow */
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light);
+      flex: 1;
+      padding: 10px 0; /* Adjust padding for icon-only */
+      transition: color 0.2s ease;
+      height: 100%; /* Ensure items fill height */
+    }
+    .nav-item.active {
+       color: var(--primary-color);
+    }
+    .nav-item .material-symbols-outlined {
+      font-size: 28px; /* Slightly larger icon */
+    }
+    /* Style for the center button (logo) */
+    .center-button-nav {
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         width: 50px;
+         height: 50px;
+         border-radius: 50%;
+         background-color: var(--background-dark);
+         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+         margin-top: -20px;
+         cursor: pointer;
+         border: 3px solid var(--background-light);
+         position: relative;
+         flex-shrink: 0;
+    }
+     /* Add active style to the center button */
+    .center-button-nav.active {
+        border-color: var(--primary-color); /* Highlight border when active */
+    }
+     .center-button-nav img {
+         width: 28px;
+         height: 28px;
+         object-fit: contain;
+     }
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo-container">
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+      <span class="header-logo-text">WeConnect</span>
+    </div>
+    <div class="header-icons-right">
+      <!-- Notifications Icon -->
+      <div class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span> <!-- Dynamic badge -->
+      </div>
+      <!-- Messages Icon -->
+      <div class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span> <!-- Dynamic badge -->
+      </div>
+       <!-- Sign Out icon -->
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Title -->
+  <h1 class="page-title">Transaction History</h1>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Transaction Filter Card -->
+    <div class="transaction-filter-card">
+      <div class="transaction-filter-card-header">
+        <div class="transaction-filter-card-title">Filter Transactions</div>
+      </div>
+      <div class="transaction-filter-options">
+        <div class="filter-option active" data-filter="all">All</div>
+        <div class="filter-option" data-filter="deposit">Deposits</div>
+        <div class="filter-option" data-filter="withdrawal">Withdrawals</div>
+        <div class="filter-option" data-filter="transfer">Transfers</div>
+        <div class="filter-option" data-filter="exchange">Exchanges</div>
+        <div class="filter-option" data-filter="reward">Rewards</div>
+      </div>
+      <div class="transaction-search">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" placeholder="Search transactions..." id="searchTransactions">
+        <span class="material-symbols-outlined" id="clearSearch" style="cursor: pointer; display: none;">close</span>
+      </div>
+    </div>
+
+    <!-- Transaction List Card -->
+    <div class="transaction-list-card">
+      <div class="transaction-list-card-header">
+        <div class="transaction-list-card-title">Recent Transactions</div>
+        <div class="transaction-list-card-export" id="exportTransactions">
+          <span class="material-symbols-outlined">download</span>
+          Export
+        </div>
+      </div>
+      <div class="transaction-list" id="transactionList">
+        <!-- Today's Transactions -->
+        <div class="transaction-date-header">Today</div>
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <span class="material-symbols-outlined">arrow_downward</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-description">Deposit from Bank</div>
+            <div class="transaction-info">
+              <span class="transaction-time">10:45 AM</span>
+              <span class="transaction-id">ID: TRX123456</span>
+              <span class="transaction-status completed">Completed</span>
+            </div>
+          </div>
+          <div class="transaction-amount-container">
+            <div class="transaction-amount credit">+₱1,000.00</div>
+            <div class="transaction-currency">PHP</div>
+          </div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <span class="material-symbols-outlined">currency_exchange</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-description">Token Exchange</div>
+            <div class="transaction-info">
+              <span class="transaction-time">09:30 AM</span>
+              <span class="transaction-id">ID: TRX123455</span>
+              <span class="transaction-status completed">Completed</span>
+            </div>
+          </div>
+          <div class="transaction-amount-container">
+            <div class="transaction-amount credit">+50.00 WCX</div>
+            <div class="transaction-currency">≈ ₱500.00</div>
+          </div>
+        </div>
+
+        <!-- Yesterday's Transactions -->
+        <div class="transaction-date-header">Yesterday</div>
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <span class="material-symbols-outlined">arrow_upward</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-description">Withdrawal to Bank</div>
+            <div class="transaction-info">
+              <span class="transaction-time">3:20 PM</span>
+              <span class="transaction-id">ID: TRX123454</span>
+              <span class="transaction-status pending">Pending</span>
+            </div>
+          </div>
+          <div class="transaction-amount-container">
+            <div class="transaction-amount debit">-₱2,500.00</div>
+            <div class="transaction-currency">PHP</div>
+          </div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <span class="material-symbols-outlined">send</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-description">Transfer to John Smith</div>
+            <div class="transaction-info">
+              <span class="transaction-time">11:15 AM</span>
+              <span class="transaction-id">ID: TRX123453</span>
+              <span class="transaction-status completed">Completed</span>
+            </div>
+          </div>
+          <div class="transaction-amount-container">
+            <div class="transaction-amount debit">-₱500.00</div>
+            <div class="transaction-currency">PHP</div>
+          </div>
+        </div>
+
+        <!-- May 5, 2025 Transactions -->
+        <div class="transaction-date-header">May 5, 2025</div>
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <span class="material-symbols-outlined">redeem</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-description">Referral Bonus</div>
+            <div class="transaction-info">
+              <span class="transaction-time">4:45 PM</span>
+              <span class="transaction-id">ID: TRX123452</span>
+              <span class="transaction-status completed">Completed</span>
+            </div>
+          </div>
+          <div class="transaction-amount-container">
+            <div class="transaction-amount credit">+₱250.00</div>
+            <div class="transaction-currency">PHP</div>
+          </div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <span class="material-symbols-outlined">group</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-description">Unilevel Commission</div>
+            <div class="transaction-info">
+              <span class="transaction-time">9:10 AM</span>
+              <span class="transaction-id">ID: TRX123451</span>
+              <span class="transaction-status completed">Completed</span>
+            </div>
+          </div>
+          <div class="transaction-amount-container">
+            <div class="transaction-amount credit">+₱750.00</div>
+            <div class="transaction-currency">PHP</div>
+          </div>
+        </div>
+
+        <!-- May 4, 2025 Transactions -->
+        <div class="transaction-date-header">May 4, 2025</div>
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <span class="material-symbols-outlined">arrow_upward</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-description">Withdrawal to GCash</div>
+            <div class="transaction-info">
+              <span class="transaction-time">2:30 PM</span>
+              <span class="transaction-id">ID: TRX123450</span>
+              <span class="transaction-status failed">Failed</span>
+            </div>
+          </div>
+          <div class="transaction-amount-container">
+            <div class="transaction-amount debit">-₱1,000.00</div>
+            <div class="transaction-currency">PHP</div>
+          </div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-icon">
+            <span class="material-symbols-outlined">currency_exchange</span>
+          </div>
+          <div class="transaction-details">
+            <div class="transaction-description">Token Exchange</div>
+            <div class="transaction-info">
+              <span class="transaction-time">10:20 AM</span>
+              <span class="transaction-id">ID: TRX123449</span>
+              <span class="transaction-status completed">Completed</span>
+            </div>
+          </div>
+          <div class="transaction-amount-container">
+            <div class="transaction-amount credit">+25.00 WCX</div>
+            <div class="transaction-currency">≈ ₱250.00</div>
+          </div>
+        </div>
+
+        <button class="load-more-button" id="loadMoreButton">Load More</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <!-- Content (content.html) - Leftmost -->
+    <div class="nav-item" data-target-url="content.html" title="Content">
+      <span class="material-symbols-outlined">edit_square</span>
+    </div>
+    <!-- Tools (tools.html) -->
+    <div class="nav-item" data-target-url="tools.html" title="Tools">
+      <span class="material-symbols-outlined">build</span>
+    </div>
+    <!-- Center Logo Button (Home - home.html) -->
+    <div class="center-button-nav" data-target-url="home.html" title="Home">
+        <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="Home">
+    </div>
+    <!-- Business (business.html) - Active on this page -->
+    <div class="nav-item active" data-target-url="business.html" title="Business">
+      <span class="material-symbols-outlined">business_center</span>
+    </div>
+    <!-- Profile (user-profile.html) - Rightmost -->
+    <div class="nav-item" data-target-url="userprofile.html" title="Profile">
+      <span class="material-symbols-outlined">account_circle</span>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    // Initialize Firebase App
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    } else {
+      firebase.app();
+    }
+
+    // Get Firebase service instances
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const searchTransactionsInput = document.getElementById('searchTransactions');
+    const clearSearchButton = document.getElementById('clearSearch');
+    const filterOptions = document.querySelectorAll('.filter-option');
+    const exportTransactionsButton = document.getElementById('exportTransactions');
+    const transactionListElement = document.getElementById('transactionList');
+    const loadMoreButton = document.getElementById('loadMoreButton');
+
+    // Header Icons
+    const notificationsIcon = document.getElementById('notificationsIcon');
+    const messagesIcon = document.getElementById('messagesIcon');
+    const notificationBadge = document.getElementById('notificationBadge');
+    const messageBadge = document.getElementById('messageBadge');
+    const signOutIcon = document.getElementById('signOutIcon');
+
+    // --- Helper Function to Format Currency ---
+    function formatCurrency(amount, currency = '₱') {
+      // Ensure amount is treated as a number, default to 0 if null/undefined
+      const numericAmount = Number(amount) || 0;
+      return currency + numericAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    // --- Helper Function to Format Date ---
+    function formatDate(timestamp) {
+        if (!timestamp || !timestamp.toDate) return 'N/A'; // Check if it's a Firestore timestamp
+        const date = timestamp.toDate();
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return date.toLocaleString(undefined, options);
+    }
+
+    // --- Fetch and Display Transactions ---
+    async function fetchAndDisplayTransactions(userId, filter = 'all') {
+        try {
+            // In a real app, you would fetch transactions from Firestore
+            // For demo purposes, we're using static HTML for transactions
+            
+            // Show loading state
+            pageLoadingElement.classList.add('hidden');
+            
+            // Filter transactions based on selected filter
+            const transactionItems = document.querySelectorAll('.transaction-item');
+            
+            if (filter === 'all') {
+                transactionItems.forEach(item => {
+                    item.style.display = 'flex';
+                });
+            } else {
+                transactionItems.forEach(item => {
+                    const description = item.querySelector('.transaction-description').textContent.toLowerCase();
+                    
+                    if (filter === 'deposit' && description.includes('deposit')) {
+                        item.style.display = 'flex';
+                    } else if (filter === 'withdrawal' && description.includes('withdrawal')) {
+                        item.style.display = 'flex';
+                    } else if (filter === 'transfer' && description.includes('transfer')) {
+                        item.style.display = 'flex';
+                    } else if (filter === 'exchange' && description.includes('exchange')) {
+                        item.style.display = 'flex';
+                    } else if (filter === 'reward' && (description.includes('bonus') || description.includes('commission'))) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Update date headers visibility
+            const dateHeaders = document.querySelectorAll('.transaction-date-header');
+            dateHeaders.forEach(header => {
+                const nextSibling = header.nextElementSibling;
+                let hasVisibleTransaction = false;
+                
+                let currentElement = nextSibling;
+                while (currentElement && !currentElement.classList.contains('transaction-date-header')) {
+                    if (currentElement.classList.contains('transaction-item') && 
+                        currentElement.style.display !== 'none') {
+                        hasVisibleTransaction = true;
+                        break;
+                    }
+                    currentElement = currentElement.nextElementSibling;
+                }
+                
+                header.style.display = hasVisibleTransaction ? 'block' : 'none';
+            });
+            
+        } catch (error) {
+            console.error("Error fetching transactions:", error);
+            pageLoadingElement.classList.add('hidden');
+            alert("An error occurred while loading your transactions. Please try refreshing the page.");
+        }
+    }
+
+    // --- Search Transactions ---
+    searchTransactionsInput.addEventListener('input', () => {
+        const searchTerm = searchTransactionsInput.value.toLowerCase();
+        
+        if (searchTerm) {
+            clearSearchButton.style.display = 'block';
+        } else {
+            clearSearchButton.style.display = 'none';
+        }
+        
+        const transactionItems = document.querySelectorAll('.transaction-item');
+        
+        transactionItems.forEach(item => {
+            const description = item.querySelector('.transaction-description').textContent.toLowerCase();
+            const transactionId = item.querySelector('.transaction-id').textContent.toLowerCase();
+            
+            if (description.includes(searchTerm) || transactionId.includes(searchTerm)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Update date headers visibility
+        const dateHeaders = document.querySelectorAll('.transaction-date-header');
+        dateHeaders.forEach(header => {
+            const nextSibling = header.nextElementSibling;
+            let hasVisibleTransaction = false;
+            
+            let currentElement = nextSibling;
+            while (currentElement && !currentElement.classList.contains('transaction-date-header')) {
+                if (currentElement.classList.contains('transaction-item') && 
+                    currentElement.style.display !== 'none') {
+                    hasVisibleTransaction = true;
+                    break;
+                }
+                currentElement = currentElement.nextElementSibling;
+            }
+            
+            header.style.display = hasVisibleTransaction ? 'block' : 'none';
+        });
+    });
+
+    // --- Clear Search ---
+    clearSearchButton.addEventListener('click', () => {
+        searchTransactionsInput.value = '';
+        clearSearchButton.style.display = 'none';
+        
+        // Reset transaction visibility
+        const activeFilter = document.querySelector('.filter-option.active').dataset.filter;
+        fetchAndDisplayTransactions(auth.currentUser?.uid, activeFilter);
+    });
+
+    // --- Filter Options ---
+    filterOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remove active class from all options
+            filterOptions.forEach(opt => opt.classList.remove('active'));
+            // Add active class to clicked option
+            option.classList.add('active');
+            
+            // Filter transactions
+            const filter = option.dataset.filter;
+            fetchAndDisplayTransactions(auth.currentUser?.uid, filter);
+        });
+    });
+
+    // --- Export Transactions ---
+    exportTransactionsButton.addEventListener('click', () => {
+        alert("Transaction export functionality coming soon!");
+    });
+
+    // --- Load More Transactions ---
+    loadMoreButton.addEventListener('click', () => {
+        loadMoreButton.textContent = "Loading...";
+        
+        // Simulate loading more transactions
+        setTimeout(() => {
+            loadMoreButton.textContent = "No More Transactions";
+            loadMoreButton.disabled = true;
+            loadMoreButton.style.opacity = '0.6';
+        }, 1500);
+    });
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            console.log("User is signed in:", user.uid);
+            // User is signed in, fetch their transactions
+            fetchAndDisplayTransactions(user.uid);
+        } else {
+            console.log("User is signed out. Redirecting to signin.html");
+            // Ensure loading screen is hidden before redirecting
+            pageLoadingElement.classList.add('hidden');
+            window.location.href = 'signin.html';
+        }
+    });
+
+    // --- Header Icon Navigation ---
+    if (notificationsIcon) {
+        notificationsIcon.addEventListener('click', () => {
+            window.location.href = 'notifications.html';
+        });
+    }
+
+    if (messagesIcon) {
+        messagesIcon.addEventListener('click', () => {
+            window.location.href = 'messages.html';
+        });
+    }
+
+    // --- Sign Out Logic ---
+    if(signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                    pageLoadingElement.classList.remove('hidden');
+                    pageLoadingText.textContent = 'Signing out...';
+                    await auth.signOut();
+                    // The onAuthStateChanged listener will handle the redirect
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out. Please try again.");
+                    pageLoadingElement.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    // --- Bottom Navigation Handling ---
+    document.querySelectorAll('.bottom-nav .nav-item, .bottom-nav .center-button-nav').forEach(item => {
+        item.addEventListener('click', () => {
+            const targetUrl = item.dataset.targetUrl;
+            // Only navigate if targetUrl exists and it's not the current active page
+            if (targetUrl && !item.classList.contains('active')) {
+                console.log('Navigating to:', targetUrl);
+                window.location.href = targetUrl;
+            } else if (item.classList.contains('active')) {
+                console.log('Already on this page:', targetUrl);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                console.warn('Navigation item missing data-target-url attribute:', item);
+            }
+        });
+    });
+
+    // Prevent multi-touch zoom
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault(); // Prevent double-tap zoom
+      lastTouchEnd = now;
+    }, { passive: false });
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

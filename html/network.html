@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Network</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #2c3e50; /* Darker Text for better contrast */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --success-color: #28a745; /* Green for success states */
+      --error-color: #c62828; /* Red for error states */
+      --spacing-unit: 16px; /* Base spacing */
+      --border-radius: 12px; /* Softer border radius */
+      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); /* Softer shadow */
+      --transition-speed: 0.3s;
+    }
+
+    /* --- Base Styles --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* Prevent tap highlight */
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-bottom: calc(60px + var(--spacing-unit)); /* Space for bottom nav + padding */
+      max-width: 420px; /* Limit width for mobile view */
+      margin: 0 auto; /* Center the content area */
+      overflow-x: hidden; /* Prevent horizontal scroll */
+      position: relative;
+    }
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color var(--transition-speed), transform 0.1s;
+    }
+    button:active {
+        transform: translateY(1px); /* Subtle press effect */
+    }
+
+    /* --- Utility Classes --- */
+    .primary-button {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      padding: 10px var(--spacing-unit);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .primary-button:hover {
+      background-color: #192F4A; /* Slightly darker primary */
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* --- Header --- */
+    .header {
+      background-color: var(--background-dark);
+      color: var(--text-dark);
+      padding: 10px var(--spacing-unit);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; /* Keep header sticky */
+      top: 0; /* Stick to the top */
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      height: 56px;
+    }
+    .header-logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .header-logo-img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+    .header-logo-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-left: 8px;
+      color: var(--primary-color);
+    }
+    .header-icons-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-unit);
+    }
+    .header-icon {
+      position: relative;
+      cursor: pointer;
+      color: var(--text-medium);
+      display: flex; /* Center icon */
+      align-items: center;
+      justify-content: center;
+      width: 40px; /* Make tappable area larger */
+      height: 40px;
+      margin: -8px; /* Negative margin to compensate for padding/size increase */
+      transition: color var(--transition-speed);
+    }
+    .header-icon:hover {
+        color: var(--primary-color);
+    }
+    .header-icon .material-symbols-outlined {
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      background-color: #D0021B; /* Red badge */
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 50%;
+      padding: 2px 5px;
+      min-width: 16px;
+      text-align: center;
+      line-height: 1;
+      display: none; /* Hidden by default */
+      z-index: 1; /* Above icon */
+    }
+    .badge.visible {
+      display: block;
+    }
+
+    /* --- Main Content Area --- */
+    .main-content {
+      padding: var(--spacing-unit);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-unit); /* Space between sections */
+    }
+
+    /* --- Page Title --- */
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: calc(var(--spacing-unit) / 2);
+    }
+
+    /* --- Card Base Style --- */
+    .card {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-unit);
+      box-shadow: var(--box-shadow);
+      margin-bottom: var(--spacing-unit);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stats-card { animation-delay: 0.1s; }
+    .network-tree { animation-delay: 0.2s; }
+    .referral-section { animation-delay: 0.3s; }
+
+    /* --- Network Stats Card --- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      text-align: center;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-medium);
+      margin-top: 5px;
+    }
+
+    /* --- Network Tree --- */
+    .network-tree h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: var(--spacing-unit);
+      color: var(--text-dark);
+    }
+    .tree-container {
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+    .tree-level {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tree-level-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-medium);
+      padding-bottom: 5px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 10px;
+    }
+    .member-card {
+      display: flex;
+      align-items: center;
+      background-color: #f8f9fa;
+      border-radius: calc(var(--border-radius) - 4px);
+      padding: 10px;
+      border-left: 4px solid var(--accent-color);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .member-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .member-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      color: var(--text-medium);
+      font-weight: 600;
+      overflow: hidden; /* For background image */
+      flex-shrink: 0;
+    }
+    .member-info {
+      flex-grow: 1;
+    }
+    .member-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .member-id {
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+    .member-status {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+      background-color: #e6f7ed;
+      color: var(--success-color);
+    }
+    .member-status.inactive {
+      background-color: #ffebee;
+      color: var(--error-color);
+    }
+    .error-text, .no-members-text {
+        color: var(--text-light);
+        font-style: italic;
+        padding: 10px 0;
+    }
+
+    /* --- Skeleton Loaders --- */
+    @keyframes skeleton-loading {
+      0% { background-color: #e9ecef; }
+      50% { background-color: #f8f9fa; }
+      100% { background-color: #e9ecef; }
+    }
+    .skeleton-card {
+      display: flex;
+      align-items: center;
+      background-color: #fdfdfd;
+      border-radius: calc(var(--border-radius) - 4px);
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .skeleton-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .skeleton-info {
+      flex-grow: 1;
+    }
+    .skeleton-text {
+      height: 12px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .skeleton-text:last-child { margin-bottom: 0; }
+    .skeleton-text.long { width: 90%; }
+    .skeleton-text.short { width: 60%; }
+    .skeleton-card .skeleton-avatar, .skeleton-card .skeleton-text {
+      animation: skeleton-loading 1.5s infinite ease-in-out;
+    }
+
+
+    /* --- Referral Link Section --- */
+    .referral-section h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text-dark);
+    }
+    .referral-link-container {
+      display: flex;
+      align-items: center;
+      background-color: #f5f5f5;
+      border-radius: calc(var(--border-radius) - 4px);
+      padding: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .referral-link {
+      flex-grow: 1;
+      font-size: 0.85rem;
+      color: var(--text-medium);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 10px;
+    }
+    .copy-button {
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: background-color var(--transition-speed);
+    }
+
+    /* --- Loading Indicator --- */
+    #pageLoading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+      transition: opacity var(--transition-speed) ease, visibility 0s linear var(--transition-speed);
+    }
+    #pageLoading.hidden {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-speed) ease, visibility 0s linear 0s;
+    }
+    #pageLoading .loading-text {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+    #pageLoading .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary-color);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* --- Bottom Navigation --- */
+    .bottom-nav {
+      background-color: var(--background-dark);
+      border-top: 1px solid #e0e0e0;
+      width: 100%;
+      max-width: 420px; /* Match body max-width */
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 5px 0;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      height: 60px;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light);
+      flex: 1;
+      padding: 5px 0;
+      transition: color 0.2s ease, transform 0.2s ease;
+      height: 100%;
+    }
+    .nav-item:hover {
+        color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    .nav-item.active {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+    .nav-item .material-symbols-outlined {
+      font-size: 26px; /* Adjusted icon size */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading">
+    <div class="spinner"></div>
+    <p class="loading-text">Authenticating...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo-container">
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+      <span class="header-logo-text">WeConnect</span>
+    </div>
+    <div class="header-icons-right">
+      <div class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span>
+      </div>
+      <div class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span>
+      </div>
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <h1 class="page-title">Your Network</h1>
+
+    <div class="stats-card card">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="totalMembers">0</div>
+          <div class="stat-label">Total Members</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="activeMembers">0</div>
+          <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="networkEarnings">₱0.00</div>
+          <div class="stat-label">Earnings</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="network-tree card">
+      <h3>Network Structure</h3>
+      <div class="tree-container" id="networkTreeContainer">
+        <!-- Level 1 -->
+        <div class="tree-level">
+          <div class="tree-level-title">Level 1 (Direct Referrals)</div>
+          <div id="level1Members"></div>
+        </div>
+        
+        <!-- Level 2 -->
+        <div class="tree-level">
+          <div class="tree-level-title">Level 2</div>
+          <div id="level2Members"></div>
+        </div>
+        
+        <!-- Level 3 -->
+        <div class="tree-level">
+          <div class="tree-level-title">Level 3</div>
+          <div id="level3Members"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="referral-section card">
+      <h3>Invite New Members</h3>
+      <div class="referral-link-container">
+        <div class="referral-link" id="referralLink">Loading your link...</div>
+        <button class="copy-button" id="copyLinkBtn">Copy</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item" data-target-url="content.html" title="Content">
+      <span class="material-symbols-outlined">edit_square</span>
+    </div>
+    <div class="nav-item" data-target-url="tools.html" title="Tools">
+      <span class="material-symbols-outlined">build</span>
+    </div>
+    <div class="nav-item" data-target-url="home.html" title="Home">
+      <span class="material-symbols-outlined">home</span>
+    </div>
+    <div class="nav-item active" data-target-url="network.html" title="Network">
+      <span class="material-symbols-outlined">groups</span>
+    </div>
+    <div class="nav-item" data-target-url="userprofile.html" title="Profile">
+      <span class="material-symbols-outlined">account_circle</span>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+      authDomain: "daisy-n7g20a.firebaseapp.com",
+      databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+      projectId: "daisy-n7g20a",
+      storageBucket: "daisy-n7g20a.appspot.com",
+      messagingSenderId: "225362605902",
+      appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const pageTitleElement = document.querySelector('.page-title');
+    const totalMembersElement = document.getElementById('totalMembers');
+    const activeMembersElement = document.getElementById('activeMembers');
+    const networkEarningsElement = document.getElementById('networkEarnings');
+    
+    const level1MembersElement = document.getElementById('level1Members');
+    const level2MembersElement = document.getElementById('level2Members');
+    const level3MembersElement = document.getElementById('level3Members');
+    
+    const referralLinkElement = document.getElementById('referralLink');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const signOutIcon = document.getElementById('signOutIcon');
+
+    // --- Component Generators ---
+
+    /**
+     * Creates HTML for a skeleton loader card.
+     * @returns {string} The HTML string for a skeleton loader.
+     */
+    function createSkeletonLoaderComponent() {
+      return `
+        <div class="skeleton-card">
+          <div class="skeleton-avatar"></div>
+          <div class="skeleton-info">
+            <div class="skeleton-text long"></div>
+            <div class="skeleton-text short"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Creates an HTML member card from member data.
+     * @param {object} member - The member data object.
+     * @returns {string} The HTML string for the member card.
+     */
+    function createMemberCardComponent(member) {
+        const initials = getInitials(member.displayName);
+        const memberName = member.displayName || 'Unnamed User';
+        const memberIdDisplay = member.memberId || 'N/A';
+        const isActive = member.status === 'active' || member.isActive === true;
+        const statusText = isActive ? 'Active' : 'Inactive';
+        const statusClass = isActive ? '' : 'inactive';
+        const avatarSrc = member.photoURL;
+
+        return `
+            <div class="member-card">
+                <div class="member-avatar" ${avatarSrc ? `style="background-image: url('${avatarSrc}'); background-size: cover; color: transparent;"` : ''}>
+                    ${!avatarSrc ? initials : ''}
+                </div>
+                <div class="member-info">
+                    <div class="member-name">${memberName}</div>
+                    <div class="member-id">ID: ${memberIdDisplay}</div>
+                </div>
+                <div class="member-status ${statusClass}">${statusText}</div>
+            </div>
+        `;
+    }
+
+    // --- Utility Functions ---
+
+    function formatCurrency(amount) {
+      const numericAmount = Number(amount) || 0;
+      return '₱' + numericAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function getInitials(name) {
+      if (!name || typeof name !== 'string') return 'U';
+      const nameParts = name.trim().split(' ').filter(Boolean);
+      if (nameParts.length === 0) return 'U';
+      return nameParts.map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    }
+    
+    /**
+     * Renders member data into a specified level container.
+     * Replaces skeleton loaders with actual member cards.
+     * @param {HTMLElement} levelElement - The container for the level.
+     * @param {Array<object>} membersData - Array of member data objects.
+     * @param {number} levelNumber - The network level number.
+     */
+    function renderNetworkLevel(levelElement, membersData, levelNumber) {
+        if (!membersData || membersData.length === 0) {
+            levelElement.innerHTML = `<p class="no-members-text">No members found at Level ${levelNumber}.</p>`;
+            return;
+        }
+        const membersHtml = membersData.map(createMemberCardComponent).join('');
+        levelElement.innerHTML = membersHtml;
+    }
+
+    /**
+     * Fetches members who have the specified uplineMemberId.
+     * @param {string} uplineMemberId - The memberId of the upline.
+     * @returns {Promise<Array<object>>} A promise that resolves to an array of member documents.
+     */
+    async function fetchNetworkMembersByUpline(uplineMemberId) {
+        const members = [];
+        if (!uplineMemberId) return members;
+        // Note: Firestore queries require a composite index for this to work efficiently in production.
+        // Index: users collection, uplineMemberId ASC, any other field ASC/DESC.
+        const querySnapshot = await db.collection('users').where('uplineMemberId', '==', uplineMemberId).get();
+        querySnapshot.forEach(doc => {
+            members.push({ uid: doc.id, ...doc.data() });
+        });
+        return members;
+    }
+
+    /**
+     * Main function to fetch and display all network data for the current user.
+     * @param {string} currentUserId - The UID of the currently authenticated user.
+     */
+    async function fetchAndDisplayNetworkData(currentUserId) {
+        try {
+            // Initially render skeleton loaders for a better UX
+            level1MembersElement.innerHTML = Array(3).fill(createSkeletonLoaderComponent()).join('');
+            level2MembersElement.innerHTML = Array(2).fill(createSkeletonLoaderComponent()).join('');
+            level3MembersElement.innerHTML = Array(1).fill(createSkeletonLoaderComponent()).join('');
+
+            const currentUserDoc = await db.collection('users').doc(currentUserId).get();
+            if (!currentUserDoc.exists) throw new Error("Current user document not found.");
+
+            const currentUserData = currentUserDoc.data();
+            const { memberId: currentUserMemberId, displayName, networkEarnings, unilevel_income } = currentUserData;
+            
+            pageTitleElement.textContent = `${displayName || 'Your'} Network`;
+
+            if (!currentUserMemberId) throw new Error("Current user memberId not found.");
+            
+            referralLinkElement.textContent = `https://weconnect-ph.online/signup?ref=${currentUserMemberId}`;
+
+            let allDownlineMembers = new Map();
+            let totalActiveDownlineMembers = 0;
+
+            const processMember = (memberData) => {
+                if (memberData && memberData.uid && !allDownlineMembers.has(memberData.uid)) {
+                    allDownlineMembers.set(memberData.uid, memberData);
+                    if (memberData.status === 'active' || memberData.isActive === true) {
+                        totalActiveDownlineMembers++;
+                    }
+                }
+            };
+            
+            // Fetch and render level 1
+            const level1Members = await fetchNetworkMembersByUpline(currentUserMemberId);
+            level1Members.forEach(processMember);
+            renderNetworkLevel(level1MembersElement, level1Members, 1);
+
+            // Fetch and render level 2
+            const level2Promises = level1Members.map(m => m.memberId ? fetchNetworkMembersByUpline(m.memberId) : Promise.resolve([]));
+            const level2Results = await Promise.all(level2Promises);
+            const level2Members = level2Results.flat();
+            level2Members.forEach(processMember);
+            renderNetworkLevel(level2MembersElement, level2Members, 2);
+
+            // Fetch and render level 3
+            const level3Promises = level2Members.map(m => m.memberId ? fetchNetworkMembersByUpline(m.memberId) : Promise.resolve([]));
+            const level3Results = await Promise.all(level3Promises);
+            const level3Members = level3Results.flat();
+            level3Members.forEach(processMember);
+            renderNetworkLevel(level3MembersElement, level3Members, 3);
+            
+            // Update stats
+            totalMembersElement.textContent = allDownlineMembers.size;
+            activeMembersElement.textContent = totalActiveDownlineMembers;
+            const earnings = networkEarnings !== undefined ? networkEarnings : (unilevel_income !== undefined ? unilevel_income : 0);
+            networkEarningsElement.textContent = formatCurrency(earnings);
+
+        } catch (error) {
+            console.error("Error fetching and displaying network data:", error);
+            pageTitleElement.textContent = 'Network Load Error';
+            level1MembersElement.innerHTML = `<p class="error-text">Could not load Level 1 members. ${error.message}</p>`;
+            level2MembersElement.innerHTML = `<p class="error-text">Could not load Level 2 members.</p>`;
+            level3MembersElement.innerHTML = `<p class="error-text">Could not load Level 3 members.</p>`;
+            referralLinkElement.textContent = 'Referral ID not available.';
+        }
+    }
+
+    // --- Event Listeners and Initialization ---
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        fetchAndDisplayNetworkData(user.uid);
+        pageLoadingElement.classList.add('hidden');
+      } else {
+        console.log("User is signed out. Redirecting to signin.html");
+        window.location.href = 'signin.html';
+      }
+    });
+
+    copyLinkBtn.addEventListener('click', () => {
+      const referralLink = referralLinkElement.textContent;
+      if (navigator.clipboard && referralLink.startsWith('http')) {
+          navigator.clipboard.writeText(referralLink)
+            .then(() => {
+                const originalText = copyLinkBtn.textContent;
+                const originalColor = copyLinkBtn.style.backgroundColor;
+                copyLinkBtn.textContent = 'Copied!';
+                copyLinkBtn.style.backgroundColor = 'var(--success-color)';
+                setTimeout(() => {
+                    copyLinkBtn.textContent = originalText;
+                    copyLinkBtn.style.backgroundColor = originalColor;
+                }, 2000);
+            })
+            .catch(err => { console.error('Failed to copy text: ', err); alert('Failed to copy link.'); });
+      } else {
+          alert('Referral link not available to copy.');
+      }
+    });
+
+    signOutIcon.addEventListener('click', async () => {
+        if (confirm("Are you sure you want to sign out?")) {
+            try {
+                pageLoadingElement.classList.remove('hidden');
+                pageLoadingText.textContent = 'Signing out...';
+                await auth.signOut();
+            } catch (error) {
+                console.error("Error signing out:", error);
+                alert("Failed to sign out. Please try again.");
+                pageLoadingElement.classList.add('hidden');
+            }
+        }
+    });
+
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
+        const targetUrl = item.dataset.targetUrl;
+        if (targetUrl && window.location.pathname.includes(targetUrl)) {
+            document.querySelectorAll('.bottom-nav .nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        }
+        item.addEventListener('click', () => {
+            if (targetUrl && !item.classList.contains('active')) {
+                window.location.href = targetUrl;
+            } else if (item.classList.contains('active')) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    });
+
+    // Fallback to hide loader if auth state takes too long
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (!pageLoadingElement.classList.contains('hidden') && !auth.currentUser) {
+             pageLoadingElement.classList.add('hidden');
+          }
+        }, 3000);
+    });
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

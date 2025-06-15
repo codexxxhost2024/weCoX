@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Success</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .success-animation {
+            width: 150px;
+            height: 150px;
+            /* You might want to add a background-image here for the animation */
+            /* e.g., background-image: url('path/to/success.gif'); */
+            background-size: cover;
+            background-position: center;
+            border: 1px dashed #ccc; /* Added a placeholder border */
+        }
+    </style>
+
+    <!-- Hardcoded Firebase Configuration -->
+    <script>
+      // WARNING: Hardcoding configuration like this, especially API keys,
+      // is generally discouraged for security reasons in production applications.
+      // Consider using environment variables or backend provisioning.
+      const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Treat this like a password!
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+      };
+
+      // Note: To actually *use* Firebase on this page, you would also need to:
+      // 1. Include the Firebase SDK script(s) *before* this script or your usage script.
+      //    e.g., <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+      //         <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth-compat.js"></script>
+      //         etc. (Use appropriate version numbers)
+      // 2. Initialize Firebase using the config:
+      //    firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <!-- Removed the external firebase config script reference: -->
+    <!-- <script src="js/firebase-config.js"></script> -->
+
+</head>
+<body>
+    <div class="success-animation">
+        <!-- Content inside the animation div if needed -->
+    </div>
+
+    <script>
+        // Redirect to home page after 3 seconds
+        setTimeout(() => {
+            window.location.href = "home.html";
+        }, 3000); // 3000 milliseconds = 3 seconds
+    </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

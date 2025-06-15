@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WeConnect • Agent Manager</title> <!-- MODIFIED: WeConnect Title -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#1F3A5C" /> <!-- MODIFIED: WeConnect Theme Color -->
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- MODIFIED: Inter Font for WeConnect -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" <!-- Updated Font Awesome -->
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+  />
+
+  <style>
+    :root {
+      /* --- MODIFIED: WeConnect Theme Variables --- */
+      --primary-color: #1F3A5C;
+      --primary-color-darker: #142840;
+      --primary-color-light-bg: rgba(31, 58, 92, 0.08);
+      --accent-color: #4A90E2;
+      --accent-color-darker: #357ABD;
+
+      --background-main: #f0f2f5;
+      --background-card: #ffffff;
+      --background-card-subtle: #f8f9fa;
+
+      --text-dark: #333333;
+      --text-medium: #555555;
+      --text-light: #777777;
+      --text-on-primary: #FFFFFF;
+
+      --border-color: #DEE2E6;
+      --border-radius: 8px;
+      --border-radius-large: 12px;
+      --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      --transition-speed: 0.3s;
+      --header-h: 60px; /* WeConnect Standard */
+      --space: 16px; /* WeConnect Standard */
+
+      /* Status colors (can be adapted from WeConnect or kept if distinct) */
+      --success-color: #198754; /* Bootstrap Green */
+      --error-color: #dc3545;   /* Bootstrap Red */
+      --draft-color: #ffc107;   /* Bootstrap Yellow */
+      --hidden-color: #6c757d;  /* Bootstrap Secondary */
+      --personal-color: #6f42c1; /* Bootstrap Purple */
+      --public-color: var(--success-color);
+      --unlisted-color: #fd7e14; /* Bootstrap Orange */
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+    body {
+      font-family: "Inter", sans-serif; /* MODIFIED */
+      font-size: 0.9rem; /* MODIFIED: Slightly larger base font */
+      background: var(--background-main); /* MODIFIED */
+      color: var(--text-dark); /* MODIFIED */
+      padding-top: var(--header-h);
+      max-width: 430px; /* MODIFIED: WeConnect typical max-width */
+      margin: 0 auto;
+      overflow-x: hidden;
+    }
+    a {
+      color: var(--accent-color); /* MODIFIED */
+      text-decoration: none;
+    }
+    a:hover {
+      color: var(--accent-color-darker); /* MODIFIED */
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--header-h);
+      background: var(--background-card); /* MODIFIED */
+      backdrop-filter: none; /* MODIFIED: No blur for WeConnect */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space);
+      border-bottom: 1px solid var(--border-color); /* MODIFIED */
+      z-index: 1000;
+      box-shadow: var(--box-shadow); /* MODIFIED */
+      max-width: 430px; /* Match body */
+      margin: 0 auto;
+    }
+    .header-btn {
+      background: none;
+      border: none;
+      color: var(--text-medium); /* MODIFIED */
+      font-size: 22px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px; height: 40px; /* Consistent tap target */
+    }
+    .header-btn:hover {
+      background: var(--primary-color-light-bg); /* MODIFIED */
+      color: var(--primary-color); /* MODIFIED */
+    }
+    .title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: "Inter", sans-serif; /* MODIFIED */
+      color: var(--primary-color); /* MODIFIED */
+      font-size: 1.15rem; /* MODIFIED */
+      font-weight: 600; /* MODIFIED */
+      text-shadow: none; /* MODIFIED */
+    }
+
+    /* Main & Panel */
+    .main {
+      padding: var(--space);
+    }
+    .panel {
+      background: var(--background-card); /* MODIFIED */
+      border: 1px solid var(--border-color); /* MODIFIED */
+      border-radius: var(--border-radius-large);
+      padding: var(--space);
+      margin-bottom: var(--space);
+      box-shadow: var(--box-shadow); /* MODIFIED */
+    }
+    .panel h2 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-family: "Inter", sans-serif; /* MODIFIED */
+      color: var(--text-dark); /* MODIFIED */
+      font-size: 1.1rem; /* MODIFIED */
+      font-weight: 600; /* MODIFIED */
+      margin-bottom: calc(var(--space) * 0.75);
+      padding-bottom: calc(var(--space) * 0.5); /* MODIFIED */
+      border-bottom: 1px solid var(--border-color); /* MODIFIED */
+    }
+    .panel h2 .fas,
+    .panel h2 .fa, /* Added .fa */
+    .panel h2 .material-symbols-outlined {
+      font-size: 1em; /* MODIFIED */
+      color: var(--primary-color); /* MODIFIED */
+    }
+
+    /* Form */
+    .form-group {
+        margin-bottom: var(--space);
+    }
+    .label {
+      display: block;
+      font-family: "Inter", sans-serif; /* MODIFIED */
+      color: var(--text-medium); /* MODIFIED */
+      font-size: 0.9rem; /* MODIFIED */
+      font-weight: 500; /* MODIFIED */
+      margin-bottom: 6px; /* MODIFIED */
+      margin-top: calc(var(--space) * 0.6);
+    }
+    .label:first-of-type {
+        margin-top: 0;
+    }
+    .control {
+      width: 100%;
+      padding: 10px 12px; /* MODIFIED */
+      border-radius: var(--border-radius);
+      border: 1px solid var(--border-color); /* MODIFIED */
+      background: var(--background-card); /* MODIFIED */
+      color: var(--text-dark); /* MODIFIED */
+      font-size: 0.9rem; /* MODIFIED */
+      box-shadow: none; /* MODIFIED */
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .control:focus {
+      border-color: var(--accent-color); /* MODIFIED */
+      box-shadow: 0 0 0 0.2rem var(--primary-color-light-bg); /* MODIFIED */
+      outline: none;
+    }
+    textarea.control {
+      resize: vertical;
+      min-height: 90px; /* MODIFIED */
+    }
+    select.control { /* Basic select styling, Bootstrap will enhance if used */
+      appearance: none; /* Remove default arrow */
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 16px 12px;
+      padding-right: 2.5rem;
+    }
+    .radio-group {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping on small screens */
+        gap: calc(var(--space) * 0.75);
+        margin-top: 5px;
+        margin-bottom: calc(var(--space)*0.5);
+    }
+    .radio-group label {
+        display: flex;
+        align-items: center;
+        gap: 6px; /* MODIFIED */
+        font-size: 0.9rem; /* MODIFIED */
+        color: var(--text-medium); /* MODIFIED */
+        cursor: pointer;
+        font-family: "Inter", sans-serif; /* MODIFIED */
+    }
+    .radio-group input[type="radio"] {
+        accent-color: var(--primary-color); /* MODIFIED */
+        width: 1.1em; height: 1.1em; /* Slightly larger */
+    }
+    .price-input-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .price-input-group .control {
+        flex: 1;
+    }
+    .price-input-group span {
+        font-size: 0.9rem; /* MODIFIED */
+        color: var(--text-medium); /* MODIFIED */
+    }
+
+
+    .btn { /* WeConnect Button Style */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px; /* MODIFIED */
+      padding: 10px 18px; /* MODIFIED */
+      border-radius: var(--border-radius);
+      border: 1px solid transparent; /* Prepare for outline */
+      background-color: var(--primary-color); /* MODIFIED */
+      color: var(--text-on-primary); /* MODIFIED */
+      font-family: "Inter", sans-serif; /* MODIFIED */
+      font-size: 0.95rem; /* MODIFIED */
+      font-weight: 500; /* MODIFIED */
+      cursor: pointer;
+      transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed), transform 0.1s;
+      box-shadow: none; /* MODIFIED */
+      width: 100%;
+      margin-top: calc(var(--space) * 1.2);
+    }
+    .btn:hover {
+      background-color: var(--primary-color-darker); /* MODIFIED */
+      color: var(--text-on-primary);
+      border-color: var(--primary-color-darker); /* MODIFIED */
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+        background-color: #adb5bd; /* Bootstrap disabled grey */
+        border-color: #adb5bd;
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+    .btn .fa-spinner {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+
+    /* Agent List */
+    #agentList {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space); /* MODIFIED */
+    }
+    .agent-row {
+      display: grid;
+      grid-template-columns: 50px 1fr auto; /* MODIFIED: Avatar size */
+      align-items: center;
+      gap: var(--space); /* MODIFIED */
+      background: var(--background-card); /* MODIFIED */
+      border: 1px solid var(--border-color); /* MODIFIED */
+      border-radius: var(--border-radius-large); /* MODIFIED */
+      padding: var(--space); /* MODIFIED */
+      box-shadow: var(--box-shadow); /* MODIFIED */
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+     .agent-row:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* MODIFIED */
+    }
+    .agent-logo {
+      width: 50px; /* MODIFIED */
+      height: 50px; /* MODIFIED */
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border-color); /* MODIFIED */
+      background: var(--background-main); /* MODIFIED */
+      flex-shrink: 0;
+      grid-row: 1 / span 3;
+    }
+    .agent-info {
+      grid-column: 2;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      gap: 2px; /* MODIFIED */
+    }
+    .agent-name {
+      font-family: "Inter", sans-serif; /* MODIFIED */
+      color: var(--text-dark); /* MODIFIED */
+      font-size: 1rem; /* MODIFIED */
+      font-weight: 600; /* MODIFIED */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+    .agent-status-lease, .agent-visibility-info {
+      font-size: 0.8rem; /* MODIFIED */
+      color: var(--text-medium); /* MODIFIED */
+      line-height: 1.4; /* MODIFIED */
+      margin-top: 2px; /* MODIFIED */
+    }
+    .agent-status-lease .status-active { color: var(--success-color); }
+    .agent-status-lease .status-inactive { color: var(--error-color); }
+    .agent-status-lease .status-draft { color: var(--draft-color); }
+    .agent-status-lease .status-hidden { color: var(--hidden-color); }
+    .agent-status-lease .lease-active { color: var(--success-color); font-weight: 500; margin-left: 5px;} /* MODIFIED */
+
+    .agent-visibility-info .visibility-personal { color: var(--personal-color); }
+    .agent-visibility-info .visibility-public { color: var(--public-color); }
+    .agent-visibility-info .visibility-unlisted { color: var(--unlisted-color); }
+    .agent-visibility-info .fas, .agent-visibility-info .fa { margin-right: 4px; } /* MODIFIED */
+
+
+    .agent-actions {
+      grid-column: 3;
+      grid-row: 1 / span 3;
+      align-self: center;
+      position: relative;
+    }
+    .actions-btn {
+      background: none;
+      border: 1px solid var(--border-color); /* MODIFIED */
+      color: var(--text-medium); /* MODIFIED */
+      font-size: 18px; /* MODIFIED */
+      cursor: pointer;
+      padding: 6px 8px; /* MODIFIED */
+      border-radius: var(--border-radius);
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .actions-btn:hover {
+      background: var(--primary-color-light-bg); /* MODIFIED */
+      color: var(--primary-color); /* MODIFIED */
+    }
+    .actions-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 5px);
+      background: var(--background-card); /* MODIFIED */
+      border: 1px solid var(--border-color); /* MODIFIED */
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow); /* MODIFIED */
+      z-index: 10;
+      width: max-content;
+      min-width: 180px;
+      padding: 5px 0;
+    }
+    .actions-dropdown.visible {
+      display: block;
+    }
+    .actions-dropdown button {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-dark); /* MODIFIED */
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 0.9rem; /* MODIFIED */
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .actions-dropdown button:hover {
+      background-color: var(--primary-color-light-bg); /* MODIFIED */
+      color: var(--primary-color); /* MODIFIED */
+    }
+    .actions-dropdown button i {
+      margin-right: 8px;
+      width: 16px;
+      text-align: center;
+      color: var(--text-medium); /* MODIFIED */
+    }
+     .actions-dropdown button:hover i {
+        color: var(--primary-color); /* MODIFIED */
+     }
+
+    .modal-backdrop { /* For Lease Price Modal */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5); /* MODIFIED: Standard modal backdrop */
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1040; /* Bootstrap modal z-index is 1050+ */
+    }
+    .modal-backdrop.visible { display: flex; }
+    .modal-content {
+        background: var(--background-card); /* MODIFIED */
+        padding: var(--space) calc(var(--space) * 1.5);
+        border-radius: var(--border-radius-large);
+        border: none; /* MODIFIED: WeConnect modals usually don't have border */
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); /* MODIFIED: Bootstrap-like shadow */
+        width: 90%;
+        max-width: 380px; /* MODIFIED */
+    }
+    .modal-content h3 {
+        font-family: "Inter", sans-serif; /* MODIFIED */
+        color: var(--text-dark); /* MODIFIED */
+        font-size: 1.1rem; /* MODIFIED */
+        font-weight: 600; /* MODIFIED */
+        margin-bottom: var(--space);
+        text-align: center;
+    }
+    .modal-actions {
+        display: flex;
+        gap: var(--space);
+        margin-top: var(--space);
+    }
+    .modal-actions .btn { /* Buttons inside modal */
+        flex: 1;
+    }
+    .btn-secondary { /* WeConnect Secondary/Cancel Button */
+        background-color: var(--background-card-subtle);
+        color: var(--text-medium);
+        border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover {
+        background-color: var(--border-color);
+        color: var(--text-dark);
+        border-color: var(--border-color);
+    }
+    #pageLoadingScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(240, 242, 245, 0.9); /* MODIFIED: WeConnect Loading BG */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        color: var(--text-dark); /* MODIFIED */
+        font-family: "Inter", sans-serif; /* MODIFIED */
+    }
+    #pageLoadingScreen .spinner {
+        border: 4px solid var(--primary-color-light-bg); /* MODIFIED */
+        border-top: 4px solid var(--primary-color); /* MODIFIED */
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+    }
+    /* spin keyframes already defined */
+
+  </style>
+</head>
+
+<body>
+  <div id="pageLoadingScreen" style="display: none;"> <!-- Initial state is hidden, JS will show it -->
+    <div class="spinner"></div>
+    <p>Processing...</p>
+  </div>
+
+  <div class="modal-backdrop" id="leasePriceModal">
+    <div class="modal-content">
+        <h3 id="leaseModalTitle">Set Lease Price</h3>
+        <label class="label" for="leasePriceInput">Price (Credits)</label> <!-- MODIFIED: EMX to Credits -->
+        <input type="number" class="control" id="leasePriceInput" placeholder="e.g., 100" min="0" step="0.01">
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="cancelLeasePriceBtn">Cancel</button>
+            <button class="btn" id="confirmLeasePriceBtn">Confirm</button> <!-- Uses default .btn style (primary) -->
+        </div>
+    </div>
+  </div>
+
+  <header class="header">
+    <button class="header-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
+    <span class="title">Agent Manager</span>
+    <button class="header-btn" id="signOutBtn" title="Sign Out"><i class="fas fa-sign-out-alt"></i></button>
+  </header>
+
+  <main class="main">
+    <div class="panel">
+      <h2><i class="fas fa-user-plus"></i> Create New Agent</h2> <!-- MODIFIED: Title -->
+      <form id="agentForm">
+        <div class="form-group">
+            <label class="label" for="agentIdInput">Agent ID (Optional)</label> <!-- MODIFIED: Label -->
+            <input class="control" id="agentIdInput" name="agentId" type="text" placeholder="e.g., support_hero (auto-generated if empty)" pattern="^[a-z0-9_]*$" title="Optional. Lowercase letters, numbers, and underscores only."/>
+        </div>
+
+        <div class="form-group">
+            <label class="label" for="agentNameInput">Agent Name*</label>
+            <input class="control" id="agentNameInput" name="agentName" type="text" placeholder="e.g., Support Hero" required value="Support Hero"/>
+        </div>
+
+        <div class="form-group">
+            <label class="label" for="agentSubtitleInput">Agent Subtitle / Tagline*</label> <!-- MODIFIED: Label -->
+            <input class="control" id="agentSubtitleInput" name="agentSubtitle" type="text" placeholder="e.g., Your friendly 24/7 Support Assistant" required value="Your friendly 24/7 Support Assistant"/>
+        </div>
+
+        <div class="form-group">
+            <label class="label" for="agentBehaviorSelect">Primary Behavior*</label>
+            <select class="control" id="agentBehaviorSelect" name="agentBehavior">
+                <option value="helpful and friendly">Helpful & Friendly</option>
+                <option value="">Default (Balanced)</option>
+                <option value="strictly professional and formal">Strictly Professional & Formal</option>
+                <option value="creative and inspiring">Creative & Inspiring</option>
+                <option value="analytical and data-driven">Analytical & Data-Driven</option>
+                <option value="cautious and precise">Cautious & Precise</option>
+                <option value="enthusiastic and encouraging">Enthusiastic & Encouraging</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="label" for="agentToneSelect">Communication Tone*</label>
+            <select class="control" id="agentToneSelect" name="agentTone">
+                <option value="empathetic and understanding">Empathetic & Understanding</option>
+                <option value="">Default (Neutral)</option>
+                <option value="formal">Formal</option>
+                <option value="casual and conversational">Casual & Conversational</option>
+                <option value="humorous and witty">Humorous & Witty</option>
+                <option value="assertive and direct">Assertive & Direct</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="label" for="agentRoleSelect">Assigned Role/Persona*</label>
+            <select class="control" id="agentRoleSelect" name="agentRole">
+                <option value="customer support specialist">Customer Support Specialist</option>
+                <option value="">Default (General Assistant)</option>
+                <option value="knowledgeable tutor">Knowledgeable Tutor</option>
+                <option value="technical expert in a specific field">Technical Expert</option>
+                <option value="creative writer or storyteller">Creative Writer/Storyteller</option>
+                <option value="efficient code generator">Efficient Code Generator</option>
+                <option value="motivational coach">Motivational Coach</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="label" for="agentOutputFormatSelect">Preferred Output Format*</label>
+            <select class="control" id="agentOutputFormatSelect" name="agentOutputFormat">
+                <option value="concise and to-the-point">Concise & To-the-point</option>
+                <option value="">Default (Clear and direct)</option>
+                <option value="detailed and comprehensive">Detailed & Comprehensive</option>
+                <option value="step-by-step instructions">Step-by-step Instructions</option>
+                <option value="bullet points or numbered lists">Bullet Points / Numbered Lists</option>
+                <option value="well-structured code blocks when appropriate">Well-structured Code Blocks</option>
+                <option value="responses in a Q&A format">Q&A Format</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="label" for="additionalPromptInstructionsTextarea">Additional Instructions (Optional)</label>
+            <textarea class="control" id="additionalPromptInstructionsTextarea" name="additionalPromptInstructions" rows="3" placeholder="e.g., Always ask if the user needs further help. Prioritize resolving issues quickly.">Always ask if the user needs further help. Prioritize resolving issues quickly.</textarea>
+        </div>
+
+        <textarea class="control" id="systemPromptInput" name="systemPrompt" rows="1" required style="display: none; min-height: 0; padding: 0; border: none; resize: none;"></textarea>
+
+        <div class="form-group">
+            <label class="label" for="initialMessageInput">Agent's First Greeting*</label>
+            <textarea class="control" id="initialMessageInput" name="initialMessage" rows="3" placeholder="e.g., Hello! I'm Support Hero. How can I assist you today?" required>Hello! I'm Support Hero. How can I assist you today?</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="label">Visibility*</label>
+            <div class="radio-group">
+                <label><input type="radio" name="agentVisibility" value="personal" checked> <i class="fas fa-user-shield"></i> Personal</label>
+                <label><input type="radio" name="agentVisibility" value="public"> <i class="fas fa-globe-americas"></i> Public</label>
+                <label><input type="radio" name="agentVisibility" value="unlisted"> <i class="fas fa-link"></i> Unlisted (Link Only)</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="label">Make Rentable?*</label>
+            <div class="radio-group">
+                <label><input type="radio" name="agentRentable" value="yes"> <i class="fas fa-hand-holding-usd"></i> Yes</label>
+                <label><input type="radio" name="agentRentable" value="no" checked> <i class="fas fa-ban"></i> No</label>
+            </div>
+        </div>
+
+        <div class="form-group" id="initialLeasePriceGroup" style="display:none;">
+            <label class="label" for="initialLeasePriceInput">Initial Lease Price (Optional)</label>
+            <div class="price-input-group">
+                <input type="number" class="control" id="initialLeasePriceInput" name="initialLeasePrice" placeholder="e.g., 50" min="0" step="0.01">
+                <span>Credits</span> <!-- MODIFIED: EMX to Credits -->
+            </div>
+        </div>
+
+
+        <div class="form-group">
+            <label class="label" for="agentLogoInput">Agent Logo (Square Image)*</label>
+            <input class="control" id="agentLogoInput" name="agentLogo" type="file" accept="image/png, image/jpeg, image/gif" required/>
+        </div>
+
+        <div class="form-group">
+            <label class="label" for="agentBannerInput">Agent Banner (Wide Image)*</label>
+            <input class="control" id="agentBannerInput" name="agentBanner" type="file" accept="image/png, image/jpeg, image/gif" required/>
+        </div>
+
+        <button type="submit" class="btn" id="createAgentBtn">
+          <i class="fas fa-save"></i> Create Agent
+        </button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2><i class="fas fa-users-cog"></i> My Agents</h2> <!-- MODIFIED: Icon and Title -->
+      <div id="agentList">
+        <div id="agentListPlaceholder" style="text-align: center; color: var(--text-light); padding: 20px 0;">
+          Loading your agents…
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FIREBASE SDKs (Keep current version as it's working for you) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+  <script>
+    const firebaseConfig = { // WEBCONNECT Firebase Config
+      apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+      authDomain: "daisy-n7g20a.firebaseapp.com",
+      databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+      projectId: "daisy-n7g20a",
+      storageBucket: "daisy-n7g20a.appspot.com",
+      messagingSenderId: "225362605902",
+      appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+    };
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const auth      = firebase.auth();
+    const database  = firebase.database(); 
+    const storage   = firebase.storage();
+
+    const pageLoadingScreen = document.getElementById("pageLoadingScreen");
+    const agentForm         = document.getElementById("agentForm");
+    const createAgentBtn    = document.getElementById("createAgentBtn");
+    const agentIdInput      = document.getElementById("agentIdInput");
+    const agentNameInput    = document.getElementById("agentNameInput");
+    const agentSubtitleInput= document.getElementById("agentSubtitleInput");
+    const agentBehaviorSelect    = document.getElementById("agentBehaviorSelect");
+    const agentToneSelect        = document.getElementById("agentToneSelect");
+    const agentRoleSelect        = document.getElementById("agentRoleSelect");
+    const agentOutputFormatSelect= document.getElementById("agentOutputFormatSelect");
+    const additionalPromptInstructionsTextarea = document.getElementById("additionalPromptInstructionsTextarea");
+    const systemPromptInput      = document.getElementById("systemPromptInput");
+    const initialMessageInput = document.getElementById("initialMessageInput");
+    const agentLogoInput    = document.getElementById("agentLogoInput");
+    const agentBannerInput  = document.getElementById("agentBannerInput");
+    const agentListDiv      = document.getElementById("agentList");
+    const agentListPlaceholder = document.getElementById("agentListPlaceholder");
+
+    const leasePriceModal = document.getElementById("leasePriceModal");
+    const leaseModalTitle = document.getElementById("leaseModalTitle");
+    const leasePriceInput = document.getElementById("leasePriceInput");
+    const cancelLeasePriceBtn = document.getElementById("cancelLeasePriceBtn");
+    const confirmLeasePriceBtn = document.getElementById("confirmLeasePriceBtn");
+    let currentAgentIdForLease = null;
+
+    const initialLeasePriceGroup = document.getElementById("initialLeasePriceGroup");
+    const initialLeasePriceInput = document.getElementById("initialLeasePriceInput");
+
+    const FIXED_SYSTEM_PROMPT_PREFIX = "You are an AI Agent created within the WeConnect platform, designed by its user.";
+    let currentUser = null;
+
+    document.getElementById("backBtn").onclick = () => {
+        window.location.href = 'agents-list.html'; // MODIFIED: Ensure correct WeConnect agent list page
+    };
+    document.getElementById("signOutBtn").onclick = () => {
+        showPageLoading("Signing out...");
+        auth.signOut().catch(error => {
+            console.error("Sign out error", error);
+            alert("Error signing out: " + error.message);
+            hidePageLoading();
+        });
+    };
+
+    document.querySelectorAll('input[name="agentRentable"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            initialLeasePriceGroup.style.display = this.value === 'yes' ? 'block' : 'none';
+            if (this.value === 'no') initialLeasePriceInput.value = '';
+        });
+    });
+
+
+    function showPageLoading(message = "Processing...") {
+        if (pageLoadingScreen) {
+            pageLoadingScreen.querySelector('p').textContent = message;
+            pageLoadingScreen.style.display = 'flex';
+        }
+    }
+    function hidePageLoading() {
+        if (pageLoadingScreen) {
+            pageLoadingScreen.style.display = 'none';
+        }
+    }
+
+    function updateAndBuildSystemPrompt() {
+        const behavior = agentBehaviorSelect.value;
+        const tone = agentToneSelect.value;
+        const role = agentRoleSelect.value;
+        const outputFormat = agentOutputFormatSelect.value;
+        const additionalInstructions = additionalPromptInstructionsTextarea.value.trim();
+        let constructedPrompt = FIXED_SYSTEM_PROMPT_PREFIX;
+        if (role) constructedPrompt += " Your primary role is to act as a " + role + ".";
+        if (behavior) constructedPrompt += " Your main behavior should be " + behavior + ".";
+        if (tone) constructedPrompt += " Your tone of communication should be " + tone + ".";
+        if (outputFormat) constructedPrompt += " When responding, please format your output as " + outputFormat + ".";
+        if (additionalInstructions) {
+            if (constructedPrompt.slice(-1) !== "." && constructedPrompt !== FIXED_SYSTEM_PROMPT_PREFIX) constructedPrompt += ".";
+            constructedPrompt += " Additional guidelines: " + additionalInstructions;
+        }
+        constructedPrompt = constructedPrompt.trim();
+        if (constructedPrompt.slice(-1) !== "." && constructedPrompt !== FIXED_SYSTEM_PROMPT_PREFIX) constructedPrompt += ".";
+        systemPromptInput.value = constructedPrompt;
+    }
+
+    [agentBehaviorSelect, agentToneSelect, agentRoleSelect, agentOutputFormatSelect, additionalPromptInstructionsTextarea].forEach(element => {
+        if (element) element.addEventListener('input', updateAndBuildSystemPrompt);
+    });
+    
+
+    agentForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser) {
+          alert("⚠️ You must be logged in to create an agent.");
+          return;
+      }
+      updateAndBuildSystemPrompt(); 
+      if (!systemPromptInput.value.trim() || systemPromptInput.value.trim() === FIXED_SYSTEM_PROMPT_PREFIX || systemPromptInput.value.trim() === FIXED_SYSTEM_PROMPT_PREFIX + ".") {
+          alert("⚠️ Please define the agent's characteristics using the dropdowns or add specific instructions to create a meaningful system prompt.");
+          return;
+      }
+
+      showPageLoading("Creating Agent...");
+      createAgentBtn.disabled = true;
+      createAgentBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating…`;
+
+      let agentId = agentIdInput.value.trim();
+      if (!agentId) {
+          agentId = database.ref("weconnect_agents").push().key; 
+      } else if (!/^[a-z0-9_]+$/.test(agentId)) {
+          alert("⚠️ Agent ID can only contain lowercase letters, numbers, and underscores.");
+          createAgentBtn.disabled = false;
+          createAgentBtn.innerHTML = `<i class="fas fa-save"></i> Create Agent`;
+          hidePageLoading();
+          return;
+      }
+
+      const name     = agentNameInput.value.trim();
+      const subtitle = agentSubtitleInput.value.trim();
+      const prompt   = systemPromptInput.value.trim();
+      const initial  = initialMessageInput.value.trim();
+      const logoFile = agentLogoInput.files[0];
+      const banFile  = agentBannerInput.files[0];
+
+      const visibility = document.querySelector('input[name="agentVisibility"]:checked').value;
+      const isRentable = document.querySelector('input[name="agentRentable"]:checked').value === 'yes';
+      let leasePrice = null;
+      if (isRentable && initialLeasePriceInput.value) {
+          leasePrice = parseFloat(initialLeasePriceInput.value);
+          if (isNaN(leasePrice) || leasePrice < 0) {
+              alert("⚠️ Initial lease price must be a valid non-negative number.");
+              createAgentBtn.disabled = false; createAgentBtn.innerHTML = `<i class="fas fa-save"></i> Create Agent`; hidePageLoading(); return;
+          }
+      }
+
+      if (!logoFile || !banFile) {
+          alert("⚠️ Please select both a logo and a banner image.");
+          createAgentBtn.disabled = false;
+          createAgentBtn.innerHTML = `<i class="fas fa-save"></i> Create Agent`;
+          hidePageLoading();
+          return;
+      }
+
+      try {
+        const logoRef = storage.ref(`weconnect_agent_assets/${agentId}/logo_${Date.now()}_${logoFile.name}`);
+        await logoRef.put(logoFile);
+        const logoUrl = await logoRef.getDownloadURL();
+
+        const banRef = storage.ref(`weconnect_agent_assets/${agentId}/banner_${Date.now()}_${banFile.name}`);
+        await banRef.put(banFile);
+        const bannerUrl = await banRef.getDownloadURL();
+
+        const agentData = {
+          id: agentId,
+          name,
+          subtitle,
+          systemPrompt: prompt,
+          initialMessage: initial,
+          logoUrl,
+          bannerUrl,
+          visibility: visibility,
+          quickReplies: [], 
+          placeholder: `Message ${name}...`,
+          callButtonHref: null, 
+          createdAt: firebase.database.ServerValue.TIMESTAMP,
+          creatorUid: currentUser.uid,
+          status: "active", 
+          leaseInfo: {
+              isForLease: isRentable,
+              price: isRentable ? leasePrice : null,
+              currency: "Credits" 
+          },
+          promptComponents: { 
+              behavior: agentBehaviorSelect.value,
+              tone: agentToneSelect.value,
+              role: agentRoleSelect.value,
+              outputFormat: agentOutputFormatSelect.value,
+              additionalInstructions: additionalPromptInstructionsTextarea.value.trim()
+          }
+        };
+        await database.ref(`weconnect_agents/${agentId}`).set(agentData); 
+
+        alert("✅ Agent created successfully!");
+        agentForm.reset();
+        document.querySelector('input[name="agentVisibility"][value="personal"]').checked = true;
+        document.querySelector('input[name="agentRentable"][value="no"]').checked = true;
+        initialLeasePriceGroup.style.display = 'none';
+        initialLeasePriceInput.value = '';
+        agentNameInput.value = "Support Hero"; // Default values
+        agentSubtitleInput.value = "Your friendly 24/7 Support Assistant";
+        agentBehaviorSelect.value = "helpful and friendly";
+        agentToneSelect.value = "empathetic and understanding";
+        agentRoleSelect.value = "customer support specialist";
+        agentOutputFormatSelect.value = "concise and to-the-point";
+        additionalPromptInstructionsTextarea.value = "Always ask if the user needs further help. Prioritize resolving issues quickly.";
+        initialMessageInput.value = "Hello! I'm Support Hero. How can I assist you today?";
+        agentIdInput.value = '';
+        updateAndBuildSystemPrompt(); 
+
+        window.location.href = 'agents-list.html'; // MODIFIED: Ensure correct WeConnect agent list page
+
+      } catch (err) {
+        console.error(err);
+        alert("⚠️ Error creating agent: " + err.message);
+      } finally {
+        createAgentBtn.disabled = false;
+        createAgentBtn.innerHTML = `<i class="fas fa-save"></i> Create Agent`;
+        hidePageLoading();
+      }
+    });
+
+    function renderAgentList(agentsData) {
+      agentListDiv.innerHTML = ""; 
+      agentListPlaceholder.style.display = "none"; // Hide placeholder by default
+
+      if (!agentsData || Object.keys(agentsData).length === 0) {
+        agentListPlaceholder.textContent = "You haven't created any agents yet. Create one above!";
+        agentListPlaceholder.style.display = "block";
+        // No need to appendChild if it's already in the DOM, just ensure it's visible.
+        return;
+      }
+      
+      const sortedAgents = Object.entries(agentsData).sort(([,a], [,b]) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      sortedAgents.forEach(([key, agent]) => {
+        const agentRow = document.createElement("div");
+        agentRow.className = "agent-row";
+        agentRow.dataset.agentId = key;
+
+        let statusText = agent.status ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1) : 'Unknown';
+        let statusClass = `status-${agent.status || 'unknown'}`;
+        let leaseText = "<span>Not for Rent</span>"; 
+        if (agent.leaseInfo && agent.leaseInfo.isForLease) {
+            leaseText = `<span class="lease-active">Rentable (${agent.leaseInfo.price || '0'} Credits)</span>`; 
+        }
+
+        let visibilityText = agent.visibility ? agent.visibility.charAt(0).toUpperCase() + agent.visibility.slice(1) : 'N/A';
+        let visibilityClass = `visibility-${agent.visibility || 'unknown'}`;
+        let visibilityIcon = "fas fa-question-circle";
+        if (agent.visibility === 'personal') visibilityIcon = "fas fa-user-shield";
+        else if (agent.visibility === 'public') visibilityIcon = "fas fa-globe-americas";
+        else if (agent.visibility === 'unlisted') visibilityIcon = "fas fa-link";
+
+
+        agentRow.innerHTML = `
+          <img src="${agent.logoUrl || 'https://via.placeholder.com/50?text=N/A'}" class="agent-logo" alt="${agent.name || 'Agent'} logo" onerror="this.src='https://via.placeholder.com/50?text=Error'; this.onerror=null;">
+          <div class="agent-info">
+            <div class="agent-name">${agent.name || 'Unnamed Agent'}</div>
+            <div class="agent-status-lease">
+                Status: <span class="${statusClass}">${statusText}</span>
+                <br> ${leaseText}
+            </div>
+            <div class="agent-visibility-info">
+                Visibility: <span class="${visibilityClass}"><i class="${visibilityIcon}"></i> ${visibilityText}</span>
+            </div>
+          </div>
+          <div class="agent-actions">
+            <button class="actions-btn"><i class="fas fa-ellipsis-v"></i></button>
+            <div class="actions-dropdown">
+              <button data-action="toggle-active">
+                <i class="fas ${agent.status === 'active' ? 'fa-toggle-off' : 'fa-toggle-on'}"></i> ${agent.status === 'active' ? 'Deactivate' : 'Activate'}
+              </button>
+              <button data-action="set-draft">
+                <i class="fas fa-file-alt"></i> Set to Draft
+              </button>
+              <button data-action="toggle-hidden">
+                <i class="fas ${agent.status === 'hidden' ? 'fa-eye' : 'fa-eye-slash'}"></i> ${agent.status === 'hidden' ? 'Unhide' : 'Hide'}
+              </button>
+              <button data-action="toggle-lease">
+                <i class="fas fa-hand-holding-usd"></i> ${agent.leaseInfo && agent.leaseInfo.isForLease ? 'Update/Stop Rent' : 'Make Rentable'}
+              </button>
+              <button data-action="change-visibility">
+                <i class="fas fa-user-cog"></i> Change Visibility
+              </button>
+               <button data-action="edit-details"> 
+                <i class="fas fa-edit"></i> Edit Details
+              </button>
+            </div>
+          </div>
+        `;
+        agentListDiv.appendChild(agentRow);
+      });
+    }
+
+    agentListDiv.addEventListener('click', async (e) => {
+        const targetButton = e.target.closest('button[data-action]');
+        const agentRow = e.target.closest('.agent-row');
+        const actionsBtn = e.target.closest('.actions-btn');
+        const agentNameDiv = e.target.closest('.agent-name');
+
+        if (actionsBtn) {
+            const dropdown = actionsBtn.nextElementSibling;
+            document.querySelectorAll('.actions-dropdown.visible').forEach(d => {
+                if (d !== dropdown) d.classList.remove('visible');
+            });
+            dropdown.classList.toggle('visible');
+            return;
+        }
+
+        if (agentNameDiv && agentRow) { 
+             const agentId = agentRow.dataset.agentId;
+             window.location.href = `agent-details.html?agentId=${agentId}`; 
+             return;
+        }
+
+        if (!targetButton || !agentRow) return;
+
+        const agentId = agentRow.dataset.agentId;
+        const action = targetButton.dataset.action;
+        const agentRef = database.ref(`weconnect_agents/${agentId}`); 
+        const agentSnapshot = await agentRef.once('value');
+        const agentData = agentSnapshot.val();
+
+        if (!agentData) { alert("Could not find agent data."); return; }
+
+        document.querySelectorAll('.actions-dropdown.visible').forEach(d => d.classList.remove('visible'));
+        showPageLoading("Updating Agent...");
+
+        try {
+            switch (action) {
+                case "toggle-active":
+                    await agentRef.update({ status: agentData.status === 'active' ? 'inactive' : 'active' });
+                    break;
+                case "set-draft":
+                    await agentRef.update({ status: 'draft' });
+                    break;
+                case "toggle-hidden":
+                    await agentRef.update({ status: agentData.status === 'hidden' ? (agentData.leaseInfo?.isForLease ? 'active' : 'inactive') : 'hidden' });
+                    break;
+                case "toggle-lease":
+                    currentAgentIdForLease = agentId;
+                    if (agentData.leaseInfo && agentData.leaseInfo.isForLease) {
+                        leaseModalTitle.textContent = "Update or Stop Rent";
+                        leasePriceInput.value = agentData.leaseInfo.price || '';
+                        confirmLeasePriceBtn.textContent = "Update Price";
+                        leasePriceInput.placeholder = "Enter new price, or 0/empty to stop rent";
+                    } else {
+                        leaseModalTitle.textContent = "Set Rent Price";
+                        leasePriceInput.value = '';
+                        leasePriceInput.placeholder = "e.g., 100 Credits"; 
+                        confirmLeasePriceBtn.textContent = "Confirm Rent";
+                    }
+                    leasePriceModal.classList.add('visible');
+                    hidePageLoading(); // Hide page loading as modal is shown
+                    return; // Return to prevent hiding loading again in finally
+                 case "edit-details":
+                    alert("Editing details would typically be on a separate 'Agent Details' or 'Edit Agent' page. This feature is not fully implemented on this page.");
+                    // Example: window.location.href = `edit-agent-details.html?agentId=${agentId}`;
+                    hidePageLoading();
+                    return; 
+                 case "change-visibility":
+                    const newVisibility = prompt(`Set new visibility for "${agentData.name}":\n(personal, public, unlisted)`, agentData.visibility || "personal");
+                    if (newVisibility && ['personal', 'public', 'unlisted'].includes(newVisibility.toLowerCase())) {
+                        await agentRef.update({ visibility: newVisibility.toLowerCase() });
+                    } else if (newVisibility !== null) { // User didn't cancel
+                        alert("Invalid visibility option. Please use 'personal', 'public', or 'unlisted'.");
+                    }
+                    break;
+                 default:
+                     console.warn("Unknown action:", action);
+            }
+        } catch (error) {
+            console.error("Error updating agent:", error);
+            alert("⚠️ Error updating agent: " + error.message);
+        } finally {
+             if (action !== "toggle-lease" && action !== "edit-details" && !leasePriceModal.classList.contains('visible')) { // Don't hide if modal shown or edit action
+                hidePageLoading();
+            }
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.agent-actions')) {
+            document.querySelectorAll('.actions-dropdown.visible').forEach(dropdown => {
+                dropdown.classList.remove('visible');
+            });
+        }
+    });
+
+    cancelLeasePriceBtn.addEventListener('click', () => {
+        leasePriceModal.classList.remove('visible');
+        currentAgentIdForLease = null;
+    });
+
+    confirmLeasePriceBtn.addEventListener('click', async () => {
+        if (!currentAgentIdForLease) return;
+        showPageLoading("Updating Rent Info...");
+
+        const priceStr = leasePriceInput.value.trim();
+        const agentRef = database.ref(`weconnect_agents/${currentAgentIdForLease}`); 
+
+        try {
+            if (priceStr === "" || parseFloat(priceStr) <= 0) {
+                await agentRef.update({
+                    'leaseInfo/isForLease': false,
+                    'leaseInfo/price': null
+                });
+                alert("Agent rent stopped.");
+            } else {
+                const price = parseFloat(priceStr);
+                if (isNaN(price)) {
+                     alert("Invalid price entered.");
+                     hidePageLoading(); return;
+                }
+                await agentRef.update({
+                    'leaseInfo/isForLease': true,
+                    'leaseInfo/price': price
+                });
+                alert("Agent rent information updated!");
+            }
+        } catch (error) {
+            console.error("Error updating rent info:", error);
+            alert("⚠️ Error updating rent: " + error.message);
+        } finally {
+            leasePriceModal.classList.remove('visible');
+            currentAgentIdForLease = null;
+            hidePageLoading();
+        }
+    });
+    
+    // --- MODIFIED AUTH HANDLING ---
+    showPageLoading("Initializing..."); // Show loading screen at the very start
+    let authStateDetermined = false;
+
+    auth.onAuthStateChanged(user => {
+        authStateDetermined = true; // Mark that auth state is now known
+        if (user) {
+            currentUser = user;
+            hidePageLoading(); // <<< Hide main loading screen to show page interface
+
+            // Load "My Agents" list
+            agentListPlaceholder.textContent = "Loading your agents…";
+            agentListPlaceholder.style.display = "block";
+            agentListDiv.innerHTML = ""; // Clear before potentially adding placeholder back by renderAgentList
+
+            database.ref("weconnect_agents").orderByChild('creatorUid').equalTo(currentUser.uid)
+              .on("value", (snapshot) => {
+                renderAgentList(snapshot.val()); // This will handle the placeholder visibility
+            }, (error) => {
+                console.error("Firebase data loading error:", error);
+                agentListPlaceholder.textContent = "Error loading your agents.";
+                agentListPlaceholder.style.display = "block";
+                // agentListDiv.innerHTML = ""; // Already cleared
+            });
+        } else {
+            currentUser = null;
+            hidePageLoading(); // Hide loading screen before alert/redirect
+            alert("You are not signed in. Redirecting to sign-in page.");
+            window.location.href = 'signin.html'; 
+        }
+    });
+
+    // Safety timeout if onAuthStateChanged is too slow
+    setTimeout(() => {
+        if (!authStateDetermined && pageLoadingScreen.style.display !== 'none') {
+            console.warn("Authentication state determination took too long. Forcing loading screen hide.");
+            hidePageLoading();
+            // Consider showing a message on the page if it's still mostly blank,
+            // e.g., "Authentication is taking longer than expected."
+        }
+    }, 7000); // 7 seconds timeout
+
+    // Set initial CSR values on form (WeConnect style defaults)
+    // and build initial prompt
+    agentNameInput.value = "Support Hero";
+    agentSubtitleInput.value = "Your friendly 24/7 Support Assistant";
+    agentBehaviorSelect.value = "helpful and friendly";
+    agentToneSelect.value = "empathetic and understanding";
+    agentRoleSelect.value = "customer support specialist";
+    agentOutputFormatSelect.value = "concise and to-the-point";
+    additionalPromptInstructionsTextarea.value = "Always ask if the user needs further help. Prioritize resolving issues quickly.";
+    initialMessageInput.value = "Hello! I'm Support Hero. How can I assist you today?";
+    updateAndBuildSystemPrompt(); // Call this once to set initial systemPromptInput value
+
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

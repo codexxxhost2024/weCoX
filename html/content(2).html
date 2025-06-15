@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Social</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="WeConnect - Social Feed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="WeConnect">
+  <!-- PWA Manifest & Apple Touch Icons -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
+  <style>
+    /* Global Styles & Variables */
+    :root {
+      --WeConnect-blue: #696ffa;
+      --text-dark: #1A1A1A;
+      --text-secondary: #65676b;
+      --facebook-blue: #1877F2;
+      --card-background: #ffffff;
+      --body-background: #f0f2f5;
+      --separator-color: #e0e0e0;
+      --input-background: #f0f2f5;
+      --icon-color-inactive: var(--text-secondary);
+      --icon-color-active: var(--facebook-blue);
+      --like-color: #e0245e;
+      --header-height: 64px;
+      --border-radius-soft: 8px;
+      --border-radius-pill: 9999px;
+      --transition-speed: 0.2s;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: var(--body-background);
+      color: var(--text-dark);
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      max-width: 24rem; /* Approx 384px */
+      margin: 0 auto; /* Center the content */
+      position: relative;
+      padding-bottom: 0;
+    }
+    h1, h2, h3, h4, h5, h6, .heading { font-family: 'Roboto', sans-serif; }
+
+    /* Sticky Header */
+    .sticky-header {
+      background-color: var(--card-background);
+      padding: 0 0.75rem; /* Adjusted padding */
+      display: flex;
+      align-items: center;
+      gap: 0.5rem; /* Gap between icons and search */
+      border-bottom: 1px solid var(--separator-color);
+      position: fixed;
+      top: 0;
+      left: auto;
+      right: auto;
+      width: 100%;
+      max-width: 24rem;
+      z-index: 50;
+      height: var(--header-height);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .sticky-header .header-icon-link {
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      color: var(--icon-color-inactive);
+      flex-shrink: 0; /* Prevent icons from shrinking */
+    }
+    .sticky-header .header-icon {
+      color: var(--icon-color-inactive);
+      font-size: 1.7rem; /* Adjusted icon size */
+      cursor: pointer;
+      padding: 0.4rem;
+      border-radius: 50%;
+      transition: color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+    }
+    .sticky-header .header-icon-link:hover .header-icon,
+    .sticky-header .header-icon:hover {
+      color: var(--text-dark);
+      background-color: #f0f0f0;
+    }
+    .header-search-container {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      background-color: var(--input-background);
+      border-radius: var(--border-radius-pill);
+      padding: 0.4rem 0.8rem; /* Increased padding for better feel */
+      margin-left: 0.5rem; /* Space before search bar */
+      height: 38px; /* Fixed height for search bar */
+    }
+    .header-search-input {
+      flex-grow: 1;
+      border: none;
+      outline: none;
+      background-color: transparent;
+      font-size: 0.9rem;
+      margin-left: 0.5rem;
+      color: var(--text-dark);
+      font-family: 'Open Sans', sans-serif;
+    }
+    .header-search-input::placeholder {
+      color: var(--text-secondary);
+    }
+    .search-icon-inside {
+      color: var(--text-secondary);
+      font-size: 1.3rem; /* Slightly larger search icon */
+    }
+    .sticky-header .header-back-button {
+        margin-right: 0.25rem; /* Small space after back button */
+    }
+
+
+    /* Create Post Form (Inline Component) */
+    .create-post-form-container {
+      background-color: var(--card-background);
+      padding: 1rem;
+      border-bottom: 6px solid var(--body-background);
+    }
+    .create-post-form-container .form-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .create-post-form-container .post-avatar, .post-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--border-radius-pill);
+      overflow: hidden;
+      flex-shrink: 0;
+      background-color: #e5e7eb;
+    }
+    .create-post-form-container .post-avatar img, .post-avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .create-post-form-container .form-post-textarea {
+      flex-grow: 1;
+      min-height: 60px;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius-soft);
+      font-size: 0.95rem;
+      line-height: 1.4;
+      resize: vertical;
+      background-color: var(--input-background);
+      font-family: 'Open Sans', sans-serif;
+    }
+    .create-post-form-container .form-post-textarea::placeholder { color: var(--text-secondary); }
+    .create-post-form-container .form-post-textarea:focus {
+      border-color: var(--facebook-blue); outline: none;
+      background-color: #fff;
+    }
+    .create-post-form-container .form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+    .create-post-form-container .form-media-label {
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--border-radius-soft);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background-color var(--transition-speed) ease;
+      font-size: 0.85rem;
+    }
+    .create-post-form-container .form-media-label:hover { background-color: #e9ebee; }
+    .create-post-form-container .form-media-label .material-icons-outlined {
+      color: #45bd62; font-size: 1.4rem;
+    }
+    .create-post-form-container .form-submit-button {
+      background-color: var(--facebook-blue); color: white;
+      border: none; border-radius: var(--border-radius-soft);
+      padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: background-color var(--transition-speed) ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .create-post-form-container .form-submit-button:hover { background-color: #166fe5; }
+    .create-post-form-container .form-submit-button:disabled {
+      background-color: #a0c3f0; cursor: not-allowed;
+    }
+    .upload-spinner-inline {
+        width: 16px; height: 16px; border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-top-color: #fff;
+        animation: spin 0.8s linear infinite;
+        display: inline-block; margin-left: 8px; vertical-align: middle;
+    }
+    #mediaPreviewContainer {
+        margin-top: 0.75rem;
+        padding: 0.5rem;
+        background-color: var(--input-background);
+        border-radius: var(--border-radius-soft);
+        border: 1px dashed var(--separator-color);
+    }
+    #mediaPreviewContainer img, #mediaPreviewContainer video {
+        max-width: 100%;
+        max-height: 150px; /* Limit preview height */
+        display: block;
+        margin: 0 auto;
+        border-radius: var(--border-radius-soft);
+    }
+
+
+    /* Main Content Area */
+    main {
+      padding-top: var(--header-height);
+      width: 100%;
+    }
+
+    /* Stories & Reels */
+    .stories-reels-tabs {
+      background-color: var(--card-background); display: flex;
+      border-bottom: 1px solid var(--separator-color);
+    }
+    .tab-button {
+      flex: 1; padding: 0.9rem 0; text-align: center;
+      font-weight: 600; color: var(--icon-color-inactive);
+      cursor: pointer; position: relative;
+      border-bottom: 3px solid transparent;
+      transition: color var(--transition-speed) ease, border-bottom-color var(--transition-speed) ease;
+    }
+    .tab-button.active {
+      color: var(--icon-color-active);
+      border-bottom-color: var(--icon-color-active);
+    }
+    .stories-container {
+      background-color: var(--card-background); padding: 0.75rem 0.5rem;
+      display: flex; gap: 0.5rem; overflow-x: auto;
+      scrollbar-width: none; -ms-overflow-style: none;
+      border-bottom: 6px solid var(--body-background);
+    }
+    .stories-container::-webkit-scrollbar { display: none; }
+    .story-card {
+      width: 90px; height: 160px; flex-shrink: 0;
+      border-radius: var(--border-radius-soft);
+      background-color: #e4e6eb; overflow: hidden;
+      cursor: pointer; position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: transform var(--transition-speed) ease-in-out;
+    }
+    .story-card:hover { transform: scale(1.03); }
+    .story-card .story-avatar {
+      position: absolute; top: 8px; left: 8px;
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 3px solid var(--facebook-blue);
+      overflow: hidden; z-index: 3;
+    }
+    .story-card .story-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .story-card .story-author-name {
+      position: absolute; bottom: 8px; left: 8px; right: 8px;
+      color: white; font-size: 0.75rem; font-weight: 600;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.7); z-index: 3;
+      text-align: center; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .story-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 50%; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+      z-index: 2; pointer-events: none;
+    }
+    .story-card img.story-bg {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block; transition: transform 0.3s ease-in-out;
+    }
+    .story-card:hover img.story-bg { transform: scale(1.05); }
+    .create-story-card {
+      background-color: var(--card-background);
+      display: flex; flex-direction: column;
+    }
+    .create-story-card img.user-avatar {
+      width: 100%; height: 100px; object-fit: cover;
+      border-bottom: 1px solid var(--separator-color);
+    }
+    .create-story-content {
+      flex-grow: 1; position: relative; display: flex;
+      justify-content: center; background-color: var(--card-background);
+    }
+    .create-story-icon-wrapper {
+      position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+      width: 36px; height: 36px; background-color: var(--facebook-blue);
+      border-radius: 50%; border: 4px solid var(--card-background);
+      display: flex; align-items: center; justify-content: center; z-index: 2;
+    }
+    .create-story-icon { color: white; font-size: 22px; font-weight: bold; line-height: 1; }
+    .create-story-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);
+      text-align: center; padding-top: 22px; padding-bottom: 5px;
+    }
+
+    /* Post Feed */
+    .post-list {
+      display: flex; flex-direction: column; gap: 0; padding: 0;
+    }
+    .post-card {
+      background-color: var(--card-background); overflow: hidden;
+      display: flex; flex-direction: column;
+      border-bottom: 6px solid var(--body-background);
+      margin-bottom: 0; position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .post-card.hidden-by-search { display: none !important; } /* For search filter */
+    .post-list > .empty-state { /* Styling for search empty state if it's inside post-list */
+        margin-top: 1rem;
+    }
+
+    .post-header {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.75rem 1rem;
+    }
+    .post-info {
+      display: flex; flex-direction: column;
+      font-size: 0.85rem; line-height: 1.3;
+    }
+    .post-author { font-weight: 600; color: #050505; }
+    .post-time { font-size: 0.75rem; color: var(--icon-color-inactive); }
+    .post-content {
+      padding: 0.25rem 1rem 0.75rem 1rem; font-size: 0.9rem;
+      line-height: 1.45; color: #1c1e21; word-wrap: break-word;
+    }
+    .post-media {
+      max-height: 500px; overflow: hidden; background-color: #000;
+      display: flex; justify-content: center; align-items: center;
+    }
+    .post-media img, .post-media video {
+      width: 100%; height: auto; max-height: 500px;
+      object-fit: contain; display: block;
+    }
+    /* Image Glow Effect */
+    .post-media img.image-glow {
+      box-shadow: 0 0 10px 2px rgba(var(--WeConnect-blue-rgb, 105, 111, 250), 0.3), /* Main color glow */
+                  0 0 15px 4px rgba(255, 255, 255, 0.2); /* Softer white outer glow */
+      transition: box-shadow 0.3s ease-in-out;
+      border-radius: 2px; /* Slight rounding for the glow to look softer on edges */
+    }
+    .post-media img.image-glow:hover {
+      box-shadow: 0 0 16px 4px rgba(var(--WeConnect-blue-rgb, 105, 111, 250), 0.5),
+                  0 0 25px 7px rgba(255, 255, 255, 0.3);
+    }
+
+
+    .post-stats {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--icon-color-inactive);
+      border-bottom: 1px solid var(--separator-color);
+    }
+    .post-stats .likes-count, .post-stats .comments-count {
+      display: flex; align-items: center; gap: 0.25rem;
+    }
+    .post-stats .likes-count .material-icons {
+        font-size: 0.9rem; color: var(--icon-color-inactive); margin-right: 2px;
+    }
+    .post-stats .likes-count .like-icon-filled { color: var(--facebook-blue); }
+    .post-actions {
+      display: flex; justify-content: space-around;
+      padding: 0.1rem 0; border-bottom: 1px solid var(--separator-color);
+    }
+    .action-button {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      gap: 0.4rem; padding: 0.6rem 0; cursor: pointer;
+      border-radius: var(--border-radius-soft);
+      transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+      font-size: 0.85rem; font-weight: 600; color: var(--icon-color-inactive);
+      background: none; border: none;
+    }
+    .action-button:hover { background-color: var(--input-background); }
+    .action-button .material-icons, .action-button .material-icons-outlined { font-size: 1.25rem; }
+    .action-button.liked .material-icons { color: var(--like-color); }
+    .action-button.liked { color: var(--like-color); }
+
+    /* Comments Section */
+    .comments-section {
+      padding: 0.5rem 1rem; font-size: 0.85rem;
+      transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+      max-height: 0; opacity: 0; overflow: hidden;
+      padding-top: 0; padding-bottom: 0;
+    }
+    .comments-section.visible { opacity: 1; }
+    .comment { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .comment-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .comment-content {
+      background-color: var(--input-background); padding: 0.5rem 0.75rem;
+      border-radius: 15px; flex-grow: 1;
+    }
+    .comment-author {
+      font-weight: 600; color: #050505;
+      font-size: 0.8rem; margin-bottom: 0.1rem;
+    }
+    .comment-text { color: #1c1e21; word-wrap: break-word; line-height: 1.35; }
+    .comment-time { font-size: 0.7rem; color: var(--icon-color-inactive); margin-top: 0.2rem; }
+    .comment-input-area {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1rem 0.75rem 1rem;
+    }
+    .comment-input-area .post-avatar { width: 32px; height: 32px; }
+    .comment-input {
+      flex-grow: 1; background-color: var(--input-background);
+      border: 1px solid #ddd; border-radius: var(--border-radius-pill);
+      padding: 0.5rem 1rem; font-size: 0.9rem; outline: none;
+      transition: border-color var(--transition-speed) ease;
+    }
+    .comment-input:focus { border-color: var(--facebook-blue); }
+    .comment-submit-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--facebook-blue); font-size: 1.5rem;
+      padding: 0; line-height: 1;
+      transition: color var(--transition-speed) ease;
+    }
+    .comment-submit-btn.disabled { color: var(--icon-color-inactive); cursor: default; }
+
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000; opacity: 0; visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .loading-overlay.active { opacity: 1; visibility: visible; }
+    .loading-spinner {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 3px solid rgba(105, 111, 250, 0.2);
+      border-top-color: var(--WeConnect-blue);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Empty State */
+    .empty-state { /* General empty state styling */
+      text-align: center; padding: 2rem 1rem; /* Reduced padding slightly */
+      color: var(--text-secondary); display: none;
+      margin-top: 1rem; /* Adjusted margin */
+      /* background-color: var(--card-background); */ /* Optional: if it needs a card look */
+      /* border-radius: var(--border-radius-soft); */
+      /* box-shadow: 0 1px 2px rgba(0,0,0,0.05); */ /* Optional */
+    }
+    .empty-state i { font-size: 2.5rem; color: #ccc; margin-bottom: 0.75rem; }
+    .empty-state h3 { font-size: 1.1rem; margin-bottom: 0.4rem; color: var(--text-dark); }
+    .empty-state p { font-size: 0.85rem; }
+
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.6); display: none;
+      justify-content: center; align-items: center; z-index: 1100;
+      opacity: 0; transition: opacity var(--transition-speed) ease;
+    }
+    .modal-overlay.active { display: flex; opacity: 1; }
+    .modal-content {
+      background-color: var(--card-background); border-radius: var(--border-radius-soft);
+      width: 90%; max-width: 400px; padding: 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      position: relative; overflow: hidden;
+    }
+    .modal-header {
+      font-size: 1.2rem; font-weight: 600; padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--separator-color);
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .modal-header .modal-user-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        overflow: hidden; flex-shrink: 0; background-color: #e5e7eb;
+    }
+    .modal-header .modal-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+     .modal-header .modal-title {
+        flex-grow: 1; text-align: center;
+        margin-left: calc(-32px - 0.75rem); padding-right: calc(24px + 10px);
+    }
+    .modal-close {
+      position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+      cursor: pointer; font-size: 1.8rem; color: var(--icon-color-inactive);
+      line-height: 1; padding: 5px; border-radius: 50%;
+      transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+    }
+    .modal-close:hover { color: var(--text-dark); background-color: #f0f0f0; }
+    .modal-body { padding: 1rem 1.25rem; }
+    .modal-textarea {
+      width: 100%; padding: 0.7rem 0.9rem; margin-bottom: 1rem;
+      border: 1px solid #ccc; border-radius: var(--border-radius-soft);
+      font-size: 0.95rem; background-color: #fff;
+      transition: border-color var(--transition-speed) ease;
+      min-height: 80px; resize: vertical;
+    }
+    .modal-textarea:focus { border-color: var(--facebook-blue); outline: none; }
+    .modal-button {
+      width: 100%; padding: 0.75rem 1rem; background-color: var(--facebook-blue);
+      color: white; border: none; border-radius: var(--border-radius-soft);
+      cursor: pointer; font-size: 1rem; font-weight: 600;
+      transition: background-color var(--transition-speed) ease;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .modal-button:hover { background-color: #166fe5; }
+    .modal-button:disabled { background-color: #a0c3f0; cursor: not-allowed; }
+
+    /* Post Owner Actions */
+    .post-owner-actions {
+      margin-left: auto; display: flex; align-items: center; gap: 0.25rem;
+    }
+    .post-owner-actions button {
+      background: none; border: none; cursor: pointer; color: var(--icon-color-inactive);
+      font-size: 1.2rem; padding: 0.35rem; border-radius: 50%;
+      line-height: 1;
+      transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+    }
+     .post-owner-actions button:hover { background-color: #f0f0f0; color: var(--text-dark); }
+     .post-owner-actions .edit-icon::before { content: 'edit'; font-family: 'Material Icons Outlined'; }
+     .post-owner-actions .delete-icon::before { content: 'delete_outline'; font-family: 'Material Icons Outlined'; }
+
+    /* Notification Banner */
+    .notification-banner {
+      position: fixed; top: calc(var(--header-height) + 10px); left: 50%;
+      transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.8);
+      color: #fff; padding: 0.7rem 1.2rem; border-radius: var(--border-radius-pill);
+      z-index: 1200; opacity: 0;
+      transition: opacity 0.5s ease, top 0.5s ease;
+      font-size: 0.85rem; pointer-events: none;
+    }
+    .notification-banner.show {
+        opacity: 1; top: calc(var(--header-height) + 15px); pointer-events: auto;
+    }
+  </style>
+  <script>
+    // Prevent excessive zoom/tap events
+    document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', e => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // Helper to parse --WeConnect-blue to RGB for box-shadow alpha
+    document.addEventListener('DOMContentLoaded', () => {
+        const weConnectBlue = getComputedStyle(document.documentElement).getPropertyValue('--WeConnect-blue').trim();
+        if (weConnectBlue.startsWith('#')) {
+            const hex = weConnectBlue.substring(1);
+            const r = parseInt(hex.substring(0,2), 16);
+            const g = parseInt(hex.substring(2,4), 16);
+            const b = parseInt(hex.substring(4,6), 16);
+            document.documentElement.style.setProperty('--WeConnect-blue-rgb', `${r}, ${g}, ${b}`);
+        } else if (weConnectBlue.startsWith('rgb')) { // rgb(r, g, b)
+             const parts = weConnectBlue.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+             if (parts) {
+                document.documentElement.style.setProperty('--WeConnect-blue-rgb', `${parts[1]}, ${parts[2]}, ${parts[3]}`);
+             }
+        }
+    });
+  </script>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay active">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- Notification Banner -->
+  <div id="notificationBanner" class="notification-banner"></div>
+
+  <!-- Sticky Header -->
+  <div class="sticky-header">
+    <a href="home.html" class="header-icon-link header-back-button" title="Back">
+      <span class="material-icons header-icon">arrow_back</span>
+    </a>
+    <a href="notifications.html" class="header-icon-link" title="Notifications">
+      <span class="material-icons header-icon">notifications</span>
+    </a>
+    <a href="messenger.html" class="header-icon-link" title="Messenger">
+      <span class="material-icons-outlined header-icon">chat_bubble_outline</span>
+    </a>
+    <div class="header-search-container">
+        <span class="material-icons search-icon-inside">search</span>
+        <input type="search" id="headerSearchInput" class="header-search-input" placeholder="Search posts...">
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 w-full">
+    <!-- Inline Create Post Form -->
+    <div id="createPostFormContainer" class="create-post-form-container">
+      <div class="form-row">
+        <div class="post-avatar">
+          <a href="#" id="formUserAvatarLink">
+            <img src="assets/images/user.png" alt="User Avatar" id="formUserAvatar" />
+          </a>
+        </div>
+        <textarea id="formPostDescription" class="form-post-textarea" rows="3" placeholder="What's on your mind?"></textarea>
+      </div>
+      <div class="form-actions">
+        <label for="formPostMediaFile" class="form-media-label">
+            <span class="material-icons-outlined">add_photo_alternate</span> Add Photo/Video
+        </label>
+        <input id="formPostMediaFile" type="file" accept="image/*,video/*" style="display: none;"/>
+        <button id="formSubmitPost" class="form-submit-button">Post</button>
+      </div>
+      <!-- Media Preview Area -->
+      <div id="mediaPreviewContainer" style="display: none;">
+        <!-- Preview will be injected here by JS -->
+      </div>
+    </div>
+
+    <!-- Stories & Reels Tabs -->
+    <div class="stories-reels-tabs">
+      <div class="tab-button active">Connects</div>
+      <div class="tab-button">Feels</div>
+    </div>
+    <!-- Stories Container -->
+    <div class="stories-container" id="storiesContainer">
+      <div class="story-card create-story-card" id="createConnectCard">
+        <a href="#" id="createConnectUserAvatarLink">
+          <img class="user-avatar" src="assets/images/user.png" alt="Your Avatar" id="createConnectUserAvatar">
+        </a>
+        <div class="create-story-content">
+          <div class="create-story-icon-wrapper"><span class="create-story-icon">+</span></div>
+          <div class="create-story-label">Create connects</div>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="connectFileInput" accept="image/*" style="display: none;">
+
+    <!-- Post Feed -->
+    <div id="postList" class="post-list">
+      <!-- Posts loaded dynamically -->
+      <!-- Search empty state will be appended here by JS if needed -->
+    </div>
+    <!-- This is the GENERAL empty state, shown when no posts and no search active -->
+    <div class="empty-state" id="emptyState">
+      <i class="material-icons">feed</i>
+      <h3>No posts yet</h3>
+      <p>Start connecting with others!</p>
+    </div>
+  </main>
+
+  <!-- Edit Post Modal -->
+  <div id="editPostModal" class="modal-overlay">
+    <div class="modal-content">
+       <div class="modal-header">
+         <div class="modal-user-avatar">
+             <img src="assets/images/user.png" alt="User Avatar" id="editModalUserAvatar" />
+         </div>
+         <span class="modal-title">Edit Post</span>
+         <span id="editModalClose" class="modal-close material-icons-outlined">close</span>
+       </div>
+       <div class="modal-body">
+          <textarea id="editPostDescription" class="modal-textarea" rows="4" placeholder="Edit your post"></textarea>
+          <button id="updatePost" class="modal-button">Update</button>
+       </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, where, limit, doc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // KEEP YOUR CONFIG
+      authDomain: "daisy-n7g20a.firebaseapp.com",
+      databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+      projectId: "daisy-n7g20a",
+      storageBucket: "daisy-n7g20a.appspot.com",
+      messagingSenderId: "225362605902",
+      appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+    };
+    let app, auth, db, storage;
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      storage = getStorage(app);
+      console.log("Firebase Initialized Successfully for Social Page");
+    } catch (error) {
+      console.error("Firebase Initialization Failed:", error);
+      document.getElementById("loadingOverlay")?.classList.remove("active");
+      const body = document.querySelector('body');
+      if (body) body.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Critical error: Could not initialize application services. Please try again later.</div>';
+    }
+
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const postList = document.getElementById("postList");
+    const emptyState = document.getElementById("emptyState"); // General empty state
+    const headerSearchInputEl = document.getElementById('headerSearchInput'); // Search input
+
+    const formPostDescriptionEl = document.getElementById("formPostDescription");
+    const formPostMediaFileEl = document.getElementById("formPostMediaFile");
+    const formSubmitPostBtn = document.getElementById("formSubmitPost");
+    const formUserAvatar = document.getElementById("formUserAvatar");
+    const formUserAvatarLink = document.getElementById("formUserAvatarLink");
+    const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
+
+    const editPostModal = document.getElementById("editPostModal");
+    const editModalClose = document.getElementById("editModalClose");
+    const updatePostBtn = document.getElementById("updatePost");
+    const editPostDescriptionEl = document.getElementById("editPostDescription");
+    const connectFileInput = document.getElementById("connectFileInput");
+    const storiesContainer = document.getElementById("storiesContainer");
+    const createConnectCard = document.getElementById("createConnectCard");
+    const notificationBanner = document.getElementById("notificationBanner");
+    const createConnectUserAvatar = document.getElementById("createConnectUserAvatar");
+    const createConnectUserAvatarLink = document.getElementById("createConnectUserAvatarLink");
+    const editModalUserAvatar = document.getElementById("editModalUserAvatar");
+
+    let currentUser = null;
+    let currentUserProfile = null;
+    let userLikes = {};
+    let postsDataGlobal = {}; // Stores raw post data
+    let editPostId = null;
+
+    function showNotification(message) {
+      if (!notificationBanner) return;
+      notificationBanner.textContent = message;
+      notificationBanner.classList.add("show");
+      setTimeout(() => notificationBanner.classList.remove("show"), 3000);
+    }
+
+    function updateUserAvatars(profileData) {
+      const defaultAvatar = 'assets/images/user.png';
+      const avatarUrl = profileData?.photo || defaultAvatar;
+      const profileLinkBase = "user-profile.html";
+      const userProfileLink = profileData?.uid ? `${profileLinkBase}?uid=${profileData.uid}` : "#";
+
+      if (formUserAvatar) formUserAvatar.src = avatarUrl;
+      if (formUserAvatarLink) formUserAvatarLink.href = userProfileLink;
+      if (formPostDescriptionEl && profileData) {
+        formPostDescriptionEl.placeholder = `What's on your mind, ${profileData.displayName ? profileData.displayName.split(' ')[0] : 'User'}?`;
+      } else if (formPostDescriptionEl) {
+        formPostDescriptionEl.placeholder = "What's on your mind?";
+      }
+      if (createConnectUserAvatar) createConnectUserAvatar.src = avatarUrl;
+      if (createConnectUserAvatarLink) createConnectUserAvatarLink.href = userProfileLink;
+      if (editModalUserAvatar) editModalUserAvatar.src = avatarUrl;
+    }
+
+    function showEmptyState(message = "No posts yet", subMessage = "Start connecting with others!") {
+        // This function shows the GENERAL empty state, typically when no posts exist AT ALL.
+        // It should hide any search-specific empty state.
+        const searchEmptyEl = document.getElementById('searchEmptyStateInList');
+        if (searchEmptyEl) searchEmptyEl.style.display = 'none';
+
+        if (postList) postList.innerHTML = ""; // Clear out posts
+        if (emptyState) { // emptyState is the one OUTSIDE postList
+            emptyState.style.display = 'block';
+            emptyState.querySelector('h3').textContent = message;
+            emptyState.querySelector('p').textContent = subMessage;
+        }
+    }
+
+    function hideEmptyState() {
+        // This function hides the GENERAL empty state.
+        if (emptyState) emptyState.style.display = 'none';
+    }
+
+    function formatTimestamp(timestamp) {
+        if (!timestamp || typeof timestamp.toDate !== 'function') return "just now";
+        const date = timestamp.toDate(); const now = new Date();
+        const secondsPast = (now.getTime() - date.getTime()) / 1000;
+        if (secondsPast < 5) return 'Just now';
+        if (secondsPast < 60) return `${Math.round(secondsPast)}s ago`;
+        if (secondsPast < 3600) return `${Math.round(secondsPast / 60)}m ago`;
+        if (secondsPast < 86400) return `${Math.round(secondsPast / 3600)}h ago`;
+        if (secondsPast < 604800) return `${Math.round(secondsPast / 86400)}d ago`;
+        const options = { month: 'short', day: 'numeric' };
+        if (date.getFullYear() !== now.getFullYear()) options.year = 'numeric';
+        return date.toLocaleDateString(undefined, options);
+    }
+
+    function formatPostContent(text) {
+      if (!text) return '';
+      const escapedText = text.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
+      const linkedText = escapedText.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: var(--facebook-blue); text-decoration: underline;">$1</a>');
+      return linkedText.replace(/\n/g, '<br>');
+    }
+    
+    function escapeHTML(str) { // For securely displaying user input like search terms
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+    async function loadConnects() { /* ... (no changes to this function) ... */
+      if (!db || !storiesContainer) return;
+      const connectsRef = collection(db, "connects");
+      const q = query(connectsRef, orderBy("createdAt", "desc"), limit(15));
+      try {
+        const snapshot = await getDocs(q);
+        const connectsData = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        renderConnects(connectsData);
+      } catch (error) { console.error("Error loading connects:", error); }
+    }
+    function clearConnects() { /* ... (no changes to this function) ... */
+        if (!storiesContainer) return;
+        const existingConnects = storiesContainer.querySelectorAll('.story-card:not(.create-story-card)');
+        existingConnects.forEach(card => card.remove());
+    }
+    function renderConnects(connects) { /* ... (no changes to this function) ... */
+      if (!storiesContainer || !createConnectCard) return;
+      clearConnects();
+      connects.forEach(connect => {
+        const connectCard = document.createElement('div');
+        connectCard.className = 'story-card';
+        connectCard.dataset.connectId = connect.id;
+        connectCard.innerHTML = `
+          <div class="story-avatar">
+            <a href="user-profile.html?uid=${connect.authorId || ''}">
+              <img src="${connect.authorAvatarUrl || 'assets/images/user.png'}" alt="${connect.authorName || 'User'}">
+            </a>
+          </div>
+          <img class="story-bg" src="${connect.imageUrl}" alt="Connect by ${connect.authorName || 'User'}">
+          <div class="story-author-name">${connect.authorName || 'Anonymous'}</div>
+        `;
+        connectCard.addEventListener('click', () => {
+          showNotification(`Viewing connect from ${connect.authorName || 'Anonymous'}`);
+        });
+        createConnectCard.insertAdjacentElement('afterend', connectCard);
+      });
+       const dynamicConnects = Array.from(storiesContainer.querySelectorAll('.story-card:not(.create-story-card)'));
+       dynamicConnects.reverse().forEach(card => storiesContainer.appendChild(card));
+    }
+    async function createConnect(file) { /* ... (no changes to this function) ... */
+        if (!currentUser) { showNotification("Please log in to create a connect."); if (connectFileInput) connectFileInput.value = ''; return; }
+        if (!file || !storage || !db || !currentUserProfile) { showNotification("Cannot create connect. Profile not loaded or service unavailable."); if (connectFileInput) connectFileInput.value = ''; return; }
+        loadingOverlay?.classList.add('active');
+        if (createConnectCard) { createConnectCard.style.opacity = '0.5'; createConnectCard.style.pointerEvents = 'none'; }
+        try {
+            const filePath = `connects/${currentUserProfile.uid}/${Date.now()}_${file.name}`;
+            const fileRef = storageRef(storage, filePath);
+            const uploadSnapshot = await uploadBytes(fileRef, file);
+            const imageUrl = await getDownloadURL(uploadSnapshot.ref);
+            await addDoc(collection(db, "connects"), {
+                imageUrl: imageUrl,
+                authorId: currentUserProfile.uid,
+                authorName: currentUserProfile.displayName || "Anonymous",
+                authorAvatarUrl: currentUserProfile.photo || 'assets/images/user.png',
+                createdAt: serverTimestamp()
+            });
+            await loadConnects();
+            showNotification("Connect created successfully!");
+        } catch (error) {
+            console.error("Error creating connect:", error);
+            showNotification(`Failed to create connect: ${error.message}`);
+        } finally {
+            loadingOverlay?.classList.remove("active");
+            if (createConnectCard) { createConnectCard.style.opacity = '1'; createConnectCard.style.pointerEvents = 'auto'; }
+            if (connectFileInput) connectFileInput.value = '';
+        }
+    }
+
+    async function loadPosts() {
+      if (!db) return;
+      try {
+        const postsRef = collection(db, "social");
+        const q = query(postsRef, orderBy("createdAt", "desc"), limit(20));
+        const snapshot = await getDocs(q);
+        let postsData = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        
+        postsDataGlobal = {}; // Reset and populate global data store
+        snapshot.docs.forEach(docSnap => postsDataGlobal[docSnap.id] = { id: docSnap.id, ...docSnap.data() });
+
+        if (currentUser) { await fetchUserLikesForPosts(postsData.map(p => p.id)); }
+        else { userLikes = {}; }
+
+        if (postsData.length === 0 && !headerSearchInputEl?.value) { // Only show general empty if no search is active
+            showEmptyState(); 
+        } else if (postsData.length > 0) {
+            renderPosts(postsData); // This will clear postList and re-render
+            hideEmptyState(); // Hide general empty state
+        } else {
+            // If postsData is empty but a search might be active, filterPostsOnPage will handle empty message
+            postList.innerHTML = ""; // Clear post list
+            hideEmptyState(); // Hide general empty state
+        }
+      } catch (error) {
+        console.error("Error loading posts:", error);
+        showEmptyState("Error loading posts.", "Please try again later.");
+      } finally {
+        setTimeout(() => loadingOverlay?.classList.remove("active"), 300);
+        // After posts are loaded and rendered, re-apply search filter if any
+        const currentSearchTerm = headerSearchInputEl?.value;
+        if (currentSearchTerm && currentSearchTerm.trim() !== '') {
+            filterPostsOnPage(currentSearchTerm.toLowerCase().trim());
+        } else if (Object.keys(postsDataGlobal).length === 0) { // If after load, still no posts and no search
+            showEmptyState();
+        } else if (Object.keys(postsDataGlobal).length > 0) { // Posts loaded, no search term, hide general empty state
+             hideEmptyState();
+        }
+
+      }
+    }
+    async function fetchUserLikesForPosts(postIds) { /* ... (no changes to this function) ... */
+      if (!currentUser || postIds.length === 0 || !db) return;
+      const likePromises = postIds.map(postId => {
+          if (userLikes[postId] === undefined) { // Only fetch if not already known
+              const likeRef = doc(db, "social", postId, "likes", currentUser.uid);
+              return getDoc(likeRef).then(likeSnap => ({ postId, exists: likeSnap.exists() }));
+          }
+          return Promise.resolve(null); // Avoid re-fetching
+      });
+      try {
+        const results = await Promise.all(likePromises.filter(p => p !== null));
+        results.forEach(result => { if (result) userLikes[result.postId] = result.exists; });
+      } catch (error) { console.error("Error fetching user likes:", error); }
+    }
+    function renderPosts(postsToRender) { // Accepts an array of posts
+      if (!postList) return;
+      postList.innerHTML = ""; // Clear current posts
+      if (postsToRender.length === 0 && !headerSearchInputEl?.value) {
+         // showEmptyState(); // This might be redundant if loadPosts handles it
+         return;
+      }
+      // hideEmptyState(); // Hide general empty state as we are rendering posts
+      postsToRender.forEach(post => {
+        const postEl = createPostElement(post);
+        postList.appendChild(postEl);
+      });
+    }
+
+    function createPostElement(post) {
+      const postEl = document.createElement("div");
+      postEl.className = "post-card";
+      postEl.dataset.postId = post.id;
+
+      const hasLiked = currentUser ? (userLikes[post.id] === true) : false;
+      const likeCount = post.likeCount || 0;
+      const commentCount = post.commentCount || 0;
+      const commentAvatarUrl = currentUserProfile?.photo || 'assets/images/user.png';
+
+      const avatarHtml = `
+        <div class="post-avatar">
+          <a href="user-profile.html?uid=${post.authorId || ''}">
+            <img src="${post.authorAvatarUrl || 'assets/images/user.png'}" alt="${post.author || 'Author'} Avatar" />
+          </a>
+        </div>`;
+      let ownerActionsHtml = (currentUser && post.authorId === currentUser.uid) ? `
+          <div class="post-owner-actions">
+             <button class="edit-icon" title="Edit Post" onclick="window.handleEditPost('${post.id}')"></button>
+             <button class="delete-icon" title="Delete Post" onclick="window.handleDeletePost('${post.id}')"></button>
+          </div>` : "";
+      const likesDisplayHtml = likeCount > 0 ? `<span class="material-icons like-icon-filled">thumb_up</span> ${likeCount}` : '';
+      const commentsDisplayHtml = commentCount > 0 ? `${commentCount} Comment${commentCount > 1 ? 's' : ''}` : '';
+
+      // Apply image-glow class conditionally
+      const mediaHtml = post.mediaUrl ?
+        `<div class="post-media">
+            ${post.mediaType === 'video' ?
+                `<video src="${post.mediaUrl}" controls preload="metadata"></video>` :
+                `<img src="${post.mediaUrl}" alt="Post Media" class="${post.mediaType === 'image' ? 'image-glow' : ''}" />`}
+        </div>` : '';
+
+      postEl.innerHTML = `
+        <div class="post-header">
+          ${avatarHtml}
+          <div class="post-info">
+            <a href="user-profile.html?uid=${post.authorId || ''}" style="text-decoration: none; color: inherit;">
+                <div class="post-author">${post.author || "Anonymous"}</div>
+            </a>
+            <div class="post-time">${formatTimestamp(post.createdAt)}</div>
+          </div>
+          ${ownerActionsHtml}
+        </div>
+        ${post.description ? `<div class="post-content" data-searchable-content>${formatPostContent(post.description)}</div>` : '<div class="post-content" data-searchable-content style="display:none;"></div>'}
+        ${mediaHtml}
+        <div class="post-stats">
+          <span class="likes-count">${likesDisplayHtml}</span>
+          <span class="comments-count">${commentsDisplayHtml}</span>
+        </div>
+        <div class="post-actions">
+          <button class="action-button like-button ${hasLiked ? 'liked' : ''}" data-post-id="${post.id}">
+            <span class="material-icons${hasLiked ? '' : '-outlined'}">${hasLiked ? 'thumb_up' : 'thumb_up_off_alt'}</span>
+            <span>Like</span>
+          </button>
+          <button class="action-button comment-button" data-post-id="${post.id}">
+            <span class="material-icons-outlined">chat_bubble_outline</span>
+            <span>Comment</span>
+          </button>
+        </div>
+        <div class="comments-section" data-post-id="${post.id}">
+           <div class="comments-list"><div style="text-align:center; padding:10px;"><div class="loading-spinner comment-spinner" style="width:20px; height:20px; border-width: 2px; display:none;"></div></div></div>
+        </div>
+        ${currentUser ? `
+        <div class="comment-input-area">
+          <div class="post-avatar comment-avatar">
+             <a href="user-profile.html?uid=${currentUserProfile?.uid || ''}"><img src="${commentAvatarUrl}" alt="Your Avatar"></a>
+          </div>
+          <input type="text" class="comment-input" placeholder="Write a comment..." data-post-id="${post.id}" aria-label="Write a comment">
+          <button class="comment-submit-btn disabled" data-post-id="${post.id}" aria-label="Send Comment"><span class="material-icons">send</span></button>
+        </div>` : '' }`;
+
+      const commentButton = postEl.querySelector('.comment-button');
+      const commentsSection = postEl.querySelector('.comments-section');
+      if (commentButton && commentsSection) {
+        commentButton.addEventListener('click', () => toggleComments(post.id, commentsSection));
+      }
+      return postEl;
+    }
+    function toggleComments(postId, commentsSection) { /* ... (no changes to this function) ... */
+        const commentsList = commentsSection.querySelector('.comments-list');
+        const isVisible = commentsSection.classList.contains('visible');
+        if (!isVisible) {
+            commentsSection.classList.add('visible');
+            commentsSection.style.maxHeight = '500px'; // Initial max height for loading
+             if (!commentsList.dataset.loaded) { // Check if comments are already loaded
+                 loadCommentsForPost(postId, commentsList, commentsSection);
+             } else {
+                  // If already loaded, just adjust max-height to content
+                  commentsSection.style.maxHeight = commentsList.scrollHeight + 'px';
+             }
+            const inputField = postList.querySelector(`.comment-input[data-post-id="${postId}"]`);
+            if (inputField) inputField.focus();
+        } else {
+            commentsSection.classList.remove('visible');
+            commentsSection.style.maxHeight = '0';
+        }
+    }
+    async function loadCommentsForPost(postId, commentsContainer, commentsSectionElement) { /* ... (no changes to this function) ... */
+        if (!db) return;
+        const spinner = commentsContainer.querySelector('.comment-spinner');
+        if (spinner) spinner.style.display = 'inline-block';
+        try {
+            const commentsRef = collection(doc(db, "social", postId), "comments");
+            const q = query(commentsRef, orderBy("createdAt", "desc"), limit(5)); // Load latest 5
+            const snapshot = await getDocs(q);
+            commentsContainer.innerHTML = ''; // Clear previous comments or spinner
+            if (snapshot.empty) {
+                commentsContainer.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8rem; text-align:center; padding: 10px 0;">No comments yet.</p>';
+            } else {
+                snapshot.docs.forEach(docSnap => renderComment(docSnap.data(), commentsContainer));
+            }
+            commentsContainer.dataset.loaded = "true"; // Mark as loaded
+            // Adjust maxHeight of the section if it's visible
+            if (commentsSectionElement && commentsSectionElement.classList.contains('visible')) {
+                 commentsSectionElement.style.maxHeight = commentsContainer.scrollHeight + 'px';
+            }
+        } catch (error) {
+            console.error(`Error loading comments for post ${postId}:`, error);
+            commentsContainer.innerHTML = '<p style="color: red; font-size: 0.8rem; text-align: center;">Could not load comments.</p>';
+        } finally {
+            if (spinner) spinner.style.display = 'none';
+        }
+    }
+    function renderComment(commentData, container) { /* ... (no changes to this function) ... */
+        const commentEl = document.createElement('div');
+        commentEl.className = 'comment';
+        commentEl.innerHTML = `
+            <div class="comment-avatar">
+              <a href="user-profile.html?uid=${commentData.authorId || ''}"><img src="${commentData.authorAvatarUrl || 'assets/images/user.png'}" alt="${commentData.authorName || 'User'} Avatar"></a>
+            </div>
+            <div class="comment-content">
+              <a href="user-profile.html?uid=${commentData.authorId || ''}" style="text-decoration: none; color: inherit;"><div class="comment-author">${commentData.authorName || 'Anonymous'}</div></a>
+              <div class="comment-text">${formatPostContent(commentData.text)}</div>
+              <div class="comment-time">${formatTimestamp(commentData.createdAt)}</div>
+            </div>`;
+        container.prepend(commentEl); // Prepend to show newest first
+    }
+
+    async function uploadMediaToFirebase(file, pathPrefix = 'posts') { /* ... (no changes) ... */
+        if (!storage || !currentUser) { showNotification("Cannot upload media. Login required or storage unavailable."); return null; }
+        const uidForPath = currentUser.uid; // Use current user's UID for path
+        try {
+            const fileRef = storageRef(storage, `${pathPrefix}/${uidForPath}/${Date.now()}_${file.name}`);
+            const snapshot = await uploadBytes(fileRef, file); // Simple upload
+            return await getDownloadURL(snapshot.ref);
+        } catch (error) {
+            console.error("Firebase Storage upload error:", error);
+            showNotification(`Media upload failed: ${error.message}`);
+            return null;
+        }
+    }
+    async function handleLike(postId, button) { /* ... (no changes to this function's logic) ... */
+        if (!currentUser || !db) { showNotification("Please log in to like posts."); return; }
+        const postRef = doc(db, "social", postId);
+        const likeRef = doc(postRef, "likes", currentUser.uid);
+        const isCurrentlyLiked = userLikes[postId] === true;
+
+        // Optimistic UI update
+        const originalLikeState = userLikes[postId];
+        const postDataFromGlobal = postsDataGlobal[postId]; // Use the object from global store
+        const originalLikeCount = postDataFromGlobal?.likeCount || 0;
+        
+        userLikes[postId] = !isCurrentlyLiked;
+        if (postDataFromGlobal) {
+            postDataFromGlobal.likeCount = originalLikeCount + (userLikes[postId] ? 1 : -1);
+        }
+        updateLikeButtonUI(postId, userLikes[postId]); // Update this specific button and count
+        button.disabled = true; // Disable button during transaction
+
+        try {
+            await runTransaction(db, async (transaction) => {
+                const postDoc = await transaction.get(postRef);
+                if (!postDoc.exists()) throw "Document does not exist!";
+                let currentDbLikeCount = postDoc.data().likeCount || 0;
+                const likeDoc = await transaction.get(likeRef);
+
+                if (!isCurrentlyLiked && !likeDoc.exists()) { // Liking
+                    transaction.set(likeRef, { createdAt: serverTimestamp() });
+                    transaction.update(postRef, { likeCount: currentDbLikeCount + 1 });
+                } else if (isCurrentlyLiked && likeDoc.exists()) { // Unliking
+                    transaction.delete(likeRef);
+                    transaction.update(postRef, { likeCount: Math.max(0, currentDbLikeCount - 1) });
+                } else {
+                    // Mismatch scenario: UI was out of sync. Fetch true state.
+                    console.warn(`Like state mismatch for post ${postId}. UI: ${isCurrentlyLiked}, DB: ${likeDoc.exists()}. Syncing...`);
+                    userLikes[postId] = likeDoc.exists(); // Correct local state
+                    if (postDataFromGlobal) postDataFromGlobal.likeCount = currentDbLikeCount; // Correct local count
+                    updateLikeButtonUI(postId, userLikes[postId]); // Re-render button with correct state
+                    throw new Error("Syncing like state."); // Abort transaction to prevent further changes based on wrong state
+                }
+            });
+            // If transaction is successful, global state (postsDataGlobal[postId].likeCount) is already updated optimistically.
+            // If it failed and was rolled back, UI also rolled back.
+        } catch (error) {
+            if (error.message !== "Syncing like state.") { // Don't show error for sync correction
+                console.error("Like transaction failed:", error);
+                showNotification(`Could not ${isCurrentlyLiked ? 'unlike' : 'like'} post.`);
+                // Rollback optimistic UI update
+                userLikes[postId] = originalLikeState;
+                if (postDataFromGlobal) postDataFromGlobal.likeCount = originalLikeCount;
+                updateLikeButtonUI(postId, userLikes[postId]);
+            }
+        } finally {
+            button.disabled = false; // Re-enable button
+        }
+    }
+    async function handleCommentSubmit(postId, text, inputField, submitButton) { /* ... (no changes to this function's logic) ... */
+        if (!currentUser || !db || !currentUserProfile) { showNotification("Login and profile required to comment."); return; }
+        const postRef = doc(db, "social", postId);
+        const commentsRef = collection(postRef, "comments");
+        inputField.disabled = true; submitButton.disabled = true; submitButton.classList.add('disabled');
+
+        const newCommentData = {
+            text: text,
+            authorId: currentUserProfile.uid,
+            authorName: currentUserProfile.displayName || "Anonymous",
+            authorAvatarUrl: currentUserProfile.photo || 'assets/images/user.png',
+            createdAt: serverTimestamp()
+        };
+        try {
+            const addedCommentRef = await addDoc(commentsRef, newCommentData); // Get ref to new comment
+            // Update comment count on the post
+            await runTransaction(db, async (transaction) => {
+                const postDoc = await transaction.get(postRef);
+                if (!postDoc.exists()) throw "Post document does not exist!";
+                const newCommentCount = (postDoc.data().commentCount || 0) + 1;
+                transaction.update(postRef, { commentCount: newCommentCount });
+                // Update global cache
+                if (postsDataGlobal[postId]) postsDataGlobal[postId].commentCount = newCommentCount;
+            });
+            
+            inputField.value = ""; // Clear input field
+            // Optimistically render the new comment
+            const commentsList = postList.querySelector(`.comments-section[data-post-id="${postId}"] .comments-list`);
+            if (commentsList) {
+                 // Create a temporary comment data object that mimics Firestore Timestamp for formatting
+                 const optimisticCommentData = { ...newCommentData, createdAt: { toDate: () => new Date() }}; // Simulate timestamp for immediate rendering
+                 renderComment(optimisticCommentData, commentsList); // Render the new comment
+                 const commentsSection = commentsList.closest('.comments-section');
+                 if (commentsSection && !commentsSection.classList.contains('visible')) {
+                     toggleComments(postId, commentsSection); // Open if closed
+                 } else if (commentsSection) {
+                     commentsSection.style.maxHeight = commentsList.scrollHeight + 'px'; // Adjust height
+                 }
+            }
+            updateCommentCountUI(postId); // Update displayed comment count on the post
+            showNotification("Comment posted!");
+        } catch (error) {
+            console.error("Error adding comment:", error);
+            showNotification("Could not post comment. Please try again.");
+        } finally {
+            inputField.disabled = false; // Re-enable input field
+            // Submit button state will be handled by the input event listener
+        }
+    }
+    async function handleCreatePost() {
+        if (!currentUser || !db || !currentUserProfile) { showNotification("Login and profile required to post."); return; }
+        const descVal = formPostDescriptionEl.value.trim();
+        const mediaFile = formPostMediaFileEl.files[0];
+        if (!descVal && !mediaFile) { showNotification("Please write something or add a photo/video."); return; }
+
+        formSubmitPostBtn.disabled = true;
+        formSubmitPostBtn.innerHTML = 'Posting... <span class="upload-spinner-inline"></span>';
+        let mediaUrl = "", mediaType = "";
+
+        if (mediaFile) {
+            mediaUrl = await uploadMediaToFirebase(mediaFile, 'posts');
+            if (!mediaUrl) {
+                formSubmitPostBtn.disabled = false;
+                formSubmitPostBtn.innerHTML = "Post";
+                return;
+            }
+            mediaType = mediaFile.type.startsWith("video") ? "video" : "image";
+        }
+        try {
+            await addDoc(collection(db, "social"), {
+                description: descVal, mediaUrl, mediaType,
+                author: currentUserProfile.displayName || "Anonymous",
+                authorId: currentUserProfile.uid,
+                authorAvatarUrl: currentUserProfile.photo || 'assets/images/user.png',
+                createdAt: serverTimestamp(), likeCount: 0, commentCount: 0
+            });
+            if (formPostDescriptionEl) formPostDescriptionEl.value = "";
+            if (formPostMediaFileEl) formPostMediaFileEl.value = "";
+            if (mediaPreviewContainer) {
+                mediaPreviewContainer.innerHTML = '';
+                mediaPreviewContainer.style.display = 'none';
+            }
+            showNotification("Post created successfully!");
+            await loadPosts(); // Reload posts to show the new one
+            const currentSearchTerm = headerSearchInputEl?.value;
+            if (currentSearchTerm && currentSearchTerm.trim() !== '') {
+                filterPostsOnPage(currentSearchTerm.toLowerCase().trim());
+            }
+
+        } catch (error) {
+            console.error("Error creating post:", error);
+            showNotification(`Failed to create post: ${error.message}`);
+        } finally {
+            formSubmitPostBtn.disabled = false;
+            formSubmitPostBtn.innerHTML = "Post";
+        }
+    }
+     window.handleEditPost = (postId) => { /* ... (no changes) ... */
+         if (!currentUser || !postsDataGlobal[postId] || postsDataGlobal[postId].authorId !== currentUser.uid) {
+             showNotification("You can only edit your own posts."); return;
+         }
+         editPostId = postId;
+         editPostDescriptionEl.value = postsDataGlobal[postId].description || "";
+         if (editModalUserAvatar && currentUserProfile) editModalUserAvatar.src = currentUserProfile.photo || 'assets/images/user.png';
+         editPostModal.classList.add("active");
+     };
+     async function handleUpdatePost() { /* ... (no changes) ... */
+         if (!editPostId || !currentUser || !db || !postsDataGlobal[editPostId] || postsDataGlobal[editPostId].authorId !== currentUser.uid) {
+             showNotification("Error: Cannot update this post."); return;
+         }
+         updatePostBtn.disabled = true; updatePostBtn.textContent = "Updating...";
+         try {
+             await updateDoc(doc(db, "social", editPostId), {
+                 description: editPostDescriptionEl.value.trim(),
+                 updatedAt: serverTimestamp()
+             });
+             showNotification("Post updated successfully.");
+             editPostModal.classList.remove("active");
+             postsDataGlobal[editPostId].description = editPostDescriptionEl.value.trim(); // Update cache
+             // Update UI directly
+             const postCardContent = postList.querySelector(`.post-card[data-post-id="${editPostId}"] .post-content`);
+             if (postCardContent) postCardContent.innerHTML = formatPostContent(editPostDescriptionEl.value.trim());
+             editPostId = null;
+         } catch (error) {
+             console.error("Error updating post:", error);
+             showNotification("Could not update post.");
+         } finally { updatePostBtn.disabled = false; updatePostBtn.textContent = "Update"; }
+     }
+     window.handleDeletePost = async (postId) => { /* ... (no changes) ... */
+        if (!currentUser || !db || !postsDataGlobal[postId] || postsDataGlobal[postId].authorId !== currentUser.uid) {
+            showNotification("You can only delete your own posts."); return;
+        }
+        if (confirm("Are you sure you want to delete this post? This cannot be undone.")) {
+            const postCardEl = postList.querySelector(`.post-card[data-post-id="${postId}"]`);
+            if (postCardEl) postCardEl.style.opacity = '0.5'; // Visual feedback
+            try {
+                await deleteDoc(doc(db, "social", postId));
+                showNotification("Post deleted successfully.");
+                if (postCardEl) postCardEl.remove();
+                delete postsDataGlobal[postId]; // Remove from cache
+                if (postList && postList.children.length === 0 && !headerSearchInputEl?.value) { // Check if search is active
+                    showEmptyState();
+                } else if (postList && postList.querySelectorAll('.post-card:not(.hidden-by-search)').length === 0 && headerSearchInputEl?.value) {
+                    // If search is active and no results after delete, filter function will handle empty state
+                    filterPostsOnPage(headerSearchInputEl.value.toLowerCase().trim());
+                }
+
+            } catch (error) {
+                console.error("Error deleting post:", error);
+                showNotification("Could not delete post.");
+                 if (postCardEl) postCardEl.style.opacity = '1'; // Revert visual feedback on error
+            }
+        }
+     };
+    function updateLikeButtonUI(postId, isLiked) { /* ... (no changes) ... */
+        const postCards = postList?.querySelectorAll(`.post-card[data-post-id="${postId}"]`);
+        postCards?.forEach(postCard => {
+            const likeButton = postCard.querySelector('.like-button');
+            const icon = likeButton?.querySelector('.material-icons, .material-icons-outlined');
+            const likeCountSpan = postCard.querySelector('.post-stats .likes-count');
+            
+            if (likeButton && icon) {
+                likeButton.classList.toggle('liked', isLiked);
+                icon.textContent = isLiked ? 'thumb_up' : 'thumb_up_off_alt';
+                icon.className = isLiked ? 'material-icons' : 'material-icons-outlined'; // Ensure class matches icon name for filled/outlined
+            }
+
+            const count = postsDataGlobal[postId]?.likeCount || 0;
+            if (likeCountSpan) {
+                 const likeIconHtml = `<span class="material-icons like-icon-filled" style="font-size: 0.9rem; vertical-align: middle; margin-right: 2px;">thumb_up</span>`;
+                 likeCountSpan.innerHTML = count > 0 ? `${likeIconHtml} ${count}` : '';
+            }
+        });
+    }
+    function updateCommentCountUI(postId) { /* ... (no changes) ... */
+        const postCards = postList?.querySelectorAll(`.post-card[data-post-id="${postId}"]`);
+        postCards?.forEach(postCard => {
+            const commentCountSpan = postCard.querySelector('.post-stats .comments-count');
+             if (!commentCountSpan) return;
+
+             const count = postsDataGlobal[postId]?.commentCount || 0;
+             commentCountSpan.textContent = count > 0 ? `${count} Comment${count > 1 ? 's' : ''}` : '';
+        });
+    }
+
+    // --- Search Functionality ---
+    headerSearchInputEl?.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        filterPostsOnPage(searchTerm);
+    });
+
+    function filterPostsOnPage(searchTerm) {
+        const allPostCards = postList.querySelectorAll('.post-card');
+        let searchEmptyEl = document.getElementById('searchEmptyStateInList'); // Specific ID for search empty state
+
+        // If search term is cleared
+        if (searchTerm === '') {
+            allPostCards.forEach(post => post.classList.remove('hidden-by-search'));
+            if (searchEmptyEl) searchEmptyEl.style.display = 'none'; // Hide search empty state
+
+            // Decide whether to show general empty state or hide it
+            if (Object.keys(postsDataGlobal).length === 0) { // No posts loaded at all
+                showEmptyState();
+            } else {
+                hideEmptyState(); // Posts exist, so hide general empty state
+            }
+            return;
+        }
+
+        // Active search filtering
+        let visiblePostsCount = 0;
+        hideEmptyState(); // Hide the general empty state during active search
+
+        allPostCards.forEach(post => {
+            const contentEl = post.querySelector('.post-content[data-searchable-content]');
+            const authorEl = post.querySelector('.post-author');
+            const postDescription = contentEl ? contentEl.textContent.toLowerCase() : '';
+            const postAuthor = authorEl ? authorEl.textContent.toLowerCase() : '';
+            
+            const isMatch = postDescription.includes(searchTerm) || postAuthor.includes(searchTerm);
+
+            if (isMatch) {
+                post.classList.remove('hidden-by-search');
+                visiblePostsCount++;
+            } else {
+                post.classList.add('hidden-by-search');
+            }
+        });
+
+        if (visiblePostsCount === 0) {
+            if (!searchEmptyEl) {
+                searchEmptyEl = document.createElement('div');
+                searchEmptyEl.id = 'searchEmptyStateInList';
+                searchEmptyEl.className = 'empty-state'; // Use general empty state styling
+                postList.appendChild(searchEmptyEl); // Append to postList
+            }
+            searchEmptyEl.style.display = 'block';
+            searchEmptyEl.innerHTML = `
+                <i class="material-icons">search_off</i>
+                <h3>No posts match "<strong>${escapeHTML(searchTerm)}</strong>"</h3>
+                <p>Try a different search term or clear the search.</p>
+            `;
+        } else {
+            if (searchEmptyEl) searchEmptyEl.style.display = 'none';
+        }
+    }
+
+
+    // --- Authentication State Change ---
+    onAuthStateChanged(auth, async (user) => {
+      loadingOverlay?.classList.add('active');
+      if (user) {
+        currentUser = user;
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                currentUserProfile = { uid: user.uid, ...userDocSnap.data() };
+            } else { // Fallback if no Firestore profile
+                currentUserProfile = { uid: user.uid, displayName: user.displayName || user.email?.split('@')[0] || "User", photo: user.photoURL || 'assets/images/user.png' };
+                console.warn("Firestore user profile not found for UID:", user.uid, "Using Auth data.");
+            }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
+            currentUserProfile = { uid: user.uid, displayName: user.displayName || user.email?.split('@')[0] || "User", photo: user.photoURL || 'assets/images/user.png' };
+        }
+        updateUserAvatars(currentUserProfile);
+        await loadConnects();
+        await loadPosts(); // This will also re-apply search if needed via its finally block
+      } else { // User logged out
+        currentUser = null; currentUserProfile = null; userLikes = {}; postsDataGlobal = {};
+        updateUserAvatars(null);
+        clearConnects();
+        postList.innerHTML = ""; // Clear posts
+        const searchEmptyEl = document.getElementById('searchEmptyStateInList');
+        if (searchEmptyEl) searchEmptyEl.style.display = 'none';
+        showEmptyState("Please log in to see the feed.", "Your social world awaits!");
+        loadingOverlay?.classList.remove('active');
+      }
+    });
+
+    // Event listener for media file selection (for preview)
+    formPostMediaFileEl?.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (!mediaPreviewContainer) return;
+        mediaPreviewContainer.innerHTML = ''; // Clear previous preview
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let mediaElement;
+                if (file.type.startsWith('image/')) {
+                    mediaElement = document.createElement('img');
+                } else if (file.type.startsWith('video/')) {
+                    mediaElement = document.createElement('video');
+                    mediaElement.controls = true;
+                }
+                if (mediaElement) {
+                    mediaElement.src = e.target.result;
+                    mediaPreviewContainer.appendChild(mediaElement);
+                    mediaPreviewContainer.style.display = 'block';
+                }
+            }
+            reader.readAsDataURL(file);
+        } else {
+            mediaPreviewContainer.style.display = 'none';
+        }
+    });
+
+
+    formSubmitPostBtn?.addEventListener("click", handleCreatePost);
+    editModalClose?.addEventListener("click", () => { editPostModal.classList.remove("active"); editPostId = null; });
+    updatePostBtn?.addEventListener('click', handleUpdatePost);
+    editPostModal?.addEventListener('click', (e) => { if (e.target === editPostModal) { editPostModal.classList.remove('active'); editPostId = null; } });
+    createConnectCard?.addEventListener('click', () => {
+      if (!currentUser) { showNotification("Please log in to create a connect."); return; }
+      connectFileInput?.click();
+    });
+    connectFileInput?.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) createConnect(file);
+    });
+
+    postList?.addEventListener('click', (e) => {
+      const likeButton = e.target.closest('.like-button');
+      if (likeButton) { handleLike(likeButton.dataset.postId, likeButton); }
+
+      const submitButton = e.target.closest('.comment-submit-btn');
+      if (submitButton && !submitButton.classList.contains('disabled')) {
+        if (!currentUser) { showNotification("Please log in to comment."); return; }
+        const postId = submitButton.dataset.postId;
+        const inputField = submitButton.closest('.comment-input-area')?.querySelector(`.comment-input[data-post-id="${postId}"]`);
+        if (inputField) {
+          const commentText = inputField.value.trim();
+          if (commentText) handleCommentSubmit(postId, commentText, inputField, submitButton);
+        }
+      }
+    });
+    postList?.addEventListener('input', (e) => {
+      const inputField = e.target.closest('.comment-input');
+      if (inputField) {
+        const submitButton = inputField.closest('.comment-input-area')?.querySelector(`.comment-submit-btn[data-post-id="${inputField.dataset.postId}"]`);
+        if (submitButton) {
+          const hasText = inputField.value.trim().length > 0;
+          submitButton.classList.toggle('disabled', !hasText);
+          submitButton.disabled = !hasText;
+        }
+      }
+    });
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

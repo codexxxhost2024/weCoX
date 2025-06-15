@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Edit Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #333; /* Dark Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --spacing-unit: 15px; /* Base spacing */
+      --border-radius: 8px;
+      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --button-disabled-bg: #ccc;
+      --button-disabled-color: #888;
+    }
+
+    /* --- Base Styles --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* Prevent tap highlight */
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-bottom: var(--spacing-unit); /* Removed bottom nav padding */
+      max-width: 420px; /* Limit width for mobile view */
+      margin: 0 auto; /* Center the content area */
+      overflow-x: hidden; /* Prevent horizontal scroll */
+      position: relative;
+    }
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, transform 0.1s, opacity 0.3s;
+    }
+    button:active {
+        transform: translateY(1px); /* Subtle press effect */
+    }
+    button:disabled {
+        background-color: var(--button-disabled-bg) !important; /* Ensure override */
+        color: var(--button-disabled-color) !important;
+        cursor: not-allowed;
+        transform: none; /* Disable active effect */
+    }
+
+
+    /* --- Utility Classes --- */
+    .primary-button {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      padding: 10px var(--spacing-unit);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .primary-button:hover:not(:disabled) { /* Add :not(:disabled) */
+      background-color: #192F4A; /* Slightly darker primary */
+    }
+    .material-symbols-outlined {
+      font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24
+    }
+
+    /* --- Header --- */
+    .header {
+      background-color: var(--background-dark);
+      color: var(--text-dark);
+      padding: 10px var(--spacing-unit);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; /* Make header sticky */
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: 56px;
+    }
+    .header-left-icon { /* Style for back button */
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       cursor: pointer;
+       color: var(--text-medium);
+       width: 40px;
+       height: 40px;
+       margin-left: -8px; /* Negative margin to align visually */
+    }
+    .header-left-icon .material-symbols-outlined {
+        font-size: 24px;
+    }
+    .header-title { /* Style for centered title */
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        text-align: center;
+        flex-grow: 1; /* Allows title to take space */
+        /* Adjust margin if back button takes too much space */
+        margin-left: -32px; /* Rough adjustment to re-center title with back button */
+    }
+    /* Optional: Hide right icons if not needed on edit page */
+    .header-icons-right {
+       width: 40px; /* Keep space consistent even if empty */
+       visibility: hidden; /* Hide icons but keep space */
+    }
+
+    /* --- Main Content Area --- */
+    .main-content {
+      padding: var(--spacing-unit);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-unit); /* Space between sections */
+    }
+
+    /* --- Profile Edit Form Section --- */
+    .profile-edit-form-section {
+        background-color: var(--background-dark);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        padding: var(--spacing-unit);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-unit);
+    }
+
+    .profile-edit-form-section h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: calc(var(--spacing-unit) * 0.5);
+        /* Added border for separation */
+        border-bottom: 1px solid #eee;
+        padding-bottom: calc(var(--spacing-unit) * 0.5);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .form-group label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-medium);
+        margin-bottom: 5px;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group input[type="url"],
+    .form-group textarea { /* Added textarea style */
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: var(--border-radius);
+        font-family: inherit;
+        font-size: 0.95rem;
+        color: var(--text-dark);
+        outline: none;
+        transition: border-color 0.2s ease;
+        background-color: #fff; /* Ensure background */
+        resize: vertical; /* Allow vertical resize for textarea */
+        min-height: 40px; /* Min height for textarea */
+    }
+     .form-group textarea {
+        min-height: 80px; /* Larger min height for bio */
+     }
+     .form-group input:read-only { /* Style for readonly fields */
+        background-color: #f0f0f0;
+        cursor: not-allowed;
+     }
+
+     .form-group input:focus,
+     .form-group textarea:focus {
+        border-color: var(--accent-color);
+     }
+
+     .form-group .hint-text {
+         font-size: 0.75rem;
+         color: var(--text-light);
+         margin-top: 4px;
+     }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end; /* Align buttons to the right */
+        gap: calc(var(--spacing-unit) * 0.7);
+        margin-top: var(--spacing-unit);
+        border-top: 1px solid #eee;
+        padding-top: var(--spacing-unit);
+    }
+    .form-actions button {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+    .form-actions .cancel-button {
+        background-color: #eee; /* Lighter cancel */
+        color: var(--text-dark);
+        margin-right: auto; /* Push cancel button to the left */
+        border: 1px solid #ccc; /* Add subtle border */
+    }
+    .form-actions .cancel-button:hover:not(:disabled) {
+        background-color: #ddd;
+    }
+
+    /* Status Message Styling */
+    #statusMessage {
+        margin-top: var(--spacing-unit);
+        padding: 10px;
+        border-radius: var(--border-radius);
+        text-align: center;
+        font-weight: 500;
+        display: none; /* Hidden by default */
+    }
+    #statusMessage.success {
+        background-color: #E6F4EA; /* Light green */
+        color: #34A853; /* Green text */
+        border: 1px solid #CEEAD6;
+        display: block;
+    }
+    #statusMessage.error {
+        background-color: #FCE8E6; /* Light red */
+        color: #EA4335; /* Red text */
+        border: 1px solid #FAD2CF;
+        display: block;
+    }
+    #statusMessage.loading {
+        background-color: #FFFBEB; /* Light yellow */
+        color: #926319; /* Dark yellow text */
+        border: 1px solid #FEEBC8;
+        display: block;
+    }
+
+    /* Loading Overlay (Optional) */
+    #loadingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        font-size: 1.2rem;
+        color: var(--primary-color);
+        font-weight: 600;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s linear 0.3s, opacity 0.3s ease;
+    }
+     #loadingOverlay.visible {
+         visibility: visible;
+         opacity: 1;
+         transition: visibility 0s linear 0s, opacity 0.3s ease;
+     }
+
+  </style>
+</head>
+<body>
+
+  <!-- Loading Indicator -->
+  <div id="loadingOverlay">Loading Profile...</div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left-icon" id="backButton">
+      <span class="material-symbols-outlined">arrow_back_ios_new</span>
+    </div>
+    <span class="header-title">Edit Profile</span>
+    <div class="header-icons-right">
+      <!-- Intentionally empty -->
+    </div>
+  </header>
+
+  <!-- Main Content - Edit Profile Form -->
+  <main class="main-content">
+
+    <!-- Profile Edit Form Section -->
+    <div class="profile-edit-form-section">
+        <h3>Basic Information</h3>
+        <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" placeholder="Enter your full name">
+        </div>
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="your@email.com" readonly>
+            <span class="hint-text">Email cannot be changed here. Contact support if needed.</span>
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" placeholder="+63 9xx xxx xxxx">
+        </div>
+         <div class="form-group">
+            <label for="bio">Bio / Description</label>
+            <textarea id="bio" placeholder="Tell us a little bit about yourself..."></textarea>
+        </div>
+
+         <h3>Social Media Accounts</h3>
+         <!-- Social Media URL Fields -->
+        <div class="form-group">
+            <label for="youtubeUrl">YouTube Channel URL</label>
+            <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/@yourchannel">
+            <span class="hint-text">Optional: Link to your YouTube channel.</span>
+        </div>
+         <div class="form-group">
+            <label for="facebookUrl">Facebook Page/Profile URL</label>
+            <input type="url" id="facebookUrl" placeholder="https://www.facebook.com/yourpage">
+            <span class="hint-text">Optional: Link to your Facebook.</span>
+        </div>
+         <div class="form-group">
+            <label for="instagramUrl">Instagram Profile URL</label>
+            <input type="url" id="instagramUrl" placeholder="https://www.instagram.com/yourhandle">
+            <span class="hint-text">Optional: Link to your Instagram.</span>
+        </div>
+         <div class="form-group">
+            <label for="tiktokUrl">TikTok Profile URL</label>
+            <input type="url" id="tiktokUrl" placeholder="https://www.tiktok.com/@yourhandle">
+            <span class="hint-text">Optional: Link to your TikTok.</span>
+        </div>
+        <!-- Add more social media fields as needed -->
+
+        <!-- Status Message Area -->
+        <div id="statusMessage"></div>
+
+        <div class="form-actions">
+             <button class="cancel-button" id="cancelButton">Cancel</button>
+            <button class="primary-button" id="saveChangesBtn">Save Changes</button>
+        </div>
+    </div>
+
+  </main>
+
+  <!-- Firebase SDK -->
+  <!-- Use the latest compatible versions -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
+
+  <!-- Firebase Configuration and Custom Script -->
+  <script defer>
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+       apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Replace with your actual API key
+       authDomain: "daisy-n7g20a.firebaseapp.com",
+       databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+       projectId: "daisy-n7g20a",
+       storageBucket: "daisy-n7g20a.appspot.com",
+       messagingSenderId: "225362605902",
+       appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+    };
+
+    // --- Wait for DOM and Firebase SDKs ---
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            // --- Initialize Firebase ---
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app(); // if already initialized, use that instance
+            }
+
+            const auth = firebase.auth();
+            const database = firebase.database();
+
+            // --- Get DOM Elements ---
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const fullNameInput = document.getElementById('fullName');
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+            const bioInput = document.getElementById('bio');
+            const youtubeInput = document.getElementById('youtubeUrl');
+            const facebookInput = document.getElementById('facebookUrl');
+            const instagramInput = document.getElementById('instagramUrl');
+            const tiktokInput = document.getElementById('tiktokUrl');
+            const saveButton = document.getElementById('saveChangesBtn');
+            const cancelButton = document.getElementById('cancelButton');
+            const backButton = document.getElementById('backButton');
+            const statusMessageDiv = document.getElementById('statusMessage');
+
+            let currentUserId = null; // Store the logged-in user's ID
+
+            // --- Show/Hide Loading ---
+            function showLoading(message = "Loading...") {
+                if (loadingOverlay) {
+                    loadingOverlay.textContent = message;
+                    loadingOverlay.classList.add('visible');
+                }
+                disableButtons();
+            }
+
+            function hideLoading() {
+                if (loadingOverlay) {
+                    loadingOverlay.classList.remove('visible');
+                }
+                enableButtons();
+            }
+
+            // --- Disable/Enable Buttons ---
+            function disableButtons() {
+                if (saveButton) saveButton.disabled = true;
+                if (cancelButton) cancelButton.disabled = true;
+                 if (backButton) backButton.style.pointerEvents = 'none'; // Prevent click
+            }
+            function enableButtons() {
+                if (saveButton) saveButton.disabled = false;
+                if (cancelButton) cancelButton.disabled = false;
+                 if (backButton) backButton.style.pointerEvents = 'auto';
+            }
+
+            // --- Show Status Message ---
+             function showStatusMessage(message, type = 'info') { // types: success, error, loading, info (default)
+                 if (!statusMessageDiv) return;
+                 statusMessageDiv.textContent = message;
+                 statusMessageDiv.className = ''; // Clear existing classes
+                 if (type === 'success' || type === 'error' || type === 'loading') {
+                    statusMessageDiv.classList.add(type);
+                 }
+                 statusMessageDiv.style.display = 'block';
+
+                 // Auto-hide after a delay for success/error
+                 if (type === 'success' || type === 'error') {
+                    setTimeout(() => {
+                        statusMessageDiv.style.display = 'none';
+                    }, 4000); // Hide after 4 seconds
+                 }
+            }
+             function hideStatusMessage() {
+                  if (statusMessageDiv) statusMessageDiv.style.display = 'none';
+             }
+
+            // --- Load Profile Data ---
+            function loadProfileData(userId) {
+                showLoading("Loading Profile...");
+                hideStatusMessage(); // Clear previous messages
+                const userProfileRef = database.ref('users/' + userId + '/profile');
+
+                userProfileRef.once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const data = snapshot.val();
+                            fullNameInput.value = data.fullName || '';
+                            phoneInput.value = data.phone || '';
+                            bioInput.value = data.bio || '';
+                            // Safely access nested social data
+                            youtubeInput.value = data.social?.youtube || '';
+                            facebookInput.value = data.social?.facebook || '';
+                            instagramInput.value = data.social?.instagram || '';
+                            tiktokInput.value = data.social?.tiktok || '';
+                        } else {
+                            console.log("No profile data found for this user. Ready for initial setup.");
+                            // Form will be empty, which is fine for a first edit.
+                        }
+                        // Email is always set from auth, even if no profile exists yet
+                        const currentUser = auth.currentUser;
+                        if (currentUser && currentUser.email) {
+                             emailInput.value = currentUser.email;
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error loading profile data:", error);
+                         showStatusMessage("Error loading profile. Please try again later.", "error");
+                    })
+                    .finally(() => {
+                        hideLoading();
+                    });
+            }
+
+            // --- Save Profile Data ---
+            function saveProfileData() {
+                if (!currentUserId) {
+                    showStatusMessage("Error: Not logged in.", "error");
+                    return;
+                }
+
+                showLoading("Saving...");
+                hideStatusMessage(); // Clear previous messages
+
+                const profileUpdates = {
+                    fullName: fullNameInput.value.trim(),
+                    phone: phoneInput.value.trim(),
+                    bio: bioInput.value.trim(),
+                    social: {
+                        youtube: youtubeInput.value.trim(),
+                        facebook: facebookInput.value.trim(),
+                        instagram: instagramInput.value.trim(),
+                        tiktok: tiktokInput.value.trim(),
+                    },
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP // Record update time
+                };
+
+                // Basic Validation (Example - enhance as needed)
+                if (!profileUpdates.fullName) {
+                     hideLoading();
+                     showStatusMessage("Full Name cannot be empty.", "error");
+                     fullNameInput.focus();
+                     return;
+                }
+
+
+                const userProfileRef = database.ref('users/' + currentUserId + '/profile');
+
+                userProfileRef.update(profileUpdates)
+                    .then(() => {
+                        console.log("Profile updated successfully!");
+                        showStatusMessage("Profile saved successfully!", "success");
+                    })
+                    .catch((error) => {
+                        console.error("Error saving profile data:", error);
+                        showStatusMessage(`Error saving profile: ${error.message}`, "error");
+                    })
+                    .finally(() => {
+                         hideLoading(); // Re-enable buttons even on error
+                    });
+            }
+
+            // --- Authentication State Observer ---
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // User is signed in.
+                    console.log("User logged in:", user.uid);
+                    currentUserId = user.uid;
+                    loadProfileData(currentUserId);
+                } else {
+                    // User is signed out.
+                    console.log("User is signed out.");
+                    currentUserId = null;
+                    // Redirect to login page or show a message
+                    showLoading("Redirecting to login..."); // Keep showing loading
+                    // Example redirect (adjust path as needed):
+                    // window.location.href = '/login.html';
+                    alert("You must be logged in to edit your profile. Redirecting...");
+                    // Replace alert with a proper UI message if possible
+                    // For demonstration, we'll just disable the form:
+                    showStatusMessage("Please log in to edit your profile.", "error");
+                    disableButtons();
+                     // Clear form fields if needed
+                     fullNameInput.value = '';
+                     emailInput.value = '';
+                     phoneInput.value = '';
+                     bioInput.value = '';
+                     youtubeInput.value = '';
+                     facebookInput.value = '';
+                     instagramInput.value = '';
+                     tiktokInput.value = '';
+                }
+            });
+
+            // --- Event Listeners ---
+            if (saveButton) {
+                saveButton.addEventListener('click', saveProfileData);
+            }
+
+            function goBack() {
+                // Consider if there are unsaved changes? For simplicity, just go back.
+                history.back();
+            }
+
+            if (cancelButton) {
+                cancelButton.addEventListener('click', goBack);
+            }
+            if (backButton) {
+                backButton.addEventListener('click', goBack);
+            }
+
+        } catch (error) {
+            console.error("Initialization Error:", error);
+            // Display a critical error message to the user
+            document.body.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">An unexpected error occurred loading the page. Please try refreshing.</div>';
+        }
+
+        // Keep multi-touch zoom prevention if desired (optional)
+        document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+        document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) event.preventDefault();
+          lastTouchEnd = now;
+        }, { passive: false });
+
+    });
+
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

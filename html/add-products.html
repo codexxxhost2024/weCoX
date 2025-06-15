@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1F3A5C"> <!-- WeConnect Theme Color -->
+    <title>Manage WeShop Products</title> <!-- Updated Title -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+     <!-- Material Symbols Outlined (for header icon) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <!-- Inter Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+    <style>
+        :root {
+            /* --- WeConnect Theme Variables --- */
+            --primary-color: #1F3A5C; /* WeConnect Dark Blue */
+            --primary-color-darker: #142840;
+            --primary-color-light-bg: rgba(31, 58, 92, 0.08);
+            --accent-color: #4A90E2;   /* WeConnect Blue Accent */
+            --accent-color-darker: #357ABD;
+
+            --background-main: #f0f2f5;  /* WeConnect Light Grey */
+            --background-card: #ffffff; /* WeConnect White */
+            --background-card-subtle: #f8f9fa;
+
+            --text-dark: #333333;       /* WeConnect Dark Grey */
+            --text-medium: #555555;     /* WeConnect Medium Grey */
+            --text-light: #777777;      /* WeConnect Light Grey */
+            --text-on-dark-bg: #FFFFFF; /* WeConnect White */
+            --text-on-dark-bg-muted: #E0E6F0;
+
+            --border-color: #DEE2E6;    /* WeConnect Light Grey Border */
+            --border-radius: 6px;      /* Consistent radius */
+            --card-radius: 8px;
+
+            /* Bootstrap colors mapped */
+            --bs-primary: var(--primary-color);
+            --bs-secondary: #6c757d;
+            --bs-success: #198754;
+            --bs-danger: #dc3545;
+            --bs-warning: #ffc107;
+            --bs-info: #0dcaf0;
+            --bs-light: #f8f9fa;
+            --bs-dark: #212529;
+
+            /* Layout Variables */
+            --header-height: 65px;
+            --transition-speed: 0.3s;
+            --spacing-unit: 15px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            touch-action: manipulation;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+            touch-action: pan-y;
+            background-color: var(--background-main);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .page-container {
+             padding-top: calc(var(--header-height) + 20px); /* Increased space for fixed header */
+             padding-bottom: 40px;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--background-card);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            height: var(--header-height);
+        }
+
+        .header-left { display: flex; align-items: center; }
+        .back-btn {
+            background: none; border: none; font-size: 20px; margin-right: 15px;
+            color: var(--primary-color); cursor: pointer; padding: 5px;
+            display: flex; align-items: center; /* For icon alignment */
+        }
+        .header-title { font-size: 20px; font-weight: 600; color: var(--text-dark); }
+        .header-right { display: flex; align-items: center; }
+        /* --- In-App Notification Bell --- */
+        .notification-bell {
+            position: relative; color: var(--text-light); cursor: pointer; margin-left: 20px;
+            font-size: 22px;
+        }
+        .notification-badge {
+            position: absolute; top: -4px; right: -6px; background-color: var(--bs-danger);
+            color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px;
+            font-weight: bold; display: flex; justify-content: center; align-items: center;
+            border: 1px solid white;
+        }
+        .notification-panel {
+            display: none; /* Hidden by default */
+            position: absolute; top: 120%; right: 0; background-color: var(--card-bg);
+            border-radius: var(--card-radius); box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
+            width: 300px; max-height: 400px; overflow-y: auto; z-index: 1100;
+        }
+        .notification-panel.visible { display: block; }
+        .notification-header { padding: 10px 15px; font-weight: 600; border-bottom: 1px solid var(--border-color); }
+        .notification-list { list-style: none; padding: 0; margin: 0; }
+        .notification-item { padding: 10px 15px; border-bottom: 1px solid var(--border-color); font-size: 13px; color: var(--text-light); }
+        .notification-item:last-child { border-bottom: none; }
+        .notification-item strong { color: var(--text-dark); }
+        .notification-item-time { font-size: 11px; color: #999; display: block; margin-top: 3px;}
+        .notification-empty { padding: 20px; text-align: center; color: #999; font-size: 14px; }
+        /* --- End Notification Bell --- */
+
+         /* Form Container */
+        .form-container, .list-container {
+            max-width: 700px;
+            margin: 25px auto;
+            padding: 0 15px;
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .card-header {
+            padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+            font-size: 17px; font-weight: 600; color: var(--text-dark);
+            background-color: var(--background-card-subtle); /* Slightly off-white header */
+        }
+        .card-body { padding: 25px 20px; }
+
+        /* Form Group Styling */
+        .form-group { margin-bottom: 25px; }
+        .form-group label {
+            display: block; font-size: 14px; font-weight: 500;
+            color: var(--text-dark); margin-bottom: 8px;
+        }
+        .form-group label .required { color: var(--bs-danger); }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="url"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%; padding: 12px 15px; border: 1px solid var(--border-color);
+            border-radius: var(--border-radius); font-size: 14px; background-color: var(--input-bg);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            color: var(--text-dark); /* Ensure text is readable */
+        }
+         .form-group input:focus,
+         .form-group textarea:focus,
+         .form-group select:focus {
+             border-color: var(--primary-color); outline: none;
+             box-shadow: 0 0 0 2px var(--primary-color-light-bg); /* Focus shadow using WC theme */
+         }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-group .input-hint { font-size: 12px; color: var(--text-light); margin-top: 6px; }
+
+        /* --- Image Upload Styling --- */
+        .image-upload-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; }
+        .image-upload-slot {
+            position: relative; aspect-ratio: 1 / 1; border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; cursor: pointer;
+            background-color: var(--background-card-subtle); transition: border-color 0.2s ease, background-color 0.2s ease;
+            overflow: hidden;
+        }
+        .image-upload-slot:hover { border-color: var(--primary-color); background-color: #f4f6f8; }
+        .image-upload-slot i { font-size: 24px; color: var(--text-light); margin-bottom: 8px; }
+        .image-upload-slot span { font-size: 12px; color: var(--text-light); text-align: center; padding: 0 5px;}
+        .image-upload-slot input[type="file"] { display: none; }
+        .image-upload-slot img.preview {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1;
+        }
+        .image-upload-slot .remove-image {
+            position: absolute; top: 5px; right: 5px; background-color: rgba(0,0,0,0.6);
+            color: white; border: none; border-radius: 50%; width: 20px; height: 20px;
+            font-size: 12px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 2; display: none;
+        }
+        .image-upload-slot:hover .remove-image { display: flex; }
+        .image-upload-slot.has-image .remove-image { display: flex; }
+        .image-upload-slot.has-image i, .image-upload-slot.has-image span { display: none; }
+        /* --- End Image Upload Styling --- */
+
+
+        /* Price Fields Layout */
+        .price-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* Status and Visibility */
+        .status-visibility { display: grid; grid-template-columns: 1fr; gap: 20px; }
+         @media (min-width: 600px) { .status-visibility { grid-template-columns: 1fr 1fr; } }
+
+
+        /* Submit Button */
+        .submit-button-container {
+            display: flex; justify-content: flex-end; margin-top: 30px; padding: 0 20px 20px; /* Add padding */
+        }
+        .submit-btn {
+            background-color: var(--primary-color); color: var(--text-on-dark-bg); border: none;
+            padding: 12px 28px; font-size: 15px; font-weight: 600;
+            border-radius: var(--border-radius); cursor: pointer; transition: background-color 0.3s ease, box-shadow 0.2s ease;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .submit-btn i { font-size: 14px; }
+        .submit-btn:hover { background-color: var(--primary-color-darker); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .submit-btn:disabled { background-color: var(--text-light); cursor: not-allowed; box-shadow: none; }
+        .cancel-btn { background-color: var(--text-medium); }
+        .cancel-btn:hover { background-color: var(--text-light); }
+
+
+        /* Status Message & Loading Indicator */
+        .status-indicator { margin: 20px 0; padding: 12px 15px; border-radius: var(--border-radius); font-size: 14px; text-align: center; display: none; }
+        .status-indicator.success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; } /* Bootstrap success colors */
+        .status-indicator.error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; } /* Bootstrap danger colors */
+        .status-indicator.loading { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; } /* Bootstrap info colors */
+        .status-indicator i { margin-right: 8px; }
+
+        /* --- User Product List Styles --- */
+        .user-products-list { margin-top: 30px; }
+        .user-products-list h3 {
+            font-size: 18px; font-weight: 600; margin-bottom: 15px;
+            padding: 0 20px;
+            color: var(--text-dark);
+        }
+        .product-list-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px 20px;
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: var(--border-radius); margin-bottom: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+        .product-list-item-image {
+             width: 50px; height: 50px; border-radius: 4px;
+             object-fit: cover; flex-shrink: 0; background-color: var(--background-card-subtle);
+             border: 1px solid var(--border-color);
+        }
+        .product-list-item-details { flex-grow: 1; }
+        .product-list-item-title { font-weight: 500; font-size: 15px; margin-bottom: 3px; color: var(--text-dark); }
+        .product-list-item-price { font-size: 14px; color: var(--text-light); }
+        .product-list-item-status { font-size: 12px; padding: 2px 6px; border-radius: 4px; display: inline-block; text-transform: capitalize; }
+        .product-list-item-status.active { background-color: #d1e7dd; color: #0f5132; } /* Bootstrap success */
+        .product-list-item-status.draft { background-color: #fff3cd; color: #664d03; } /* Bootstrap warning */
+        .product-list-item-actions { display: flex; gap: 10px; flex-shrink: 0; }
+        .action-btn {
+            background: none; border: none; font-size: 16px; cursor: pointer;
+            padding: 5px; border-radius: 4px; transition: color 0.2s, background-color 0.2s;
+        }
+        .action-btn.edit { color: var(--primary-color); }
+        .action-btn.delete { color: var(--bs-danger); }
+        .action-btn:hover { background-color: var(--primary-color-light-bg); }
+
+        .product-list-empty { text-align: center; padding: 30px; color: var(--text-light); }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.7); /* Lighter overlay */
+            display: flex; justify-content: center;
+            align-items: center; z-index: 2000;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid var(--primary-color-light-bg);
+            border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast Notifications */
+        .toast-container { position: fixed; top: calc(var(--header-height) + 20px); right: 20px; z-index: 1060; }
+        .toast {
+            max-width: 350px; background-color: var(--card-bg);
+            border-radius: var(--border-radius); box-shadow: var(--shadow-md);
+            margin-bottom: 10px; overflow: hidden; animation: slideIn 0.3s ease forwards;
+            border: 1px solid var(--border-color); color: var(--text-dark);
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-header { display: flex; align-items: center; padding: 0.5rem 0.75rem; background-color: var(--background-card-subtle); border-bottom: 1px solid var(--border-color); }
+        .toast-body { padding: 0.75rem; }
+        .toast.success .toast-header { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc; }
+        .toast.error .toast-header { background-color: #f8d7da; color: #842029; border-color: #f5c2c7;}
+        .toast.warning .toast-header { background-color: #fff3cd; color: #664d03; border-color: #ffecb5;}
+        .toast.info .toast-header { background-color: #cff4fc; color: #055160; border-color: #b6effb;}
+        .toast .btn-close { filter: invert(0.5) sepia(0) saturate(0) hue-rotate(0deg) brightness(0.8); }
+
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 767px) {
+            .page-container { padding-top: calc(var(--header-height) + 10px); }
+            .form-container, .list-container { padding: 0 10px; margin: 15px auto; }
+            .card-body { padding: 15px; }
+            .card-header { padding: 12px 15px; font-size: 16px; }
+            .price-fields { grid-template-columns: 1fr; gap: 15px;}
+            .submit-button-container { padding: 0 15px 15px; }
+            .product-list-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .product-list-item-actions { width: 100%; justify-content: flex-end; margin-top: 10px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="window.location.href='index.html';" title="Back to Store">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="header-title">Manage WeShop Products</div> <!-- Updated Title -->
+        </div>
+        <div class="header-right">
+             <!-- Notification Bell -->
+             <div class="notification-bell" id="notificationBell">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
+                <div class="notification-panel" id="notificationPanel">
+                    <div class="notification-header">Notifications</div>
+                    <ul class="notification-list" id="notificationList">
+                         <li class="notification-empty" id="notificationEmpty">No new notifications</li>
+                    </ul>
+                </div>
+             </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+
+    <!-- Main Content -->
+    <div class="page-container">
+        <div class="form-container">
+            <!-- Add/Edit Product Form -->
+            <form id="productForm">
+                 <input type="hidden" id="productId" name="productId">
+
+                <div class="card">
+                    <div class="card-header" id="formCardHeader">Add New Product</div>
+                    <div class="card-body">
+                         <div class="status-indicator" id="statusIndicator"></div>
+                        <div class="form-group">
+                            <label for="productTitle">Title <span class="required">*</span></label>
+                            <input type="text" id="productTitle" name="productTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productDescription">Description</label>
+                            <textarea id="productDescription" name="productDescription"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Media (Upload up to 4 images)</div>
+                    <div class="card-body">
+                        <div class="image-upload-container" id="imageUploadContainer"></div>
+                        <p class="input-hint" style="margin-top: 15px;">Click or tap to upload images. First image will be the main display image.</p>
+                        <input type="hidden" id="imageUrls" name="imageUrls">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Pricing</div>
+                    <div class="card-body">
+                        <div class="price-fields">
+                             <div class="form-group">
+                                 <label for="productPrice">Price (₱) <span class="required">*</span></label>
+                                 <input type="number" id="productPrice" name="productPrice" step="0.01" min="0" required>
+                             </div>
+                             <div class="form-group">
+                                 <label for="productComparePrice">Compare at price (₱)</label>
+                                 <input type="number" id="productComparePrice" name="productComparePrice" step="0.01" min="0">
+                                 <p class="input-hint">Optional. Must be higher than price.</p>
+                            </div>
+                        </div>
+                         <div class="form-group">
+                             <label for="productCost">Cost per item (₱)</label>
+                             <input type="number" id="productCost" name="productCost" step="0.01" min="0">
+                             <p class="input-hint">Optional. For your reference.</p>
+                         </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Inventory</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="productSku">SKU (Stock Keeping Unit)</label>
+                            <input type="text" id="productSku" name="productSku">
+                        </div>
+                        <div class="form-group">
+                            <label for="productQuantity">Quantity</label>
+                             <input type="number" id="productQuantity" name="productQuantity" step="1" min="0">
+                             <p class="input-hint">Leave blank to not track inventory.</p>
+                        </div>
+                         <div class="form-group">
+                             <input type="checkbox" id="allowOverselling" name="allowOverselling" style="margin-right: 5px;">
+                             <label for="allowOverselling" style="display: inline-block; font-weight: normal;">Allow overselling when out of stock</label>
+                         </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Organization</div>
+                    <div class="card-body">
+                         <div class="form-group">
+                             <label for="productVendor">Vendor</label>
+                             <input type="text" id="productVendor" name="productVendor">
+                         </div>
+                         <div class="form-group">
+                            <label for="productType">Product type</label>
+                            <input type="text" id="productType" name="productType" placeholder="e.g., Meat, Snack, Drink">
+                         </div>
+                        <div class="form-group">
+                            <label for="productTags">Tags</label>
+                            <input type="text" id="productTags" name="productTags" placeholder="Comma-separated, e.g., siomai, frozen, pork">
+                        </div>
+                         <div class="form-group">
+                            <label for="productCategory">Product Category</label>
+                            <input type="text" id="productCategory" name="productCategory" placeholder="e.g., Food > Frozen Goods > Meat">
+                         </div>
+                    </div>
+                </div>
+
+                 <div class="card">
+                     <div class="card-header">Status</div>
+                     <div class="card-body">
+                         <div class="form-group">
+                             <label for="productStatus">Product status <span class="required">*</span></label>
+                             <select id="productStatus" name="productStatus" required>
+                                 <option value="active" selected>Active</option>
+                                 <option value="draft">Draft</option>
+                             </select>
+                             <p class="input-hint">Active products are visible in the store. Draft products are hidden.</p>
+                         </div>
+                     </div>
+                 </div>
+
+                <div class="submit-button-container">
+                    <button type="button" class="submit-btn cancel-btn" id="cancelEditButton" style="background-color: #aaa; margin-right: 10px; display: none;">Cancel</button>
+                    <button type="submit" class="submit-btn" id="saveButton">
+                        <i class="fas fa-save"></i> <span id="saveButtonText">Save Product</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+         <div class="list-container">
+            <div class="user-products-list card">
+                <div class="card-header">Your Products</div>
+                 <div class="card-body" style="padding: 0;">
+                    <div id="userProductsListArea">
+                         <div class="product-list-empty" id="productListEmpty">Loading your products...</div>
+                     </div>
+                 </div>
+            </div>
+         </div>
+
+    </div> <!-- End page-container -->
+
+
+    <!-- Firebase SDK - Use Firestore, Auth, Storage -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+    <script>
+        // --- Firebase Configuration (WeConnect) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+
+        // --- Initialize Firebase ---
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+
+        // --- Firestore Collection References ---
+        const productsCollectionRef = db.collection('weshop_products'); // Updated Collection Name
+        const userNotificationsCollectionRef = db.collection('user_notifications');
+
+        // --- DOM Elements ---
+        const productForm = document.getElementById('productForm');
+        const saveButton = document.getElementById('saveButton');
+        const saveButtonText = document.getElementById('saveButtonText');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const imageUploadContainer = document.getElementById('imageUploadContainer');
+        const imageInputs = [];
+        const imageUrlsInput = document.getElementById('imageUrls');
+        const userProductsListArea = document.getElementById('userProductsListArea');
+        const productListEmpty = document.getElementById('productListEmpty');
+        const productIdInput = document.getElementById('productId');
+        const formCardHeader = document.getElementById('formCardHeader');
+        const cancelEditButton = document.getElementById('cancelEditButton');
+        const notificationBell = document.getElementById('notificationBell');
+        const notificationCount = document.getElementById('notificationCount');
+        const notificationPanel = document.getElementById('notificationPanel');
+        const notificationList = document.getElementById('notificationList');
+        const notificationEmpty = document.getElementById('notificationEmpty');
+        const loadingOverlay = document.getElementById('loadingOverlay'); // Added loading overlay element
+
+
+        let currentUser = null;
+        const MAX_IMAGES = 4;
+        let uploadedImageUrls = [];
+        let isEditing = false;
+        let notificationListenerUnsubscribe = null;
+
+        // --- Authentication State Change ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log("User logged in:", user.uid);
+                currentUser = user;
+                initializePageForUser();
+            } else {
+                console.log("User logged out. Redirecting to signin.");
+                currentUser = null;
+                // Redirect to root signin page
+                window.location.href = '/signin.html';
+                // Basic UI reset might still be good practice
+                userProductsListArea.innerHTML = '<div class="product-list-empty">Please log in to manage products.</div>';
+                productForm.reset();
+                disableForm();
+                if (notificationListenerUnsubscribe) {
+                    notificationListenerUnsubscribe();
+                    notificationListenerUnsubscribe = null;
+                }
+                updateNotificationUI([]);
+            }
+        });
+
+        // --- Function to run after user is logged in ---
+        function initializePageForUser() {
+            if (!currentUser) return;
+            enableForm();
+            createImageUploadSlots();
+            loadUserProducts();
+            listenForNotifications();
+        }
+
+        // --- Disable/Enable Form ---
+        function disableForm() {
+            productForm.querySelectorAll('input, textarea, select, button').forEach(el => el.disabled = true);
+            imageUploadContainer.style.pointerEvents = 'none';
+            imageUploadContainer.style.opacity = '0.6';
+        }
+        function enableForm() {
+            productForm.querySelectorAll('input, textarea, select, button').forEach(el => el.disabled = false);
+            saveButton.disabled = false;
+            imageUploadContainer.style.pointerEvents = 'auto';
+            imageUploadContainer.style.opacity = '1';
+        }
+        // --- Show/hide loading overlay ---
+        function showLoading() { loadingOverlay.classList.remove('hidden'); }
+        function hideLoading() { loadingOverlay.classList.add('hidden'); }
+
+        // --- Image Upload UI & Handling ---
+        function createImageUploadSlots() {
+            imageUploadContainer.innerHTML = '';
+            imageInputs.length = 0;
+            uploadedImageUrls = new Array(MAX_IMAGES).fill(null);
+
+            for (let i = 0; i < MAX_IMAGES; i++) {
+                const slot = document.createElement('label'); slot.className = 'image-upload-slot'; slot.setAttribute('for', `imageUploadInput${i}`);
+                const icon = document.createElement('i'); icon.className = 'fas fa-cloud-upload-alt';
+                const text = document.createElement('span'); text.textContent = i === 0 ? 'Add main image' : `Add image ${i + 1}`;
+                const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/jpeg, image/png, image/webp, image/gif'; input.id = `imageUploadInput${i}`; input.dataset.index = i; input.style.display = 'none';
+                const preview = document.createElement('img'); preview.className = 'preview'; preview.style.display = 'none';
+                const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image'; removeBtn.innerHTML = '×'; removeBtn.style.display = 'none'; removeBtn.dataset.index = i;
+
+                slot.appendChild(icon); slot.appendChild(text); slot.appendChild(input); slot.appendChild(preview); slot.appendChild(removeBtn);
+                imageUploadContainer.appendChild(slot); imageInputs.push(input);
+
+                input.addEventListener('change', handleFileSelect);
+                removeBtn.addEventListener('click', handleRemoveImage);
+            }
+             updateImageUrlsInput();
+        }
+
+        function handleFileSelect(event) {
+            const input = event.target; const index = parseInt(input.dataset.index); const file = input.files[0];
+            const slot = input.closest('.image-upload-slot'); const preview = slot.querySelector('img.preview'); const removeBtn = slot.querySelector('.remove-image');
+            if (file) { const reader = new FileReader(); reader.onload = (e) => { preview.src = e.target.result; preview.style.display = 'block'; removeBtn.style.display = 'flex'; slot.classList.add('has-image'); uploadedImageUrls[index] = file; }; reader.readAsDataURL(file); }
+        }
+
+        function handleRemoveImage(event) {
+            event.preventDefault(); event.stopPropagation();
+            const button = event.target; const index = parseInt(button.dataset.index); const slot = button.closest('.image-upload-slot'); const input = slot.querySelector(`#imageUploadInput${index}`); const preview = slot.querySelector('img.preview');
+            if(input) input.value = ''; preview.src = '#'; preview.style.display = 'none'; button.style.display = 'none'; slot.classList.remove('has-image'); uploadedImageUrls[index] = null; updateImageUrlsInput();
+        }
+
+        function updateImageUrlsInput() {
+             const validUrls = uploadedImageUrls.filter(item => typeof item === 'string' && item !== '');
+             imageUrlsInput.value = JSON.stringify(validUrls);
+        }
+        // --- End Image Handling ---
+
+        // --- Handle Form Submission (Add/Update Product to Firestore) ---
+        productForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!currentUser) { showStatus("Error: You must be logged in.", "error"); return; }
+            setLoading(true, isEditing ? 'Updating...' : 'Saving...');
+            showLoading(); // Show full screen loader
+
+            try {
+                const currentUrlsOrFiles = [...uploadedImageUrls];
+                const finalImageUrls = [];
+
+                for (let i = 0; i < currentUrlsOrFiles.length; i++) {
+                    const item = currentUrlsOrFiles[i];
+                    if (item instanceof File) {
+                        const file = item;
+                        const uniquePrefix = productIdInput.value || Date.now();
+                        const fileName = `product_${uniquePrefix}_${i}_${file.name}`;
+                        const filePath = `product_images/${currentUser.uid}/${fileName}`;
+                        const fileRef = storage.ref(filePath);
+                        showStatus(`Uploading image ${i + 1}...`, "loading", false);
+                        const snapshot = await fileRef.put(file);
+                        const downloadURL = await snapshot.ref.getDownloadURL();
+                        finalImageUrls.push(downloadURL);
+                        console.log(`Image ${i+1} uploaded:`, downloadURL);
+                    } else if (typeof item === 'string' && item) {
+                        finalImageUrls.push(item);
+                    }
+                }
+                 if (finalImageUrls.length === 0 && document.getElementById('thumbnail').required) {
+                    throw new Error("At least one image (thumbnail) is required.");
+                 }
+
+                const productData = {
+                    userId: currentUser.uid,
+                    Handle: createHandle(document.getElementById('productTitle').value.trim()),
+                    Title: document.getElementById('productTitle').value.trim(),
+                    'Body (HTML)': document.getElementById('productDescription').value.trim(),
+                    Vendor: document.getElementById('productVendor').value.trim() || `Store_${currentUser.uid.substring(0,5)}`, // Default Vendor
+                    'Product Category': document.getElementById('productCategory').value.trim(),
+                    Type: document.getElementById('productType').value.trim(),
+                    Tags: document.getElementById('productTags').value.trim().split(',')
+                          .map(tag => tag.trim()).filter(tag => tag !== ''),
+                    Status: document.getElementById('productStatus').value,
+                    'Variant Price': parseFloat(document.getElementById('productPrice').value) || 0,
+                    'Variant Compare At Price': parseFloat(document.getElementById('productComparePrice').value) || null,
+                    'Image Src': finalImageUrls[0] || '',
+                    imageUrls: finalImageUrls,
+                    'Variant SKU': document.getElementById('productSku').value.trim() || null,
+                    'Variant Inventory Qty': document.getElementById('productQuantity').value !== '' ? parseInt(document.getElementById('productQuantity').value) : null,
+                    allowOverselling: document.getElementById('allowOverselling').checked,
+                    'Cost per item': parseFloat(document.getElementById('productCost').value) || null,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (!productData.Title || isNaN(productData['Variant Price'])) {
+                    throw new Error("Title and Price are required.");
+                }
+                const comparePrice = productData['Variant Compare At Price'];
+                if (comparePrice !== null && (isNaN(comparePrice) || comparePrice <= productData['Variant Price'])) {
+                     throw new Error("Compare at Price must be a valid number higher than the Price.");
+                 }
+
+                let successMessage = '';
+                if (isEditing) {
+                    const productId = productIdInput.value;
+                    if (!productId) throw new Error("Product ID missing for update.");
+                    showStatus("Updating product data...", "loading", false);
+                    const productDocRef = productsCollectionRef.doc(productId);
+                    await productDocRef.update(productData);
+                    successMessage = `Product "${productData.Title}" updated successfully!`;
+                } else {
+                    showStatus("Adding product data...", "loading", false);
+                    productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    const newDocRef = await productsCollectionRef.add(productData);
+                    successMessage = `Product "${productData.Title}" added successfully!`;
+                    console.log("New product added with ID:", newDocRef.id);
+                    addNotification(currentUser.uid, `You added a new product: "${productData.Title}".`, newDocRef.id);
+                }
+
+                resetForm();
+                showToast(successMessage, "success"); // Use Toast for success
+                loadUserProducts();
+
+            } catch (error) {
+                console.error("Error saving product to Firestore:", error);
+                showToast(`Error: ${error.message || 'Failed to save product.'}`, "error"); // Use Toast for error
+                showStatus(`Error: ${error.message || 'Failed to save product.'}`, "error"); // Keep status indicator as well
+            } finally {
+                setLoading(false);
+                hideLoading(); // Hide full screen loader
+            }
+        });
+
+        // --- Cancel Edit ---
+        cancelEditButton.addEventListener('click', () => { resetForm(); });
+
+        // --- Reset Form Function ---
+        function resetForm() {
+            productForm.reset();
+            productIdInput.value = ''; isEditing = false; formCardHeader.textContent = 'Add New Product'; saveButtonText.textContent = 'Save Product'; cancelEditButton.style.display = 'none'; statusIndicator.style.display = 'none';
+            uploadedImageUrls.fill(null);
+            imageInputs.forEach((input, index) => {
+                 const slot = input.closest('.image-upload-slot');
+                 const preview = slot.querySelector('img.preview');
+                 const removeBtn = slot.querySelector('.remove-image');
+                 preview.src = '#';
+                 preview.style.display = 'none';
+                 removeBtn.style.display = 'none';
+                 slot.classList.remove('has-image');
+                 input.value = ''; // Clear the file input value
+            });
+            updateImageUrlsInput();
+        }
+
+        // --- Load User Products from Firestore ---
+        async function loadUserProducts() {
+            if (!currentUser) return;
+            productListEmpty.textContent = "Loading your products...";
+            productListEmpty.style.display = 'block';
+            userProductsListArea.innerHTML = '';
+            userProductsListArea.appendChild(productListEmpty);
+
+            try {
+                console.log("Querying Firestore for products with userId:", currentUser.uid);
+                const snapshot = await productsCollectionRef
+                                        .where('userId', '==', currentUser.uid)
+                                        .orderBy('createdAt', 'desc') // Order newest first
+                                        .get();
+                const productsData = [];
+                if (!snapshot.empty) {
+                    snapshot.forEach(doc => { productsData.push({ id: doc.id, ...doc.data() }); });
+                    console.log(`Found ${productsData.length} products for user.`);
+                    productListEmpty.style.display = 'none';
+                    productsData.forEach(product => {
+                        const listItem = createProductListItem(product);
+                        userProductsListArea.appendChild(listItem);
+                    });
+                } else {
+                    console.log("No products found for this user in Firestore.");
+                    productListEmpty.textContent = "You haven't added any products yet.";
+                    productListEmpty.style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Error loading user products from Firestore:", error);
+                productListEmpty.textContent = "Error loading products.";
+                productListEmpty.style.display = 'block';
+                showToast("Error loading products.", "error");
+            }
+        }
+
+        // --- Create List Item Element ---
+        function createProductListItem(product) {
+            const item = document.createElement('div'); item.className = 'product-list-item'; item.dataset.id = product.id;
+            const img = document.createElement('img'); img.src = product['Image Src'] || (Array.isArray(product.imageUrls) && product.imageUrls[0]) || 'assets/images/placeholder.svg'; img.alt = product.Title; img.className = 'product-list-item-image'; img.onerror = () => { img.src = 'assets/images/placeholder.svg'; };
+            const details = document.createElement('div'); details.className = 'product-list-item-details';
+            const title = document.createElement('div'); title.className = 'product-list-item-title'; title.textContent = product.Title || 'No Title';
+            const price = document.createElement('div'); price.className = 'product-list-item-price'; price.textContent = formatPrice(product['Variant Price']);
+            const statusSpan = document.createElement('span'); statusSpan.className = `product-list-item-status ${product.Status || 'draft'}`; statusSpan.textContent = product.Status || 'draft';
+            details.appendChild(title); details.appendChild(price); details.appendChild(statusSpan);
+
+            const actions = document.createElement('div'); actions.className = 'product-list-item-actions';
+            const editBtn = document.createElement('button'); editBtn.className = 'action-btn edit'; editBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>'; editBtn.title = 'Edit Product'; editBtn.onclick = () => loadProductForEdit(product.id);
+            const deleteBtn = document.createElement('button'); deleteBtn.className = 'action-btn delete'; deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; deleteBtn.title = 'Delete Product'; deleteBtn.onclick = () => deleteProduct(product.id, product.Title);
+            actions.appendChild(editBtn); actions.appendChild(deleteBtn);
+
+            item.appendChild(img); item.appendChild(details); item.appendChild(actions);
+            return item;
+        }
+
+        // --- Load Product Data into Form for Editing ---
+        async function loadProductForEdit(productId) {
+            if (!currentUser) return;
+            resetForm(); // Reset before loading
+            showLoading(); // Show loading indicator
+            showStatus("Loading product data...", "loading", false);
+
+            try {
+                const productDocRef = productsCollectionRef.doc(productId);
+                const docSnap = await productDocRef.get();
+
+                if (docSnap.exists()) {
+                    const product = { id: docSnap.id, ...docSnap.data() };
+                    if (product.userId !== currentUser.uid) { throw new Error("Permission denied."); }
+
+                    isEditing = true;
+                    productIdInput.value = productId;
+                    formCardHeader.textContent = 'Edit Product';
+                    saveButtonText.textContent = 'Update Product';
+                    cancelEditButton.style.display = 'inline-flex';
+
+                    document.getElementById('productTitle').value = product.Title || '';
+                    document.getElementById('productDescription').value = product['Body (HTML)'] || '';
+                    document.getElementById('productPrice').value = product['Variant Price'] || '';
+                    document.getElementById('productComparePrice').value = product['Variant Compare At Price'] || '';
+                    document.getElementById('productCost').value = product['Cost per item'] || '';
+                    document.getElementById('productVendor').value = product.Vendor || '';
+                    document.getElementById('productType').value = product.Type || '';
+                    document.getElementById('productTags').value = Array.isArray(product.Tags) ? product.Tags.join(', ') : (product.Tags || '');
+                    document.getElementById('productCategory').value = product['Product Category'] || '';
+                    document.getElementById('productSku').value = product['Variant SKU'] || '';
+                    document.getElementById('productQuantity').value = product['Variant Inventory Qty'] ?? '';
+                    document.getElementById('allowOverselling').checked = product.allowOverselling || false;
+                    document.getElementById('productStatus').value = product.Status || 'draft';
+
+                    uploadedImageUrls.fill(null);
+                    const imageUrls = product.imageUrls || [];
+                    imageUrls.forEach((url, index) => {
+                        if (index < MAX_IMAGES) {
+                            const slot = imageUploadContainer.children[index];
+                            if (slot) {
+                                const preview = slot.querySelector('img.preview');
+                                const removeBtn = slot.querySelector('.remove-image');
+                                preview.src = url; preview.style.display = 'block'; removeBtn.style.display = 'flex'; slot.classList.add('has-image');
+                                uploadedImageUrls[index] = url;
+                            }
+                        }
+                    });
+                     updateImageUrlsInput();
+                    statusIndicator.style.display = 'none'; // Hide loading status
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else { throw new Error("Product not found."); }
+            } catch (error) {
+                console.error("Error loading product for edit:", error);
+                showToast(`Error loading product: ${error.message}`, "error");
+                resetForm(); // Reset form if loading fails
+            } finally {
+                hideLoading(); // Hide full screen loader
+            }
+        }
+
+        // --- Delete Product from Firestore ---
+        async function deleteProduct(productId, productTitle) {
+            if (!currentUser || !productId) return;
+            if (!confirm(`Are you sure you want to delete "${productTitle || 'this product'}"? This cannot be undone.`)) return;
+            showLoading();
+
+            try {
+                const productDocRef = productsCollectionRef.doc(productId);
+                const docSnap = await productDocRef.get(); // Get doc to verify ownership and get image URLs
+
+                if (docSnap.exists()) {
+                    const productData = docSnap.data();
+                     // Ownership Check
+                     if (productData.userId !== currentUser.uid) {
+                         throw new Error("Permission denied to delete this product.");
+                     }
+                     // Delete images from storage first (optional but recommended)
+                     await deleteProductImagesFromStorage(productData.imageUrls || []);
+                } else {
+                     console.warn("Product document not found for deletion, skipping image deletion.");
+                }
+
+
+                // Delete product document from Firestore
+                await productsCollectionRef.doc(productId).delete(); // Use specific ref for clarity
+                console.log(`Product ${productId} deleted from Firestore.`);
+                showToast(`Product "${productTitle}" deleted successfully.`, "success");
+                await deleteProductNotifications(productId); // Delete related notifications
+                loadUserProducts(); // Refresh the list
+
+            } catch (error) {
+                console.error("Error deleting product:", error);
+                showToast(`Error deleting product: ${error.message}`, "error");
+            } finally {
+                hideLoading();
+            }
+        }
+
+         // --- Helper to Delete Product Images from Storage ---
+         async function deleteProductImagesFromStorage(imageUrls) {
+             if (!Array.isArray(imageUrls) || imageUrls.length === 0) return;
+             console.log("Attempting to delete storage images:", imageUrls);
+             const deletePromises = imageUrls.map(url => {
+                 try {
+                     if (url && url.includes('firebasestorage.googleapis.com')) {
+                         return storage.refFromURL(url).delete();
+                     }
+                 } catch (e) { console.warn(`Could not get reference for URL ${url}:`, e); }
+                 return Promise.resolve();
+             });
+             try { await Promise.all(deletePromises); console.log("Associated product images deleted from Storage."); }
+             catch (error) { console.error("Error deleting product images (some may have failed):", error); }
+         }
+
+         // --- Helper to Delete Notifications for a Product ---
+         async function deleteProductNotifications(productId) {
+             if (!currentUser || !productId) return;
+             console.log(`Deleting notifications for product ${productId}`);
+             try {
+                const querySnapshot = await userNotificationsCollectionRef
+                    .where('userId', '==', currentUser.uid)
+                    .where('productId', '==', productId).get();
+                if (!querySnapshot.empty) {
+                    const batch = db.batch(); // Use batch for efficiency
+                    querySnapshot.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    console.log(`Deleted ${querySnapshot.size} notifications for product ${productId}.`);
+                }
+             } catch (error) { console.error(`Error deleting notifications:`, error); }
+         }
+
+
+        // --- Helper Functions ---
+        function createHandle(title) { if (!title) return `product-${Date.now()}`; return title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-'); }
+        function formatPrice(price) { if (price === null || price === undefined || price === '') return '₱--.--'; const number = parseFloat(price); if (isNaN(number)) return '₱--.--'; return `₱${number.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+        function setLoading(isLoading, message = 'Saving...') { saveButton.disabled = isLoading; if (isLoading) { saveButtonText.textContent = message; saveButton.querySelector('i').className = 'fas fa-spinner fa-spin'; } else { saveButtonText.textContent = isEditing ? 'Update Product' : 'Save Product'; saveButton.querySelector('i').className = 'fas fa-save'; } }
+        function showStatus(message, type = "info", autoHide = true) { statusIndicator.textContent = message; statusIndicator.className = `status-indicator ${type}`; statusIndicator.style.display = 'block'; if (autoHide && (type === 'success' || type === 'error')) { setTimeout(() => { statusIndicator.style.display = 'none'; }, 4000); } }
+
+         // --- Notification System ---
+         function listenForNotifications() {
+             if (!currentUser || notificationListenerUnsubscribe) return; // Don't attach multiple listeners
+             console.log("Listening for Firestore notifications for user:", currentUser.uid);
+             const q = userNotificationsCollectionRef.where('userId', '==', currentUser.uid).orderBy('timestamp', 'desc').limit(10);
+             notificationListenerUnsubscribe = q.onSnapshot( (querySnapshot) => { const notifications = []; querySnapshot.forEach((doc) => notifications.push({ id: doc.id, ...doc.data() })); console.log(`Received ${notifications.length} notifications.`); updateNotificationUI(notifications); }, (error) => console.error("Error listening to notifications:", error) );
+         }
+
+         function updateNotificationUI(notifications) {
+             notificationList.innerHTML = ''; let unreadCount = 0;
+             if (notifications.length === 0) { notificationEmpty.style.display = 'block'; }
+             else { notificationEmpty.style.display = 'none'; notifications.forEach(notif => { const item = document.createElement('li'); item.className = 'notification-item'; item.innerHTML = ` ${notif.message} <span class="notification-item-time">${formatTimestamp(notif.timestamp)}</span> `; if (!notif.read) { item.style.fontWeight = 'bold'; unreadCount++; } notificationList.appendChild(item); }); }
+             notificationCount.textContent = unreadCount > 9 ? '9+' : unreadCount.toString();
+             notificationCount.style.display = unreadCount > 0 ? 'flex' : 'none';
+         }
+
+         async function addNotification(userId, message, relatedProductId = null) {
+             if (!userId) return;
+             try {
+                 const newNotif = { userId: userId, message: message, read: false, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+                 if (relatedProductId) newNotif.productId = relatedProductId;
+                 await userNotificationsCollectionRef.add(newNotif);
+                 console.log("Notification added.");
+             } catch (error) { console.error("Error adding notification:", error); }
+         }
+
+         function formatTimestamp(timestamp) { if (!timestamp?.toDate) return ''; try { const date = timestamp.toDate(); return date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { console.warn("Error formatting timestamp:", e); return ''; } }
+
+         // Toggle Notification Panel
+         notificationBell.addEventListener('click', (e) => { e.stopPropagation(); notificationPanel.classList.toggle('visible'); /* Optional: markNotificationsAsRead(); */ });
+         document.addEventListener('click', (e) => { if (!notificationBell.contains(e.target) && !notificationPanel.contains(e.target)) { notificationPanel.classList.remove('visible'); } });
+
+         // Initial state
+         disableForm();
+
+         // Prevent zoom
+         document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+         document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+         let lastTap = 0; document.addEventListener('touchend', (e) => { const currentTime = new Date().getTime(); const tapLength = currentTime - lastTap; if (tapLength < 300 && tapLength > 0) e.preventDefault(); lastTap = currentTime; }, false);
+
+    </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

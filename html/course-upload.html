@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1F3A5C"> <!-- WeConnect Theme Color -->
+  <title>WeConnect - Academy Portal</title> <!-- Updated Title -->
+  <!-- Firebase SDK (v9 compat for Realtime DB and Storage) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Material Symbols Outlined (for header icon) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+  <!-- Custom CSS -->
+  <style>
+    :root {
+      /* --- WeConnect Theme Variables --- */
+      --primary-color: #1F3A5C; /* WeConnect Dark Blue */
+      --primary-color-darker: #142840;
+      --primary-color-light-bg: rgba(31, 58, 92, 0.08);
+      --accent-color: #4A90E2;   /* WeConnect Blue Accent */
+      --accent-color-darker: #357ABD;
+
+      --background-main: #f0f2f5;  /* WeConnect Light Grey */
+      --background-card: #ffffff; /* WeConnect White */
+      --background-card-subtle: #f8f9fa;
+
+      --text-dark: #333333;       /* WeConnect Dark Grey */
+      --text-medium: #555555;     /* WeConnect Medium Grey */
+      --text-light: #777777;      /* WeConnect Light Grey */
+      --text-on-dark-bg: #FFFFFF; /* WeConnect White */
+      --text-on-dark-bg-muted: #E0E6F0;
+
+      --border-color: #DEE2E6;    /* WeConnect Light Grey Border */
+      --border-radius: 0.375rem; /* Bootstrap default */
+
+      /* Bootstrap colors mapped (optional, but good for consistency) */
+      --bs-primary: var(--primary-color);
+      --bs-secondary: #6c757d;
+      --bs-success: #198754;
+      --bs-danger: #dc3545;
+      --bs-warning: #ffc107;
+      --bs-info: #0dcaf0;
+      --bs-light: #f8f9fa;
+      --bs-dark: #212529;
+
+      /* Layout Variables */
+      --header-height: 60px; /* Standard header height */
+      --transition-speed: 0.3s;
+      --spacing-unit: 16px; /* Consistent spacing */
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background-main);
+      color: var(--text-dark);
+      transition: background-color var(--transition-speed);
+      padding-top: var(--header-height); /* Add padding for sticky header */
+      overscroll-behavior-y: contain; /* Prevent pull-to-refresh */
+      overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+
+    /* --- Sticky Header --- */
+    .sticky-header {
+        background-color: var(--background-card);
+        color: var(--text-dark);
+        padding: 0 var(--spacing-unit);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1030;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        height: var(--header-height);
+        border-bottom: 1px solid var(--border-color);
+        max-width: 100%; /* Make header full width on mobile */
+        margin: 0 auto;
+    }
+     .header-left-icon {
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       cursor: pointer;
+       color: var(--text-medium);
+       width: 44px;
+       height: 44px;
+       margin-left: -10px; /* Pull closer to edge */
+       border-radius: 50%;
+       transition: background-color 0.2s ease;
+    }
+     .header-left-icon:hover { background-color: var(--primary-color-light-bg); }
+    .header-left-icon .material-symbols-outlined { font-size: 24px; }
+    .header-title {
+        font-size: 1.15rem; /* Slightly adjusted */
+        font-weight: 600; /* Less bold than 700 */
+        color: var(--primary-color);
+        text-align: center;
+        flex-grow: 1;
+        /* Adjust margin to truly center if one side has an icon and other is placeholder */
+        /* This might need dynamic JS adjustment if right side can have icons too */
+         margin-left: -34px; /* Offset for the back button */
+    }
+    .header-right-placeholder {
+       width: 44px;
+       height: 44px;
+       visibility: hidden; /* Keeps space for alignment */
+    }
+
+    /* Main Content Wrapper (for the portal access restriction) */
+    #portalAccessWrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - var(--header-height));
+        padding: var(--spacing-unit);
+    }
+    #portalAccessWrapper .card {
+        width: 100%;
+        max-width: 400px; /* Limit width of the access card */
+    }
+
+    /* Main Content Area (hidden initially by portal access wrapper) */
+    #mainAppContent {
+        display: none; /* Hidden until code is verified */
+    }
+    .main-content-inner { /* Renamed from .main-content to avoid conflict if portal is also main */
+      padding: 20px;
+      /* Removed sidebar margin for mobile-first approach */
+    }
+
+
+    /* Card Styles */
+    .card {
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      background-color: var(--background-card);
+    }
+    .card:hover { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+    .card-header {
+      background-color: var(--background-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 15px 20px;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .card-body { padding: 20px; }
+
+    /* Form Styles */
+    .form-label { font-weight: 500; margin-bottom: 0.5rem; color: var(--text-medium); }
+    .form-control, .form-select {
+      border-radius: var(--border-radius); padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      background-color: var(--background-card);
+      color: var(--text-dark);
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.25rem var(--primary-color-light-bg);
+    }
+    .form-control.is-invalid {
+        border-color: var(--bs-danger);
+    }
+    .form-control.is-invalid:focus {
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-danger-rgb, 220, 53, 69), 0.25);
+    }
+    .invalid-feedback {
+        display: none; width: 100%; margin-top: 0.25rem;
+        font-size: .875em; color: var(--bs-danger);
+    }
+    .form-control.is-invalid ~ .invalid-feedback { display: block; }
+
+    /* Button Styles */
+    .btn { border-radius: var(--border-radius); padding: 0.5rem 1rem; font-weight: 500; transition: all 0.2s ease; }
+    .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); color: var(--text-on-dark-bg); }
+    .btn-primary:hover { background-color: var(--primary-color-darker); border-color: var(--primary-color-darker); }
+    .btn-outline-primary { color: var(--primary-color); border-color: var(--primary-color); }
+    .btn-outline-primary:hover { background-color: var(--primary-color); color: var(--text-on-dark-bg); }
+    .btn-danger { background-color: var(--bs-danger); border-color: var(--bs-danger); }
+    .btn-danger:hover { background-color: #bb2d3b; border-color: #b02a37; }
+    .btn-outline-danger { color: var(--bs-danger); border-color: var(--bs-danger); }
+    .btn-outline-danger:hover { background-color: var(--bs-danger); color: white; }
+    .btn-success { background-color: var(--bs-success); border-color: var(--bs-success); }
+    .btn-success:hover { background-color: #157347; border-color: #146c43; }
+    .btn-warning { background-color: var(--bs-warning); border-color: var(--bs-warning); color: #212529; }
+    .btn-warning:hover { background-color: #ffca2c; border-color: #ffc720; color: #212529; }
+    .btn-icon { display: inline-flex; align-items: center; justify-content: center; }
+    .btn-icon i { margin-right: 0.5rem; }
+
+    /* Progress Bar */
+    .progress { height: 0.5rem; border-radius: var(--border-radius); background-color: #e9ecef; margin-top: 0.5rem; overflow: hidden; }
+    .progress-bar { background-color: var(--primary-color); height: 100%; transition: width 0.3s ease; }
+
+    /* File Preview */
+    .file-preview { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .file-preview img, .file-preview video {
+      max-width: 150px; max-height: 150px; border-radius: var(--border-radius);
+      object-fit: cover; border: 1px solid var(--border-color);
+    }
+
+    /* Course List */
+    .course-item {
+      display: flex; flex-direction: column; border-radius: var(--border-radius);
+      overflow: hidden; background-color: var(--background-card);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease; margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+    }
+    .course-item:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+    .course-thumbnail { height: 200px; overflow: hidden; background-color: var(--background-main); }
+    .course-thumbnail img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+    .course-item:hover .course-thumbnail img { transform: scale(1.05); }
+    .course-details { padding: 15px; }
+    .course-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 5px; color: var(--text-dark); }
+    .course-author { font-size: 0.875rem; color: var(--primary-color); margin-bottom: 10px; }
+    .course-description { font-size: 0.875rem; color: var(--text-medium); margin-bottom: 15px; }
+    .course-status { display: inline-block; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 600; border-radius: 50px; margin-bottom: 10px; }
+    .course-status.active { background-color: rgba(25, 135, 84, 0.1); color: var(--bs-success); }
+    .course-status.inactive { background-color: rgba(108, 117, 125, 0.1); color: var(--bs-secondary); }
+    .course-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+
+    /* Modal Styles */
+    .modal-content { border-radius: var(--border-radius); border: none; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); background-color: var(--background-card); }
+    .modal-header { border-bottom: 1px solid var(--border-color); padding: 15px 20px; }
+    .modal-header .modal-title { color: var(--text-dark); }
+    .modal-body { padding: 20px; color: var(--text-dark); }
+    .modal-footer { border-top: 1px solid var(--border-color); padding: 15px 20px; }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(255, 255, 255, 0.7);
+      display: flex; justify-content: center;
+      align-items: center; z-index: 2000;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid var(--primary-color-light-bg);
+      border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast Notifications */
+    .toast-container { position: fixed; top: calc(var(--header-height) + 20px); right: 20px; z-index: 1060; }
+    .toast {
+      max-width: 350px; background-color: var(--background-card);
+      border-radius: var(--border-radius); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 10px; overflow: hidden; animation: slideIn 0.3s ease forwards;
+      border: 1px solid var(--border-color);
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .toast-header { display: flex; align-items: center; padding: 0.5rem 0.75rem; background-color: rgba(0, 0, 0, 0.03); border-bottom: 1px solid rgba(0, 0, 0, 0.05); }
+    .toast-body { padding: 0.75rem; color: var(--text-dark); }
+    .toast.success .toast-header { background-color: rgba(25, 135, 84, 0.1); color: var(--bs-success); }
+    .toast.error .toast-header { background-color: rgba(220, 53, 69, 0.1); color: var(--bs-danger); }
+    .toast.warning .toast-header { background-color: rgba(255, 193, 7, 0.1); color: #664d03; }
+    .toast.info .toast-header { background-color: rgba(13, 202, 240, 0.1); color: var(--bs-info); }
+    .toast .btn-close { filter: invert(0.5) sepia(0) saturate(0) hue-rotate(0deg) brightness(0.8); }
+
+    /* Grid Layout */
+    .grid-container { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    /* Responsive adjustments for larger screens (desktop-like view) */
+    @media (min-width: 768px) {
+      .grid-container { grid-template-columns: 7fr 5fr; }
+      .sticky-header .header-left-icon { display: none; } /* Hide mobile back button */
+      .sticky-header .header-title { text-align: left; margin-left: 0; }
+      .sticky-header .header-right-placeholder { display: none; }
+      .main-content-inner { padding: 20px 30px; } /* More padding on larger screens */
+    }
+
+    .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+
+    /* Utilities */
+    .hidden { display: none !important; }
+    .text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; } .mb-3 { margin-bottom: 1rem; } .mb-4 { margin-bottom: 1.5rem; } .mb-5 { margin-bottom: 3rem; }
+    .mt-1 { margin-top: 0.25rem; } .mt-2 { margin-top: 0.5rem; } .mt-3 { margin-top: 1rem; } .mt-4 { margin-top: 1.5rem; } .mt-5 { margin-top: 3rem; }
+    .ml-auto { margin-left: auto; } .mr-auto { margin-right: auto; }
+    .d-flex { display: flex; } .align-items-center { align-items: center; } .justify-content-between { justify-content: space-between; }
+    .flex-column { flex-direction: column; } .flex-grow-1 { flex-grow: 1; } .gap-2 { gap: 0.5rem; } .gap-3 { gap: 1rem; }
+
+    /* Ensure WC light theme by default - removing dark mode specific overrides */
+    /* Styles related to sidebar and menu button removed as they are not in the provided screenshot for mobile academy page */
+
+  </style>
+</head>
+<body>
+  <!-- Sticky Header -->
+  <header class="sticky-header">
+    <div class="header-left-icon" id="backButton">
+        <span class="material-symbols-outlined">arrow_back_ios_new</span>
+    </div>
+    <span class="header-title">WeConnect Academy</span> <!-- General Title -->
+    <div class="header-right-placeholder">
+       <!-- Placeholder for alignment -->
+    </div>
+  </header>
+
+  <!-- Portal Access Wrapper -->
+  <div id="portalAccessWrapper">
+    <div class="card">
+      <div class="card-header text-center">
+        <i class="fas fa-lock fa-2x mb-2 text-primary"></i><br>
+        Academy Portal Access
+      </div>
+      <div class="card-body">
+        <p class="text-center text-muted mb-3">Please enter the access code to continue.</p>
+        <form id="portalAccessForm">
+          <div class="mb-3">
+            <label for="accessCodeInput" class="form-label visually-hidden">Access Code</label>
+            <input type="password" class="form-control form-control-lg text-center" id="accessCodeInput" placeholder="Enter Code" required>
+            <div class="invalid-feedback text-center" id="accessCodeError">Invalid code. Please try again.</div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 btn-lg">
+            <i class="fas fa-sign-in-alt me-2"></i>Enter Portal
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Main Application Content (Initially Hidden) -->
+  <div id="mainAppContent">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Main Content Area (for courses, forms, etc.) -->
+    <main class="main-content-inner">
+      <div class="grid-container">
+        <!-- Upload Form -->
+        <div>
+          <div class="card">
+            <div class="card-header">Upload New Course</div>
+            <div class="card-body">
+              <form id="courseForm">
+                <div class="mb-3">
+                  <label for="title" class="form-label">Course Title</label>
+                  <input type="text" class="form-control" id="title" placeholder="Enter course title" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="description" class="form-label">Description</label>
+                  <textarea class="form-control" id="description" rows="4" placeholder="Enter course description" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                  <label for="author" class="form-label">Author</label>
+                  <input type="text" class="form-control" id="author" placeholder="Enter author name" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="thumbnail" class="form-label">Thumbnail Image</label>
+                  <input type="file" class="form-control" id="thumbnail" accept="image/*" required>
+                  <div class="progress hidden mt-2" id="thumbnailProgressContainer">
+                    <div class="progress-bar" id="thumbnailProgressBar" role="progressbar" style="width: 0%"></div>
+                  </div>
+                  <div class="file-preview" id="thumbnailPreview"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="video" class="form-label">Course Video</label>
+                  <input type="file" class="form-control" id="video" accept="video/*" required>
+                  <div class="progress hidden mt-2" id="videoProgressContainer">
+                    <div class="progress-bar" id="videoProgressBar" role="progressbar" style="width: 0%"></div>
+                  </div>
+                  <div class="file-preview" id="videoPreview"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" id="uploadButton">
+                  <i class="fas fa-upload"></i> Upload Course
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course List -->
+        <div>
+          <h2 class="mb-3">Uploaded Courses</h2>
+          <div id="courseListContainer">
+            <p class="text-center text-muted p-5">Loading courses...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Edit Course Modal -->
+    <div class="modal fade" id="editCourseModal" tabindex="-1" aria-labelledby="editCourseModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editCourseModalLabel">Edit Course</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editCourseForm">
+              <input type="hidden" id="editCourseId">
+              <div class="mb-3">
+                <label for="editTitle" class="form-label">Title</label>
+                <input type="text" class="form-control" id="editTitle" required>
+              </div>
+              <div class="mb-3">
+                <label for="editDescription" class="form-label">Description</label>
+                <textarea class="form-control" id="editDescription" rows="4" required></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="editAuthor" class="form-label">Author</label>
+                <input type="text" class="form-control" id="editAuthor" required>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveEditButton">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div> <!-- End of #mainAppContent -->
+
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+  <!-- App JavaScript -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+      authDomain: "daisy-n7g20a.firebaseapp.com",
+      databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+      projectId: "daisy-n7g20a",
+      storageBucket: "daisy-n7g20a.appspot.com",
+      messagingSenderId: "225362605902",
+      appId: "1:225362605902:web:d2551cc389e78c92c3d01f",
+      measurementId: "G-KNZFYCREVM"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const storage = firebase.storage();
+
+    // DOM Elements
+    const portalAccessWrapper = document.getElementById('portalAccessWrapper');
+    const mainAppContent = document.getElementById('mainAppContent');
+    const portalAccessForm = document.getElementById('portalAccessForm');
+    const accessCodeInput = document.getElementById('accessCodeInput');
+    const accessCodeError = document.getElementById('accessCodeError'); // For Bootstrap validation
+
+    const backButton = document.getElementById('backButton');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const toastContainer = document.getElementById('toastContainer');
+    const courseForm = document.getElementById('courseForm');
+    const uploadButton = document.getElementById('uploadButton');
+    const courseListContainer = document.getElementById('courseListContainer');
+    const thumbnailInput = document.getElementById('thumbnail');
+    const videoInput = document.getElementById('video');
+    const thumbnailPreview = document.getElementById('thumbnailPreview');
+    const videoPreview = document.getElementById('videoPreview');
+    const thumbnailProgressContainer = document.getElementById('thumbnailProgressContainer');
+    const thumbnailProgressBar = document.getElementById('thumbnailProgressBar');
+    const videoProgressContainer = document.getElementById('videoProgressContainer');
+    const videoProgressBar = document.getElementById('videoProgressBar');
+
+    // Edit Modal Elements
+    const editCourseModalElement = document.getElementById('editCourseModal');
+    const editCourseModal = editCourseModalElement ? new bootstrap.Modal(editCourseModalElement) : null;
+    const editCourseIdInput = document.getElementById('editCourseId'); // Renamed for clarity
+    const editTitleInput = document.getElementById('editTitle');       // Renamed
+    const editDescriptionInput = document.getElementById('editDescription'); // Renamed
+    const editAuthorInput = document.getElementById('editAuthor');       // Renamed
+    const saveEditButton = document.getElementById('saveEditButton');
+
+    const CORRECT_PORTAL_ACCESS_CODE = "WCX123"; // The access code
+
+    // Back Button Functionality
+     if (backButton) {
+        backButton.addEventListener('click', () => {
+            // Check if we are already on a different page than the main list or home
+            // For now, simply go to home.html
+            window.location.href = 'home.html';
+        });
+    }
+
+    // Show/hide loading overlay
+    function showLoading() { loadingOverlay.classList.remove('hidden'); }
+    function hideLoading() { loadingOverlay.classList.add('hidden'); }
+
+    // Toast notifications
+    function showToast(message, type = 'info') {
+      const toastId = 'toast-' + Date.now();
+      const toast = document.createElement('div');
+      toast.id = toastId;
+      toast.className = `toast align-items-center text-bg-${type === 'error' ? 'danger' : type} border-0`; // Bootstrap 5 toast styling
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+      toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      toastContainer.appendChild(toast);
+      const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+      bsToast.show();
+      toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    }
+
+    // File preview handling
+    thumbnailInput.addEventListener('change', () => { previewFile(thumbnailInput, thumbnailPreview, 'img'); });
+    videoInput.addEventListener('change', () => { previewFile(videoInput, videoPreview, 'video'); });
+
+    function previewFile(input, previewContainer, type) {
+      previewContainer.innerHTML = '';
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const element = document.createElement(type);
+          element.src = e.target.result;
+          if (type === 'video') element.controls = true;
+          previewContainer.appendChild(element);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Update progress bar
+    function updateProgress(progressBar, progressContainer, percentage) {
+      progressContainer.classList.remove('hidden');
+      progressBar.style.width = percentage + '%';
+      progressBar.setAttribute('aria-valuenow', percentage);
+      progressBar.textContent = Math.round(percentage) + '%'; // Add text to progress bar
+    }
+
+    // Handle Course Upload form submission
+    courseForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // Access check already handled by showing/hiding mainAppContent
+
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const author = document.getElementById('author').value;
+      const thumbnailFile = thumbnailInput.files[0];
+      const videoFile = videoInput.files[0];
+      if (!title || !description || !author || !thumbnailFile || !videoFile) {
+        showToast('Please fill in all fields and select files', 'error'); return;
+      }
+      uploadButton.disabled = true;
+      uploadButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+      showLoading();
+      try {
+        const timestamp = Date.now();
+        const thumbnailRef = storage.ref(`academy_thumbnails/${timestamp}_${thumbnailFile.name}`);
+        const thumbnailUploadTask = thumbnailRef.put(thumbnailFile);
+        thumbnailUploadTask.on('state_changed', (snapshot) => updateProgress(thumbnailProgressBar, thumbnailProgressContainer, (snapshot.bytesTransferred / snapshot.totalBytes) * 100));
+        await thumbnailUploadTask;
+        const thumbnailURL = await thumbnailRef.getDownloadURL();
+
+        const videoRef = storage.ref(`academy_videos/${timestamp}_${videoFile.name}`);
+        const videoUploadTask = videoRef.put(videoFile);
+        videoUploadTask.on('state_changed', (snapshot) => updateProgress(videoProgressBar, videoProgressContainer, (snapshot.bytesTransferred / snapshot.totalBytes) * 100));
+        await videoUploadTask;
+        const videoURL = await videoRef.getDownloadURL();
+
+        const newCourseRef = database.ref('academy_courses').push(); // Changed path
+        const courseData = { title, description, author, image_thumbnail: thumbnailURL, video_url: videoURL, active: true, created_at: new Date().toISOString() };
+        await newCourseRef.set(courseData);
+
+        courseForm.reset();
+        thumbnailPreview.innerHTML = ''; videoPreview.innerHTML = '';
+        thumbnailProgressContainer.classList.add('hidden'); videoProgressContainer.classList.add('hidden');
+        updateProgress(thumbnailProgressBar, thumbnailProgressContainer, 0); updateProgress(videoProgressBar, videoProgressContainer, 0);
+        showToast('Course uploaded successfully!', 'success');
+      } catch (error) {
+        console.error('Upload error:', error); showToast('Error uploading course: ' + error.message, 'error');
+      } finally {
+        uploadButton.disabled = false; uploadButton.innerHTML = '<i class="fas fa-upload"></i> Upload Course'; hideLoading();
+      }
+    });
+
+    // Fetch and render course list
+    function setupCourseListListener() {
+      showLoading();
+      database.ref('academy_courses').on('value', (snapshot) => { // Changed path
+        hideLoading(); renderCourseList(snapshot.val());
+      }, (error) => {
+        hideLoading(); console.error('Error fetching courses:', error); showToast('Error loading courses: ' + error.message, 'error');
+      });
+    }
+
+    // Render course list
+    function renderCourseList(courses) {
+      courseListContainer.innerHTML = '';
+      if (!courses) {
+        courseListContainer.innerHTML = `<div class="card border-0 shadow-sm"><div class="card-body text-center p-5"><i class="fas fa-info-circle fa-3x mb-3 text-muted"></i><h5>No courses found</h5><p class="text-muted">Upload your first course to get started.</p></div></div>`; return;
+      }
+      const courseGrid = document.createElement('div'); courseGrid.className = 'course-grid';
+      for (const courseId in courses) {
+        const course = courses[courseId];
+        if (course) {
+            const courseItem = document.createElement('div'); courseItem.className = 'course-item';
+            courseItem.innerHTML = `
+            <div class="course-thumbnail"><img src="${course.image_thumbnail || 'https://via.placeholder.com/300x180?text=No+Image'}" alt="${course.title || 'Course'}"></div>
+            <div class="course-details">
+                <div class="d-flex justify-content-between align-items-start mb-2"> <!-- align-items-start for title -->
+                    <h3 class="course-title mb-0">${course.title || 'Untitled'}</h3> <!-- Removed text-truncate here, handled by CSS if needed -->
+                    <span class="course-status ${course.active ? 'active' : 'inactive'} ms-2">${course.active ? 'Active' : 'Inactive'}</span>
+                </div>
+                <p class="course-author mb-2">By: ${course.author || 'Unknown'}</p>
+                <p class="course-description text-muted small">${(course.description || 'No description').substring(0,100)}${ (course.description && course.description.length > 100) ? '...' : ''}</p> <!-- Shortened desc -->
+                <div class="course-actions mt-auto pt-2 border-top"> <!-- mt-auto pushes actions to bottom if card details have varying height -->
+                    <button class="btn btn-sm btn-outline-primary edit-btn" data-course-id="${courseId}"><i class="fas fa-edit me-1"></i> Edit</button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" data-course-id="${courseId}"><i class="fas fa-trash me-1"></i> Delete</button>
+                    <button class="btn btn-sm btn-outline-${course.active ? 'warning' : 'success'} toggle-btn" data-course-id="${courseId}" data-active="${course.active}">
+                        <i class="fas fa-${course.active ? 'eye-slash' : 'eye'} me-1"></i> ${course.active ? 'Deactivate' : 'Activate'}
+                    </button>
+                </div>
+            </div>`;
+            courseGrid.appendChild(courseItem);
+        }
+      }
+      courseListContainer.appendChild(courseGrid);
+      document.querySelectorAll('.edit-btn').forEach(button => button.addEventListener('click', handleEditCourse));
+      document.querySelectorAll('.delete-btn').forEach(button => button.addEventListener('click', handleDeleteCourse));
+      document.querySelectorAll('.toggle-btn').forEach(button => button.addEventListener('click', handleToggleCourseActive));
+    }
+
+    // Handle edit course
+    function handleEditCourse(e) {
+      const courseId = e.currentTarget.dataset.courseId;
+      database.ref(`academy_courses/${courseId}`).once('value', (snapshot) => { // Changed path
+        const course = snapshot.val();
+        if (!course) { showToast('Error: Course not found.', 'error'); return; }
+        editCourseIdInput.value = courseId; editTitleInput.value = course.title || '';
+        editDescriptionInput.value = course.description || ''; editAuthorInput.value = course.author || '';
+        if (editCourseModal) editCourseModal.show();
+      });
+    }
+
+    // Save edited course
+    saveEditButton?.addEventListener('click', () => {
+      const courseId = editCourseIdInput.value; if (!courseId) return;
+      const updatedData = { title: editTitleInput.value, description: editDescriptionInput.value, author: editAuthorInput.value };
+      showLoading();
+      database.ref(`academy_courses/${courseId}`).update(updatedData) // Changed path
+        .then(() => { if (editCourseModal) editCourseModal.hide(); showToast('Course updated!', 'success'); })
+        .catch(error => { console.error('Error updating:', error); showToast('Error: ' + error.message, 'error'); })
+        .finally(() => hideLoading());
+    });
+
+    // Handle delete course
+    function handleDeleteCourse(e) {
+      const courseId = e.currentTarget.dataset.courseId;
+      if (confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+        showLoading();
+        database.ref(`academy_courses/${courseId}`).remove() // Changed path
+          .then(() => showToast('Course deleted!', 'success'))
+          .catch(error => { console.error('Error deleting:', error); showToast('Error deleting course: ' + error.message, 'error'); })
+          .finally(() => hideLoading());
+      }
+    }
+
+    // Handle toggle course active status
+    function handleToggleCourseActive(e) {
+      const courseId = e.currentTarget.dataset.courseId;
+      const isActive = e.currentTarget.dataset.active === 'true';
+      showLoading();
+      database.ref(`academy_courses/${courseId}`).update({ active: !isActive }) // Changed path
+        .then(() => showToast(`Course ${isActive ? 'deactivated' : 'activated'}!`, 'success'))
+        .catch(error => { console.error('Error toggling:', error); showToast('Error toggling status: ' + error.message, 'error'); })
+        .finally(() => hideLoading());
+    }
+
+    // Portal Access Code Logic
+    function checkPortalAccess() {
+        if (sessionStorage.getItem('academyPortalVerified') === 'true') {
+            portalAccessWrapper.style.display = 'none';
+            mainAppContent.style.display = 'block';
+            setupCourseListListener(); // Load courses only after verification
+        } else {
+            portalAccessWrapper.style.display = 'flex'; // Show access form
+            mainAppContent.style.display = 'none';
+        }
+    }
+
+    portalAccessForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const enteredCode = accessCodeInput.value.trim();
+        if (enteredCode === CORRECT_PORTAL_ACCESS_CODE) {
+            sessionStorage.setItem('academyPortalVerified', 'true');
+            accessCodeInput.classList.remove('is-invalid');
+            portalAccessWrapper.style.display = 'none';
+            mainAppContent.style.display = 'block';
+            showToast('Access Granted!', 'success');
+            setupCourseListListener(); // Initialize course list after successful code entry
+        } else {
+            accessCodeInput.classList.add('is-invalid');
+            accessCodeError.style.display = 'block'; // Make sure Bootstrap invalid-feedback is shown
+            accessCodeInput.value = ''; // Clear incorrect code
+            showToast('Invalid access code. Please try again.', 'error');
+        }
+    });
+
+
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', () => {
+      checkPortalAccess(); // Check access on page load
+      // The course list listener is now called after successful portal access
+    });
+
+    // PWA Service Worker (Optional)
+     if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js') // Ensure sw.js is in root
+              .then(registration => console.log('ServiceWorker registered with scope:', registration.scope))
+              .catch(error => console.log('ServiceWorker registration failed:', error));
+        });
+     }
+     // Prevent multi-touch zoom/double-tap zoom
+     document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+     let lastTouchEnd = 0;
+     document.addEventListener('touchend', function(event) {
+       const now = Date.now();
+       if (now - lastTouchEnd <= 300) event.preventDefault();
+       lastTouchEnd = now;
+     }, { passive: false });
+
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

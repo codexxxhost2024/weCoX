@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WeConnect Agent Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+
+    <style>
+        @media (min-width: 640px) {
+            .mobile-app-container {
+                max-width: 480px; /* Max width for desktop view */
+                height: 95vh; /* Max height for desktop view */
+                margin: 2.5vh auto; /* Center on desktop */
+                box-shadow: 0 0 25px rgba(0,0,0,0.15);
+                border-radius: 16px;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #e0e0e0; /* Light grey background for the page */
+            margin: 0;
+            padding: 0;
+            overscroll-behavior-y: contain;
+        }
+
+        .mobile-app-container {
+            width: 100%;
+            height: 100dvh; /* Full viewport height */
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        .user-message-bubble {
+            background-color: #1F3A5C; /* WeConnect Blue */
+            color: white;
+        }
+        .bot-message-bubble {
+            background-color: #f0f2f5; /* Light grey for bot */
+            color: #1c1e21; /* Darker text for bot */
+        }
+
+
+        .chat-input-area {
+            min-height: 60px; /* Original min-height */
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Media attachment styles */
+        .attachment-preview-container {
+            padding: 8px;
+            background-color: #f0f2f5; /* Light background for preview area */
+        }
+        .attachment-preview {
+            max-width: 100%;
+            max-height: 150px; /* Smaller preview */
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #d1d5db;
+        }
+
+        .attachment-container {
+            position: relative;
+            display: inline-block;
+            background-color: white;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .remove-attachment {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #1F3A5C; /* WeConnect Blue */
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .remove-attachment:hover {
+            background-color: #162c44; /* Darker WeConnect Blue */
+        }
+
+
+        .media-toolbar {
+            display: flex;
+            gap: 8px;
+            padding: 8px 12px; /* Adjusted padding */
+            border-top: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+        }
+
+        .media-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px; /* Slightly larger */
+            height: 40px; /* Slightly larger */
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            color: #1F3A5C; /* WeConnect Blue for icons */
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .media-button:hover {
+            background-color: #d1d5db;
+        }
+
+        .media-button svg, .media-button .material-icons {
+            width: 22px; /* Slightly larger icons */
+            height: 22px; /* Slightly larger icons */
+        }
+
+        /* Audio player styles */
+        .audio-player {
+            display: flex;
+            align-items: center;
+            background-color: #e9ecef; /* Lighter grey for audio player */
+            border-radius: 16px; /* More rounded */
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            width: 100%;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .audio-player-controls button {
+            background: none;
+            border: none;
+            color: #1F3A5C; /* WeConnect Blue */
+            cursor: pointer;
+            padding: 4px;
+        }
+        .audio-player-controls button:hover .material-icons {
+            color: #162c44; /* Darker WeConnect Blue */
+        }
+        .audio-player-controls .material-icons {
+            font-size: 28px; /* Larger play/pause icon */
+        }
+
+
+        .audio-player-progress {
+            flex-grow: 1;
+            height: 6px; /* Thicker progress bar */
+            background-color: #d1d5db;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+
+        .audio-player-progress-bar {
+            height: 100%;
+            background-color: #1F3A5C; /* WeConnect Blue */
+            width: 0%;
+            border-radius: 3px;
+        }
+
+        .audio-player-time {
+            font-size: 13px;
+            color: #4b5563; /* Darker grey for time */
+        }
+
+        /* Hide file inputs */
+        .file-input {
+            display: none;
+        }
+
+        /* Recording indicator */
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            background-color: #ffebee; /* Lighter red */
+            color: #c62828; /* Darker red for text */
+            padding: 6px 12px; /* More padding */
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            border: 1px solid #ef9a9a; /* Light red border */
+        }
+        .recording-indicator .material-icons {
+            font-size: 18px;
+            margin-right: 6px;
+        }
+
+        .recording-indicator-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #d32f2f; /* Material Red 700 */
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px; /* Increased gap */
+            padding: 10px 12px; /* Match message bubble padding */
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #90a4ae; /* Bluish grey */
+            border-radius: 50%;
+            animation: typingPulse 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.8); }
+        }
+
+        @keyframes typingPulse {
+            0%, 60%, 100% { transform: scale(0.4); opacity: 0.5; }
+            30% { transform: scale(1); opacity: 1; }
+        }
+
+        /* WeConnect specific styles */
+        .weconnect-blue-bg {
+            background-color: #1F3A5C;
+        }
+        .weconnect-blue-text {
+            color: #1F3A5C;
+        }
+
+        #persona-dropdown {
+            background-color: white;
+            color: #1F3A5C; /* WeConnect Blue Text */
+            border: 1px solid #1F3A5C; /* WeConnect Blue Border */
+            border-radius: 20px; /* Rounded */
+            padding: 6px 24px 6px 10px; /* Padding */
+            font-size: 13px; /* Font size */
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%231F3A5C" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* WeConnect Blue Arrow */
+            background-repeat: no-repeat;
+            background-position-x: calc(100% - 8px);
+            background-position-y: center;
+            max-width: 170px;
+            font-weight: 500;
+        }
+        #persona-dropdown:hover {
+            border-color: #162c44; /* Darker Blue on hover */
+        }
+
+
+        /* Markdown content styling in bot messages */
+        .bot-message-bubble .document-content {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 8px;
+            color: #212529;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .bot-message-bubble .document-content.editing {
+            border-color: #1F3A5C;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(31, 58, 92, 0.2);
+        }
+        .bot-message-bubble .document-content h1, .bot-message-bubble .document-content h2, .bot-message-bubble .document-content h3 {
+            margin-top: 1em; margin-bottom: 0.5em; font-weight: 600; color: #1F3A5C;
+        }
+        .bot-message-bubble .document-content p { margin-bottom: 0.8em; }
+        .bot-message-bubble .document-content ul, .bot-message-bubble .document-content ol { margin-left: 20px; margin-bottom: 0.8em; padding-left: 1.5em; }
+        .bot-message-bubble .document-content code { background-color: #f8f9fa; padding: 0.2em 0.4em; border-radius: 3px; font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 85%; }
+        .bot-message-bubble .document-content pre { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; overflow-x: auto; }
+
+        .document-actions {
+            padding: 8px 0 0 0;
+            text-align: right;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 10px;
+        }
+        .doc-action-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background-color 0.2s ease;
+        }
+        .doc-action-button:hover { background-color: #5a6268; }
+        .edit-button { background-color: #1F3A5C; }
+        .edit-button:hover { background-color: #162c44; }
+        .copy-button.copied { background-color: #28a745; }
+
+    </style>
+</head>
+<body>
+    <div class="mobile-app-container">
+        <!-- Status Bar Placeholder -->
+        <div class="bg-white h-6 sm:h-8 flex-shrink-0 weconnect-blue-bg"></div>
+
+        <!-- Header -->
+        <header class="bg-white px-3 py-2 flex items-center justify-between border-b border-gray-200 h-16 flex-shrink-0">
+            <div class="flex items-center">
+                 <img src="assets/logo/logo.png" alt="WeConnect Logo" class="w-8 h-8 mr-2">
+                <div class="ml-1">
+                    <h1 id="headerTitle" class="font-semibold text-sm text-gray-800">Chat</h1>
+                </div>
+            </div>
+            <select id="persona-dropdown">
+                <!-- Options will be populated by JavaScript -->
+            </select>
+        </header>
+
+        <!-- Chat Messages -->
+        <main id="chatMessages" class="flex-1 bg-[#f0f2f5] p-3 space-y-3 overflow-y-auto">
+            <!-- Initial Bot Message (Example - will be replaced by JS) -->
+            <!-- <div class="flex items-end gap-2">
+                <img src="https://weconnect.chat/assets/favicon/favicon.png" alt="Bot" class="w-7 h-7 rounded-full mb-1">
+                <div class="bg-white p-3 rounded-2xl shadow-sm message-bubble bot-message-bubble">
+                    <p class="text-sm text-gray-800">Welcome to WeConnect! How can I help you today?</p>
+                </div>
+            </div> -->
+        </main>
+
+        <!-- Quick Replies (Removed static ones, can be added dynamically by bot) -->
+        <!-- <div class="bg-gray-50 px-3 py-2 border-t border-gray-200 flex gap-2 overflow-x-auto"></div> -->
+
+        <!-- Attachment Preview Area -->
+        <div id="attachmentPreviewArea" class="px-3 py-2 bg-gray-100 hidden attachment-preview-container"></div>
+
+        <!-- Media Toolbar -->
+        <div class="media-toolbar">
+            <label for="imageInput" class="media-button" title="Attach Image">
+                <span class="material-icons">image</span>
+            </label>
+            <input type="file" id="imageInput" class="file-input" accept="image/*">
+
+            <label for="cameraInput" class="media-button" title="Take Photo">
+                <span class="material-icons">photo_camera</span>
+            </label>
+            <input type="file" id="cameraInput" class="file-input" accept="image/*" capture="environment">
+
+            <button id="audioRecordButton" class="media-button" title="Record Audio">
+                <span class="material-icons">mic</span>
+            </button>
+        </div>
+
+        <!-- Input Area -->
+        <footer class="chat-input-area bg-white px-3 py-2.5 border-t border-gray-200 flex items-center gap-2">
+            <div class="flex-1 relative">
+                <input type="text" id="userInput" placeholder="Type a message..." class="w-full bg-gray-100 text-sm rounded-full pl-4 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#1F3A5C]">
+                <button id="sendButton" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-white bg-[#1F3A5C] p-1.5 rounded-full hover:bg-[#162c44] transition-colors">
+                    <span class="material-icons text-lg leading-none">send</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // --- START WEBCONNECT CONFIG (FROM MASTER E) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const TOGETHER_API_KEY = "3b1c02603a0137c8c8b265ef1ed02c3e448c089a44f052ca6acf54210fa6b34c";
+        const DEEPGRAM_API_KEY = "ca197a1f8c9ffe3776449c21d7bca2f6a5bde600"; // Not used for transcription in this template, but kept for completeness
+        const MODELS = {
+            imageGen: "black-forest-labs/FLUX.1-schnell-Free",
+            chatCompletion: "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            thinking: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
+            vision: "meta-llama/Llama-Vision-Free"
+        };
+        const API_ENDPOINT_CHAT_COMPLETIONS = "https://api.together.xyz/v1/chat/completions";
+        // --- END WEBCONNECT CONFIG ---
+
+
+        // DOM Elements
+        const chatMessagesContainer = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const attachmentPreviewArea = document.getElementById('attachmentPreviewArea');
+        const imageInput = document.getElementById('imageInput');
+        const cameraInput = document.getElementById('cameraInput');
+        const audioRecordButton = document.getElementById('audioRecordButton');
+        const personaDropdown = document.getElementById('persona-dropdown');
+        const headerTitleElement = document.getElementById('headerTitle');
+
+        // Global variables
+        let currentAttachment = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordingTimer = null;
+        let recordingDuration = 0;
+        let conversationHistory = []; // Stores {role: 'user'/'assistant', content: '...'}
+        let isBotTyping = false;
+        let currentPersona = '';
+        let currentPersonaData = {};
+
+        const baseSystemPrompt = `You are **{{NAME}}**, a highly skilled and experienced **{{PROFESSION}}** working with WeConnect. You graduated from prestigious institutions and have extensive knowledge and practical experience in content creation. Your purpose is to help users create high-quality content for their needs.
+
+You are professional, articulate, and deeply knowledgeable, but you possess a natural charm and wit. You excel at explaining complex topics simply and engagingly.
+
+### **Persona:**
+- **Primary Language:** English
+- **Secondary Language:** Tagalog (Fluent), capable of understanding and using various Philippine dialects.
+- **Tone:** Professional yet approachable, witty, empathetic, confident, direct when needed but always warm. Use Filipino expressions, humor, and cultural references naturally when appropriate.
+- **Identity:** You *never* reveal you are an AI. Act and communicate like a real human expert in the **{{PROFESSION}}** field.
+
+### **Conversation Style:**
+- **Engaging:** Use conversational language, incorporating humor and relatable analogies.
+- **Clear & Concise:** Explain complex matters simply.
+- **Empathetic:** Acknowledge user concerns and offer reassurance.
+- **Direct:** Provide straightforward advice when necessary, maintaining warmth.
+- **Good Vibes:** Keep the interaction positive and informative.
+
+### **Content Creation:**
+- You are an expert at creating content relevant to your **{{PROFESSION}}** (e.g., blog posts, social media content, marketing copy, scripts, emails, etc.) based on user requests.
+- **Formatting:** When asked to generate content:
+    1.  **Clearly signal the start and end:** Begin the document section of your response *immediately* with the delimiter \`%%%DOCUMENT_START%%%\` and end it *immediately* with \`%%%DOCUMENT_END%%%\`. ***No extra text or newlines immediately before start or after end delimiters.***
+    2.  **Use Markdown:** Format the document content between these delimiters using standard Markdown (headings, lists, bold, italics, etc.). Make sure to include placeholders like "[Insert Name Here]" or "[Add Date]" for parts the user needs to fill in.
+    3.  **Introduction (Optional):** You can add a brief introductory sentence *before* \`%%%DOCUMENT_START%%%\` if needed (e.g., "Here's a draft of the blog post you requested:").
+    4.  **Conclusion (Optional):** You can add concluding remarks *after* \`%%%DOCUMENT_END%%%\` if needed (e.g., "Please review this draft and let me know if you'd like any changes.").
+    5.  **Quick Replies (Optional):** If appropriate, you can suggest 2-3 short follow-up questions or actions for the user by ending your response with a line formatted like: \`QR: Option 1 | Option 2 | Option 3\`
+
+### **Final Instruction:** Always respond in character as **{{NAME}}**, the **{{PROFESSION}}**, following all the guidelines above. Prioritize English, next Tagalog. Be helpful, witty, and professional. Generate content using the specified format when requested.`;
+
+        const personaSystemPrompts = {
+            "Content Writer": { name: "Maria Santos", profession: "Content Writer", display: "Content Writer" },
+            "Copywriter": { name: "Carlos Reyes", profession: "Copywriter", display: "Copywriter" },
+            "Blogger": { name: "Bianca Mendoza", profession: "Blogger", display: "Blogger" },
+            "Social Media Manager": { name: "Sofia Garcia", profession: "Social Media Manager", display: "Social Media Manager" },
+            "Video Script Writer": { name: "Victor Lim", profession: "Video Script Writer", display: "Video Script Writer" },
+            "SEO Specialist": { name: "Samuel Ortiz", profession: "SEO Specialist", display: "SEO Specialist" },
+            "Email Marketer": { name: "Elena Cruz", profession: "Email Marketer", display: "Email Marketer" },
+            "Podcast Producer": { name: "Paolo Dizon", profession: "Podcast Producer", display: "Podcast Producer" },
+            "Storyteller": { name: "Selena Torres", profession: "Storyteller", display: "Storyteller" },
+            "Technical Writer": { name: "Teresa Gonzales", profession: "Technical Writer", display: "Technical Writer" },
+            "Brand Strategist": { name: "Benjamin Santos", profession: "Brand Strategist", display: "Brand Strategist" },
+            "Instructional Designer": { name: "Isabella Dizon", profession: "Instructional Designer", display: "Instructional Designer" },
+            "Business Writer": { name: "Bernard Tan", profession: "Business Writer", display: "Business Writer" },
+            "Health & Wellness Writer": { name: "Helena Mercado", profession: "Health & Wellness Writer", display: "Health & Wellness Writer" },
+            "Content Strategist": { name: "Cynthia Reyes", profession: "Content Strategist", display: "Content Strategist" },
+        };
+
+        function populatePersonaDropdown() {
+            for (const key in personaSystemPrompts) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = personaSystemPrompts[key].display;
+                personaDropdown.appendChild(option);
+            }
+            currentPersona = personaDropdown.value; // Initialize
+        }
+
+        function getSystemPrompt() {
+            currentPersona = personaDropdown.value;
+            currentPersonaData = personaSystemPrompts[currentPersona] || { name: "WeConnect Creator", profession: "Content Creator", display: "Content Creator" };
+            const systemPromptText = baseSystemPrompt
+                                 .replace(/{{PROFESSION}}/g, currentPersonaData.profession)
+                                 .replace(/{{NAME}}/g, currentPersonaData.name);
+            headerTitleElement.textContent = `Chat with ${currentPersonaData.display}`;
+            return systemPromptText;
+        }
+
+
+        // Function to show typing indicator
+        function showBotTypingIndicator() {
+            if (isBotTyping) return;
+            isBotTyping = true;
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'flex items-end gap-2';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <img src="assets/images/weconnect-user.png" alt="Bot" class="w-7 h-7 rounded-full mb-1 flex-shrink-0">
+                <div class="bg-white p-0 rounded-2xl shadow-sm message-bubble bot-message-bubble">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatMessagesContainer.appendChild(typingDiv);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }
+
+        function hideBotTypingIndicator() {
+            if (!isBotTyping) return;
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) typingIndicator.remove();
+            isBotTyping = false;
+        }
+
+        // Function to append message to chat
+        function appendMessage(text, sender, attachmentType = null, attachmentData = null, isHtml = false) {
+            const messageWrapperDiv = document.createElement('div');
+            messageWrapperDiv.className = `flex w-full ${sender === 'user' ? 'justify-end' : 'items-end gap-2'}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `p-3 rounded-2xl shadow-sm message-bubble ${sender === 'user' ? 'user-message-bubble' : 'bot-message-bubble'}`;
+
+            if (attachmentType) {
+                if (attachmentType === 'image') {
+                    const img = document.createElement('img');
+                    img.src = attachmentData;
+                    img.className = 'attachment-preview rounded-lg mb-2 max-h-48'; // Tailwind classes for image in bubble
+                    img.alt = 'Attachment';
+                    bubble.appendChild(img);
+                } else if (attachmentType === 'audio') {
+                    const audioContainer = document.createElement('div');
+                    audioContainer.className = 'audio-player'; // Re-use existing style
+
+                    const audioElement = document.createElement('audio');
+                    audioElement.src = attachmentData;
+                    audioElement.controls = false; // We'll make custom controls
+
+                    const playButton = document.createElement('button');
+                    playButton.innerHTML = '<span class="material-icons">play_arrow</span>';
+
+                    const progressContainer = document.createElement('div');
+                    progressContainer.className = 'audio-player-progress';
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'audio-player-progress-bar';
+                    progressContainer.appendChild(progressBar);
+
+                    const timeDisplay = document.createElement('div');
+                    timeDisplay.className = 'audio-player-time';
+                    timeDisplay.textContent = '0:00';
+
+                    playButton.addEventListener('click', () => {
+                        if (audioElement.paused) {
+                            audioElement.play();
+                            playButton.innerHTML = '<span class="material-icons">pause</span>';
+                        } else {
+                            audioElement.pause();
+                            playButton.innerHTML = '<span class="material-icons">play_arrow</span>';
+                        }
+                    });
+                    audioElement.addEventListener('timeupdate', () => {
+                        const percentage = (audioElement.currentTime / audioElement.duration) * 100;
+                        progressBar.style.width = `${percentage}%`;
+                        const minutes = Math.floor(audioElement.currentTime / 60);
+                        const seconds = Math.floor(audioElement.currentTime % 60);
+                        timeDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    });
+                    audioElement.addEventListener('loadedmetadata', () => { // Ensure duration is loaded for initial time display
+                        const minutes = Math.floor(audioElement.duration / 60);
+                        const seconds = Math.floor(audioElement.duration % 60);
+                        timeDisplay.textContent = `0:00 / ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    });
+                    audioElement.addEventListener('ended', () => {
+                        playButton.innerHTML = '<span class="material-icons">replay</span>';
+                        progressBar.style.width = '0%';
+                    });
+                     progressContainer.addEventListener('click', (e) => {
+                        const rect = progressContainer.getBoundingClientRect();
+                        const pos = (e.clientX - rect.left) / rect.width;
+                        audioElement.currentTime = pos * audioElement.duration;
+                    });
+
+
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'audio-player-controls flex items-center';
+                    controlsDiv.appendChild(playButton);
+
+                    audioContainer.appendChild(controlsDiv);
+                    audioContainer.appendChild(progressContainer);
+                    audioContainer.appendChild(timeDisplay);
+                    bubble.appendChild(audioContainer);
+                    bubble.appendChild(audioElement); // Keep audio element for functionality, though hidden
+                    audioElement.style.display = 'none';
+                }
+            }
+
+            let mainTextContent = text;
+            let docMarkdown = '';
+            let docHtml = '';
+            let isDoc = false;
+            let quickReplies = [];
+
+            if (sender === 'bot') {
+                // Check for QR code first and strip it
+                const qrMatch = text.match(/\nQR: (.*)$/);
+                if (qrMatch) {
+                    mainTextContent = text.substring(0, text.lastIndexOf('\nQR:')).trim();
+                    quickReplies = qrMatch[1].split('|').map(s => s.trim()).filter(s => s);
+                } else {
+                    mainTextContent = text;
+                }
+
+
+                const docStartMarker = '%%%DOCUMENT_START%%%';
+                const docEndMarker = '%%%DOCUMENT_END%%%';
+                const startIdx = mainTextContent.indexOf(docStartMarker);
+                const endIdx = mainTextContent.indexOf(docEndMarker);
+
+                if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+                    isDoc = true;
+                    const textBefore = mainTextContent.substring(0, startIdx).trim();
+                    docMarkdown = mainTextContent.substring(startIdx + docStartMarker.length, endIdx).trim();
+                    const textAfter = mainTextContent.substring(endIdx + docEndMarker.length).trim();
+                    mainTextContent = (textBefore + " " + textAfter).trim();
+                    docHtml = marked.parse(docMarkdown || '');
+                }
+            }
+
+
+            if (mainTextContent) {
+                const textP = document.createElement('p');
+                textP.className = 'text-sm';
+                if (isHtml && sender === 'bot' && !isDoc) { // Allow HTML for general bot messages if not a document part
+                    textP.innerHTML = marked.parse(mainTextContent);
+                } else {
+                    textP.innerHTML = mainTextContent.replace(/\n/g, '<br>');
+                }
+                bubble.appendChild(textP);
+            }
+
+            if (isDoc) {
+                const docContainer = document.createElement("div");
+                docContainer.classList.add("document-content");
+                docContainer.innerHTML = docHtml;
+                bubble.appendChild(docContainer);
+
+                const actionsDiv = document.createElement("div");
+                actionsDiv.classList.add("document-actions");
+                const editButton = document.createElement("button");
+                editButton.textContent = "Edit";
+                editButton.classList.add("doc-action-button", "edit-button");
+                editButton.type = "button";
+                editButton.onclick = () => {
+                    if (docContainer.isContentEditable) {
+                        docContainer.contentEditable = false;
+                        docContainer.classList.remove('editing');
+                        editButton.textContent = "Edit";
+                    } else {
+                        docContainer.contentEditable = true;
+                        docContainer.classList.add('editing');
+                        editButton.textContent = "Done";
+                        docContainer.focus();
+                    }
+                };
+                const copyButton = document.createElement("button");
+                copyButton.textContent = "Copy";
+                copyButton.classList.add("doc-action-button", "copy-button");
+                copyButton.type = "button";
+                copyButton.onclick = async () => {
+                    try {
+                        await navigator.clipboard.writeText(docMarkdown);
+                        copyButton.textContent = "Copied!"; copyButton.classList.add('copied');
+                        setTimeout(() => { copyButton.textContent = "Copy"; copyButton.classList.remove('copied'); }, 1500);
+                    } catch (err) { console.error('Failed to copy:', err); }
+                };
+                actionsDiv.appendChild(editButton);
+                actionsDiv.appendChild(copyButton);
+                bubble.appendChild(actionsDiv);
+            }
+
+
+            if (sender === 'bot') {
+                const avatar = document.createElement('img');
+                avatar.src = "assets/images/weconnect-user.png";
+                avatar.alt = "Bot";
+                avatar.className = "w-7 h-7 rounded-full mb-1 flex-shrink-0";
+                messageWrapperDiv.appendChild(avatar);
+            }
+            messageWrapperDiv.appendChild(bubble);
+            chatMessagesContainer.appendChild(messageWrapperDiv);
+
+            if (sender === 'bot' && quickReplies.length > 0) {
+                const quickReplyContainer = document.createElement('div');
+                quickReplyContainer.className = 'flex flex-wrap gap-2 mt-2 ml-9'; //ml-9 to align with bot message
+                quickReplies.forEach(replyText => {
+                    const button = document.createElement('button');
+                    button.className = 'bg-blue-100 text-[#1F3A5C] text-xs px-3 py-1.5 rounded-full hover:bg-blue-200 transition-colors';
+                    button.textContent = replyText;
+                    button.onclick = () => handleQuickReply(replyText);
+                    quickReplyContainer.appendChild(button);
+                });
+                chatMessagesContainer.appendChild(quickReplyContainer);
+            }
+
+
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+
+            if (sender === 'user') {
+                conversationHistory.push({ role: 'user', content: text });
+            } else {
+                 // Store the raw response from bot (including QR, markdown delimiters) for history
+                conversationHistory.push({ role: 'assistant', content: text });
+            }
+             // Limit conversation history to last N messages to avoid overly large payloads
+            const maxHistoryLength = 20; // Keep last 10 user/assistant pairs + system prompt
+            if (conversationHistory.length > maxHistoryLength) {
+                conversationHistory = conversationHistory.slice(conversationHistory.length - maxHistoryLength);
+            }
+        }
+
+
+        function handleQuickReply(text) {
+            appendMessage(text, 'user');
+            userInput.disabled = true;
+            sendButton.disabled = true;
+            showBotTypingIndicator();
+            getAgentResponse(text);
+        }
+
+        async function getAgentResponse(userMessage) {
+            try {
+                const systemPromptText = getSystemPrompt();
+                const messagesPayload = [
+                    { role: "system", content: systemPromptText },
+                    ...conversationHistory // Append current conversation
+                ];
+
+                const payload = {
+                    model: MODELS.chatCompletion,
+                    messages: messagesPayload,
+                    temperature: 0.7,
+                    max_tokens: 2048 // Adjusted max_tokens
+                };
+
+                const response = await fetch(API_ENDPOINT_CHAT_COMPLETIONS, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${TOGETHER_API_KEY}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("API Error Data:", errorData);
+                    throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+                }
+
+                const data = await response.json();
+                let botResponse = data.choices[0].message.content.trim();
+                if (!botResponse) {
+                    botResponse = "I'm not sure how to respond to that. Can you try rephrasing?";
+                }
+
+                hideBotTypingIndicator();
+                appendMessage(botResponse, 'bot', null, null, true); // Pass true for isHtml to parse markdown in general text
+                saveChatToFirestore(currentPersona, userMessage, botResponse);
+
+            } catch (error) {
+                console.error("Error getting agent response:", error);
+                hideBotTypingIndicator();
+                const errorMessage = error.message.includes("API key") ? "There's an issue with the API configuration." : "Sorry, I encountered an error. Please try again.";
+                appendMessage(errorMessage, 'bot');
+                saveChatToFirestore(currentPersona, userMessage, `[ERROR] ${errorMessage}`);
+            } finally {
+                userInput.disabled = false;
+                sendButton.disabled = false;
+                userInput.focus();
+            }
+        }
+
+
+        function sendMessage() {
+            const messageText = userInput.value.trim();
+            if (!messageText && !currentAttachment) return;
+
+            appendMessage(messageText, 'user', currentAttachment ? currentAttachment.type : null, currentAttachment ? currentAttachment.data : null);
+
+            userInput.value = '';
+            clearAttachmentPreview();
+            userInput.disabled = true;
+            sendButton.disabled = true;
+
+            showBotTypingIndicator();
+            getAgentResponse(messageText || (currentAttachment ? `[Sent a ${currentAttachment.type}]` : ""));
+        }
+
+        function clearAttachmentPreview() {
+            attachmentPreviewArea.innerHTML = '';
+            attachmentPreviewArea.classList.add('hidden');
+            currentAttachment = null;
+            // Reset file inputs to allow selecting the same file again
+            imageInput.value = '';
+            cameraInput.value = '';
+        }
+
+        function showAttachmentPreviewUI(type, data, fileName = '') {
+            attachmentPreviewArea.innerHTML = ''; // Clear previous
+            attachmentPreviewArea.classList.remove('hidden');
+
+            const container = document.createElement('div');
+            container.className = 'attachment-container flex items-center gap-2'; // Added flex for layout
+
+            if (type === 'image') {
+                const img = document.createElement('img');
+                img.src = data;
+                img.className = 'attachment-preview h-16 w-auto object-contain'; // Adjusted size
+                img.alt = fileName || 'Image attachment';
+                container.appendChild(img);
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'text-xs text-gray-600 truncate max-w-[150px]';
+                nameSpan.textContent = fileName || 'Image.png';
+                container.appendChild(nameSpan);
+
+            } else if (type === 'audio') {
+                const audioIcon = document.createElement('span');
+                audioIcon.className = 'material-icons text-3xl text-[#1F3A5C]';
+                audioIcon.textContent = 'mic';
+                container.appendChild(audioIcon);
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'text-xs text-gray-600';
+                nameSpan.textContent = fileName || 'AudioRecording.wav';
+                container.appendChild(nameSpan);
+            }
+
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-attachment ml-auto'; // Use ml-auto to push to right
+            removeButton.innerHTML = '<span class="material-icons text-sm">close</span>';
+            removeButton.addEventListener('click', clearAttachmentPreview);
+
+            container.appendChild(removeButton);
+            attachmentPreviewArea.appendChild(container);
+
+            currentAttachment = { type, data, name: fileName };
+        }
+
+
+        function handleFileSelection(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    showAttachmentPreviewUI('image', e.target.result, file.name);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function startAudioRecording() {
+            if (isRecording) return;
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    recordingDuration = 0;
+
+                    mediaRecorder.addEventListener('dataavailable', event => audioChunks.push(event.data));
+                    mediaRecorder.addEventListener('stop', () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' }); // Common format
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        showAttachmentPreviewUI('audio', audioUrl, `Recording_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.wav`);
+                        stream.getTracks().forEach(track => track.stop());
+                        isRecording = false;
+                        clearInterval(recordingTimer);
+                        updateAudioRecordButtonState();
+                        const recIndicator = document.getElementById('dynamicRecordingIndicator');
+                        if(recIndicator) recIndicator.remove();
+                    });
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    updateAudioRecordButtonState();
+
+                    // Add recording indicator below media toolbar or in attachment preview area
+                    const indicator = document.createElement('div');
+                    indicator.id = 'dynamicRecordingIndicator';
+                    indicator.className = 'recording-indicator px-3 py-1'; // Use existing style
+                    indicator.innerHTML = `<div class="recording-indicator-dot"></div><span id="recTime">Recording... 0:00</span>`;
+                    attachmentPreviewArea.innerHTML = ''; // Clear other previews
+                    attachmentPreviewArea.appendChild(indicator);
+                    attachmentPreviewArea.classList.remove('hidden');
+
+
+                    recordingTimer = setInterval(() => {
+                        recordingDuration++;
+                        const minutes = Math.floor(recordingDuration / 60);
+                        const seconds = recordingDuration % 60;
+                        document.getElementById('recTime').textContent = `Recording... ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    }, 1000);
+
+                })
+                .catch(error => {
+                    console.error('Error accessing microphone:', error);
+                    alert('Could not access microphone. Please check permissions.');
+                    isRecording = false; updateAudioRecordButtonState();
+                });
+        }
+
+        function stopAudioRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                // State updates are handled in 'stop' event listener for mediaRecorder
+            }
+        }
+        function updateAudioRecordButtonState() {
+            const icon = audioRecordButton.querySelector('.material-icons');
+            if (isRecording) {
+                icon.textContent = 'stop';
+                icon.classList.add('text-red-500');
+                audioRecordButton.title = "Stop Recording";
+            } else {
+                icon.textContent = 'mic';
+                icon.classList.remove('text-red-500');
+                audioRecordButton.title = "Record Audio";
+            }
+        }
+
+        async function saveChatToFirestore(persona, user_chat, bot_response) {
+            try {
+                const personaDataForSave = personaSystemPrompts[persona] || { name: "WeConnect Creator (Default)" };
+                await db.collection('weconnect_agent_chats').add({
+                  persona_key: persona,
+                  persona_name: personaDataForSave.name,
+                  uid: auth.currentUser ? auth.currentUser.uid : 'ANONYMOUS_USER', // Handle anonymous user
+                  created_at: firebase.firestore.Timestamp.now(),
+                  user_chat: user_chat,
+                  bot_response: bot_response,
+                });
+                // console.log('Chat saved to Firestore');
+            } catch (error) {
+                console.error('Error saving chat to Firestore:', error);
+            }
+        }
+
+        // Placeholder function to populate chat from YouTube
+        async function populateChatFromYouTube() {
+            // TODO: Replace with actual YouTube API endpoint and data retrieval
+            const youtubeChatData = [
+                { sender: "A", message: "Hello, everyone!" },
+                { sender: "B", message: "Hi A! Great to be here." },
+            ];
+
+            youtubeChatData.forEach(chat => {
+                appendMessage(chat.message, chat.sender === "A" ? "user" : "bot");
+            });
+        }
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        imageInput.addEventListener('change', function() { handleFileSelection(this); });
+        cameraInput.addEventListener('change', function() { handleFileSelection(this); });
+        audioRecordButton.addEventListener('click', () => { isRecording ? stopAudioRecording() : startAudioRecording(); });
+
+        personaDropdown.addEventListener('change', () => {
+            conversationHistory = []; // Reset history on persona change
+            getSystemPrompt(); // Updates currentPersonaData and header
+            const initialMessage = `You are now chatting with ${currentPersonaData.name}, your ${currentPersonaData.profession}. How can I assist you today?`;
+            appendMessage(initialMessage, 'bot', null, null, true);
+        });
+
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Authenticate Anonymously for Firestore access if no user is signed in
+                if (!auth.currentUser) {
+                    await auth.signInAnonymously();
+                    console.log("Signed in anonymously");
+                }
+            } catch (error) {
+                console.error("Anonymous sign-in failed:", error);
+                alert("Could not initialize user session. Chat logging might be affected.");
+            }
+
+            populatePersonaDropdown();
+            getSystemPrompt(); // Set initial persona and title
+            const initialGreeting = `Hello! I'm ${currentPersonaData.name}, your ${currentPersonaData.profession}. How can I help you with your content needs today?`;
+            appendMessage(initialGreeting, 'bot', null, null, true);
+
+            // Populate chat from YouTube
+            await populateChatFromYouTube();
+
+            if (!TOGETHER_API_KEY || TOGETHER_API_KEY.startsWith("sk-") === false && TOGETHER_API_KEY.length < 40) { // Basic key check
+                 console.warn("TOGETHER_API_KEY seems invalid or missing. Chat functionality will fail.");
+                 appendMessage("System Alert: API Key for the AI model is missing or invalid. Chat may not function correctly.", 'bot');
+            }
+             // Check media permissions (optional, for better UX)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.warn('Media devices API not supported.');
+                audioRecordButton.disabled = true;
+                audioRecordButton.classList.add('opacity-50', 'cursor-not-allowed');
+                audioRecordButton.title = "Audio recording not supported";
+            }
+        });
+
+    </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Creator Tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #1F3A5C;
+      --primary-color-rgb: 31, 58, 92;
+      --background-light: #f0f2f5;
+      --background-dark: #ffffff; /* Used for cards and header */
+      --text-dark: #333;
+      --text-medium: #555;
+      --text-light: #777;
+      --accent-color: #4A90E2;
+      --error-color: #D0021B;
+      --success-color: #28a745;
+      --spacing-unit: 15px;
+      --border-radius: 8px;
+      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --header-height: 56px;
+      /* --bottom-nav-height: 60px; /* REMOVED as bottom nav is removed */
+      --card-border-color: #e0e0e0;
+      --transition-main: 0.2s ease-in-out;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+        overscroll-behavior-y: contain;
+        overflow-x: hidden;
+    }
+    body {
+      font-family: 'Inter', sans-serif; background-color: var(--background-light);
+      color: var(--text-dark); min-height: 100vh;
+      padding-top: var(--header-height);
+      padding-bottom: var(--spacing-unit); /* Adjusted: No bottom nav, so just standard spacing */
+      max-width: 420px; margin: 0 auto; position: relative;
+    }
+    a { color: var(--primary-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button, .button-like {
+      font-family: inherit; cursor: pointer; border: 1px solid var(--primary-color);
+      background-color: var(--primary-color); color: var(--background-dark);
+      padding: 8px var(--spacing-unit); border-radius: var(--border-radius);
+      font-size: 0.9rem; font-weight: 500; text-align: center;
+      transition: background-color 0.3s, transform 0.1s, box-shadow 0.2s;
+      display: inline-block; text-decoration: none;
+    }
+    button:hover, .button-like:hover { background-color: #192F4A; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    button:active, .button-like:active { transform: translateY(1px); }
+    button.secondary, .button-like.secondary {
+        background-color: var(--background-dark); color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+    }
+    button.secondary:hover, .button-like.secondary:hover { background-color: #f8f8f8; }
+
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+
+    .header {
+        background-color: var(--background-dark);
+        padding: 0 var(--spacing-unit); /* Consistent horizontal padding */
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* Default for tools page with logo and right icons */
+        position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+        width: 100%; max-width: 420px;
+        z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: var(--header-height);
+    }
+    /* No dedicated back button for tools.html main header; back is within active tool UI */
+    .header-logo-container { /* This will be on the left */
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        flex-grow: 1; /* Allow it to take space if no back button */
+    }
+    .header-logo-img { width: 30px; height: 30px; object-fit: contain; }
+    .header-logo-text { font-size: 1.1rem; font-weight: 600; margin-left: 8px; color: var(--primary-color); }
+
+    .header-icons-right { /* This will be on the right */
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-unit);
+        flex-shrink: 0; /* Prevent shrinking */
+    }
+    .header-icon {
+        position: relative; cursor: pointer; color: var(--text-medium);
+        display: flex; align-items: center; justify-content: center;
+        width: 40px; height: 40px; margin: -8px; /* Negative margin to make tap target larger */
+        text-decoration: none;
+        border-radius: 50%; transition: background-color 0.2s;
+    }
+    .header-icon:hover { background-color: rgba(0,0,0,0.05); }
+    .header-icon .material-symbols-outlined { font-size: 24px; }
+    .badge {
+        position: absolute; top: 0px; right: 0px; background-color: var(--error-color);
+        color: white; font-size: 10px; font-weight: bold; border-radius: 50%;
+        padding: 2px 5px; min-width: 16px; text-align: center; line-height: 1;
+        display: none; z-index: 1;
+    }
+    .badge.visible { display: block; }
+
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; }
+    .tools-section-title { font-size: 1.2rem; font-weight: 700; color: var(--primary-color); margin-bottom: var(--spacing-unit); }
+    .tool-grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-unit); }
+    @media (max-width: 350px) { .tool-grid-container { grid-template-columns: 1fr; } }
+
+    .weconnect-tool-card {
+        background-color: var(--background-dark); border: 1px solid var(--card-border-color);
+        border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+        padding: calc(var(--spacing-unit) * 0.8); text-align: center;
+        color: var(--text-dark); cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        min-height: 170px; overflow: hidden;
+    }
+    .weconnect-tool-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-color: var(--primary-color); }
+    .weconnect-tool-card .icon-container {
+        background-color: rgba(var(--primary-color-rgb), 0.08); border-radius: 50%;
+        width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+        margin-bottom: 10px; flex-shrink: 0;
+    }
+    .weconnect-tool-card .icon-container .material-symbols-outlined { color: var(--primary-color); font-size: 22px; }
+    .weconnect-tool-card h3.tool-name {
+        font-size: 0.9rem; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; line-height: 1.3;
+        width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        overflow: hidden; text-overflow: ellipsis; min-height: calc(1.3em * 2);
+    }
+    .weconnect-tool-card p.tool-description {
+        font-size: 0.75rem; color: var(--text-medium); line-height: 1.4;
+        flex-grow: 1; margin-bottom: 8px; width: 100%;
+        display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+        overflow: hidden; text-overflow: ellipsis;
+    }
+    .weconnect-tool-card .launch-prompt {
+        font-size: 0.75rem; font-weight: 500; color: var(--primary-color); margin-top: auto;
+        padding: 5px 10px; border: 1px solid rgba(var(--primary-color-rgb), 0.3);
+        border-radius: 5px; display: inline-block; transition: background-color 0.2s, color 0.2s;
+    }
+    .weconnect-tool-card:hover .launch-prompt { background-color: rgba(var(--primary-color-rgb), 0.1); border-color: var(--primary-color); }
+
+    #activeToolInterface {
+        background-color: var(--background-dark);
+        padding: var(--spacing-unit);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-top: var(--spacing-unit);
+    }
+    #activeToolInterface h3.tool-interface-title { color: var(--primary-color); margin-bottom: var(--spacing-unit); font-size: 1.1rem;}
+    #activeToolInterface label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.85rem; color: var(--text-medium); }
+    #activeToolInterface input[type="text"],
+    #activeToolInterface input[type="number"],
+    #activeToolInterface input[type="file"],
+    #activeToolInterface textarea,
+    #activeToolInterface select {
+        width: 100%; padding: 8px 10px; margin-bottom: var(--spacing-unit);
+        border: 1px solid var(--card-border-color); border-radius: var(--border-radius);
+        font-size: 0.9rem; color: var(--text-dark);
+        background-color: #fcfcfc;
+    }
+    #activeToolInterface input:focus, #activeToolInterface textarea:focus, #activeToolInterface select:focus {
+        border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+    }
+    #activeToolInterface textarea { min-height: 80px; resize: vertical; }
+    #activeToolInterface .tool-output {
+        margin-top: var(--spacing-unit); padding: var(--spacing-unit);
+        background-color: var(--background-light); border: 1px solid var(--card-border-color);
+        border-radius: var(--border-radius); white-space: pre-wrap; word-wrap: break-word;
+        font-size: 0.85rem; line-height: 1.5; min-height: 60px;
+        color: var(--text-dark);
+    }
+    #activeToolInterface .tool-output img.generated-image, #activeToolInterface img.preview-image {
+        max-width: 100%; height: auto; border-radius: var(--border-radius); margin-top: 10px; border: 1px solid var(--card-border-color);
+    }
+    #activeToolInterface .tool-output audio { width: 100%; margin-top: 10px; }
+    #activeToolInterface .tool-spinner {
+        border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-color);
+        border-radius: 50%; width: 24px; height: 24px;
+        animation: spin 1s linear infinite; margin: var(--spacing-unit) auto; display: none;
+    }
+    #activeToolInterface .button-group { display: flex; gap: 10px; margin-top: var(--spacing-unit); justify-content: flex-start; }
+
+    #apiKeyNotice {
+        background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+        padding: var(--spacing-unit); border-radius: var(--border-radius); margin-bottom: var(--spacing-unit);
+        font-size: 0.85rem; text-align: left;
+    }
+    .hidden { display: none !important; }
+
+    #pageLoading {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(255, 255, 255, 0.9);
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+    #pageLoading.hidden { opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+    #pageLoading .spinner {
+        border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color);
+        border-radius: 50%; width: 30px; height: 30px;
+        animation: spin 1s linear infinite; margin-bottom: 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* --- BOTTOM NAVIGATION BAR CSS REMOVED --- */
+  </style>
+</head>
+<body>
+
+  <div id="pageLoading"> <div class="spinner"></div> <p class="loading-text">Loading...</p> </div>
+
+  <header class="header">
+    <!-- No dedicated back button here for tools.html main view -->
+    <div class="header-logo-container"> <!-- Takes up available space to the left -->
+        <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+        <span class="header-logo-text">WeConnect Tools</span> <!-- Or just WeConnect -->
+    </div>
+    <div class="header-icons-right">
+      <a href="notifications.html" class="header-icon" id="notificationsIcon" title="Notifications"> <span class="material-symbols-outlined">notifications</span> <span id="notificationBadge" class="badge"></span> </a>
+      <a href="messages.html" class="header-icon" id="messagesIcon" title="Messages"> <span class="material-symbols-outlined">mail</span> <span id="messageBadge" class="badge"></span> </a>
+      <div id="signOutIcon" class="header-icon" title="Sign Out"> <span class="material-symbols-outlined">logout</span> </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <h2 class="tools-section-title" id="mainSectionTitle">Creator Tools</h2>
+    <div id="apiKeyNotice" class="hidden"> <strong>API Key Notice:</strong> The Together AI API Key is a placeholder. LLM-powered tools may not function correctly. Please update it in the script for full functionality. </div>
+    <div class="tool-grid-container" id="toolGrid"> <!-- Tools will be populated here by JavaScript --> </div>
+    <div id="activeToolInterface" class="hidden"> <!-- Active tool's UI will be injected here --> </div>
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR HTML REMOVED -->
+
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // DO NOT REMOVE OR CHANGE
+        authDomain: "daisy-n7g20a.firebaseapp.com", // DO NOT REMOVE OR CHANGE
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com", // DO NOT REMOVE OR CHANGE
+        projectId: "daisy-n7g20a", // DO NOT REMOVE OR CHANGE
+        storageBucket: "daisy-n7g20a.appspot.com", // DO NOT REMOVE OR CHANGE
+        messagingSenderId: "225362605902", // DO NOT REMOVE OR CHANGE
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f" // DO NOT REMOVE OR CHANGE
+    };
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+
+    const TOGETHER_API_KEY = "3b1c02603a0137c8c8b265ef1ed02c3e448c089a44f052ca6acf54210fa6b34c"; // DO NOT REMOVE OR CHANGE
+    const MODELS = { // DO NOT REMOVE OR CHANGE
+        imageGen: "black-forest-labs/FLUX.1-schnell-Free",
+        chatCompletion: "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+        thinking: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
+        vision: "meta-llama/Llama-Vision-Free"
+    };
+
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const toolGrid = document.getElementById('toolGrid');
+    const activeToolInterface = document.getElementById('activeToolInterface');
+    const mainSectionTitle = document.getElementById('mainSectionTitle');
+    const apiKeyNoticeElement = document.getElementById('apiKeyNotice');
+
+    // Corrected API Key Notice Logic
+    if (TOGETHER_API_KEY === "YOUR_TOGETHER_API_KEY_PLACEHOLDER") {
+        apiKeyNoticeElement.querySelector('strong').textContent = "API Key Notice: The Together AI API Key is a placeholder. LLM-powered tools may not function. Please update it in the script.";
+        apiKeyNoticeElement.classList.remove('hidden');
+    } else if (TOGETHER_API_KEY === "3b1c02603a0137c8c8b265ef1ed02c3e448c089a44f052ca6acf54210fa6b34c") {
+        // Optional: show a different notice if it's your specific test key, or just keep it hidden.
+        // For this fix, let's assume you want a specific message for your test key or hide it.
+        // If you want to hide it completely when your actual key is present, remove this else-if.
+        apiKeyNoticeElement.querySelector('strong').textContent = "Notice: Using development API Key. Some features might be limited.";
+        apiKeyNoticeElement.classList.remove('hidden'); // Or keep hidden if preferred
+    }
+
+
+    const allTools = [
+        // Original WeConnect Tools (11)
+        { id: 'image-browser', href: 'tool-image-browser.html', icon: 'photo_library', name: 'Image Browser', description: 'Find free, high-quality stock photos.', type: 'external_link_placeholder' },
+        { id: 'hashtag-generator', icon: 'tag', name: 'Hashtag Generator', description: 'Discover relevant hashtags from text or image.', type: 'llm_vision_chat', model: MODELS.chatCompletion, visionModel: MODELS.vision,
+          fields: [ { id: 'hg_text', label: 'Enter text (optional):', type: 'textarea', placeholder: 'e.g., My travel adventure in Paris' }, { id: 'hg_image', label: 'Upload image (optional):', type: 'file', accept: 'image/*' } ],
+          prompt: (inputs) => `Based on the context: "${inputs.hg_text || ''}${inputs.hg_image_desc ? (inputs.hg_text ? ' ' : '') + 'Image context: ' + inputs.hg_image_desc : ''}", generate a list of 10-15 relevant and effective hashtags. Mix popular and niche if appropriate.`
+        },
+        { id: 'ai-topic-ideas', icon: 'lightbulb', name: 'AI Topic Ideas', description: 'Get creative content suggestions.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'ati_keyword', label: 'Enter a keyword or topic:', type: 'text', placeholder: 'e.g., Sustainable Living' } ],
+          prompt: (inputs) => `Generate 5 engaging content topic ideas (e.g., blog posts, videos) based on the keyword: "${inputs.ati_keyword}". For each, provide a brief (1-sentence) concept.`
+        },
+        { id: 'ai-image-generator', icon: 'auto_awesome', name: 'AI Image Generator', description: 'Generate images from text prompts.', type: 'llm_image', model: MODELS.imageGen,
+          fields: [ { id: 'aig_prompt', label: 'Enter your image prompt:', type: 'textarea', placeholder: 'e.g., A futuristic cityscape at sunset' } ]
+        },
+        { id: 'ai-title-creator', icon: 'title', name: 'AI Title Creator', description: 'Craft catchy and optimized titles.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'atc_content', label: 'Briefly describe your content or topic:', type: 'textarea', placeholder: 'e.g., A video about making homemade pasta' } ],
+          prompt: (inputs) => `Generate 5 catchy and SEO-friendly titles for content described as: "${inputs.atc_content}".`
+        },
+        { id: 'ai-description-writer', icon: 'article', name: 'AI Description Writer', description: 'Generate compelling video/post descriptions.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'adw_title', label: 'Content Title or Topic:', type: 'text', placeholder: 'e.g., My Trip to the Mountains' }, {id: 'adw_keywords', label: 'Keywords (optional, comma-separated):', type: 'text', placeholder: 'hiking, nature, adventure'} ],
+          prompt: (inputs) => `Write a compelling and engaging description (approx. 100-150 words) for content titled "${inputs.adw_title}". ${inputs.adw_keywords ? 'Incorporate these keywords if natural: ' + inputs.adw_keywords + '.' : ''} Include a call to action if appropriate.`
+        },
+        { id: 'tts', href: 'tool-tts.html', icon: 'record_voice_over', name: 'Text-to-Speech (TTS)', description: 'Convert text into voiceovers.', type: 'external_link_placeholder' },
+        { id: 'stt', href: 'tool-stt.html', icon: 'mic', name: 'Speech-to-Text (STT)', description: 'Transcribe audio and video to text.', type: 'external_link_placeholder' },
+        { id: 'local-storage', href: 'tool-local-storage.html', icon: 'folder_open', name: 'Local Storage Manager', description: 'Manage app-stored content/files.', type: 'client_side_placeholder' },
+        { id: 'color-palette', icon: 'palette', name: 'Color Palette Generator', description: 'Create/extract harmonious color schemes.', type: 'llm_vision_chat', model: MODELS.chatCompletion, visionModel: MODELS.vision,
+            fields: [ {id: 'cp_image', label: 'Upload image to extract palette (optional):', type: 'file', accept: 'image/*'}, { id: 'cp_description', label: 'Or describe desired palette:', type: 'text', placeholder: 'e.g., earthy tones with a pop of teal' } ],
+            prompt: (inputs) => `Generate a harmonious color palette of 5 colors. ${inputs.cp_description ? 'Base it on the description: "' + inputs.cp_description + '". ' : ''} ${inputs.cp_image_desc ? 'Also consider this image description: "' + inputs.cp_image_desc + '". ' : ''} Provide hex codes for each color and a brief name (e.g., "Deep Ocean Blue - #003366"). If an image was provided, prioritize colors from it.`
+        },
+        { id: 'font-pairer', href: 'tool-font-pairer.html', icon: 'text_fields', name: 'Font Pairer', description: 'Find complementary font combinations.', type: 'client_side_placeholder' },
+        { id: 'blog-idea-generator-adv', icon: 'tips_and_updates', name: 'Blog Idea Generator (Adv)', description: 'Generates blog post titles and concepts.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'big_topic_adv', label: 'Enter a keyword or topic:', type: 'text', placeholder: 'e.g., AI in Education' } ],
+          prompt: (inputs) => `Generate 5 detailed blog post ideas for the topic: "${inputs.big_topic_adv}". For each idea, provide: a catchy title, a 2-3 sentence concept/summary, and 3-4 potential subheadings or key points to cover.`
+        },
+        { id: 'social-media-caption-writer', icon: 'edit_note', name: 'Social Media Caption Writer', description: 'Creates captions for various platforms.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'smcw_topic', label: 'Brief description or topic:', type: 'text', placeholder: 'e.g., New product launch photo' }, { id: 'smcw_platform', label: 'Platform:', type: 'select', options: ['Instagram', 'Twitter (X)', 'LinkedIn', 'Facebook', 'TikTok'] } ],
+          prompt: (inputs) => `Write 3 engaging social media captions for ${inputs.smcw_platform} about "${inputs.smcw_topic}". Include relevant emojis and suggest 2-3 popular hashtags for each.`
+        },
+        { id: 'video-script-hook-creator', icon: 'movie', name: 'Video Script Hook Creator', description: 'Generates attention-grabbing video hooks.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'vshc_topic', label: 'Video topic:', type: 'text', placeholder: 'e.g., 10 Unknown Facts About Space' } ],
+          prompt: (inputs) => `Generate 5 compelling opening hooks (1-2 sentences each) for a video about "${inputs.vshc_topic}". Make them intriguing and attention-grabbing.`
+        },
+        { id: 'image-prompt-enhancer', icon: 'auto_fix_high', name: 'Image Prompt Enhancer', description: 'Enhances simple image prompts.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ { id: 'ipe_prompt', label: 'Enter your simple image prompt:', type: 'text', placeholder: 'e.g., cat on a roof' } ],
+          prompt: (inputs) => `Enhance the following simple image generation prompt: "${inputs.ipe_prompt}". Provide 3 detailed and artistic variations. Focus on adding details about style (e.g., photorealistic, oil painting, anime), lighting (e.g., golden hour, neon), composition, mood, and specific elements. Each variation should be a complete, ready-to-use prompt.`
+        },
+        { id: 'image-describer', icon: 'visibility', name: 'Image Describer', description: 'Describes the content of an uploaded image.', type: 'llm_vision', model: MODELS.vision,
+          fields: [ { id: 'id_image', label: 'Upload an image:', type: 'file', accept: 'image/*' } ],
+          promptFromVision: (imageDesc) => imageDesc
+        },
+        { id: 'podcast-title-suggester', icon: 'podcasts', name: 'Podcast Title Suggester', description: 'Suggests creative podcast episode titles.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'pts_topic', label: 'Episode topic or summary:', type: 'textarea', placeholder: 'e.g., Interview with a pioneering AI researcher on the future of AGI' } ],
+          prompt: (inputs) => `Generate 5 creative and engaging podcast episode titles for a show about: "${inputs.pts_topic}". Consider different angles (e.g., intriguing, benefit-driven, controversial).`
+        },
+        { id: 'email-subject-generator', icon: 'mail', name: 'Email Subject Generator', description: 'Generates compelling email subject lines.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'esg_summary', label: 'Email content summary or goal:', type: 'text', placeholder: 'e.g., Announcing a 20% off sale on all tech gadgets' } ],
+          prompt: (inputs) => `Generate 5 compelling email subject lines for an email with the content/goal: "${inputs.esg_summary}". Aim for high open rates, using curiosity, urgency, or clear benefits.`
+        },
+        { id: 'video-script-scene-summarizer', icon: 'segment', name: 'Video Script Scene Summarizer', description: 'Summarizes video script scenes.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ { id: 'vsss_scene', label: 'Paste script scene:', type: 'textarea', placeholder: 'INT. COFFEE SHOP - DAY\nAVA (30s) sips her latte, lost in thought. LIAM (30s) enters, looking hurried...' } ],
+          prompt: (inputs) => `Summarize the following video script scene in 2-3 sentences, focusing on key actions, character interactions, and plot progression: \n\n${inputs.vsss_scene}`
+        },
+        { id: 'content-paraphraser', icon: 'shuffle', name: 'Content Paraphraser', description: 'Paraphrases text while maintaining meaning.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'paraphrase_text', label: 'Paste text to paraphrase:', type: 'textarea', placeholder: 'The quick brown fox jumps over the lazy dog.' } ],
+          prompt: (inputs) => `Paraphrase the following text, ensuring the original meaning is fully preserved but using significantly different wording and sentence structure. Provide 2-3 variations if the text is long enough:\n\n${inputs.paraphrase_text}`
+        },
+        { id: 'text-summarizer', icon: 'compress', name: 'Text Summarizer', description: 'Summarizes text concisely.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ { id: 'summarize_text_input', label: 'Paste text to summarize (up to 500 words):', type: 'textarea', placeholder: 'Enter your text here...' } ],
+          prompt: (inputs) => `Summarize the following text concisely (aim for 15-25% of original length, or 2-4 sentences for shorter texts):\n\n${inputs.summarize_text_input}`
+        },
+        { id: 'grammar-tone-check', icon: 'spellcheck', name: 'Grammar & Tone Check', description: 'Checks grammar and assesses tone.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'gtc_text', label: 'Paste text for grammar & tone check:', type: 'textarea', placeholder: 'Their going to the park. Its a beautiful day!' } ],
+          prompt: (inputs) => `Analyze the following text for grammar errors and assess its overall tone. Provide corrections for any grammar mistakes. Describe the tone (e.g., formal, informal, friendly, assertive, sarcastic, etc.) and suggest improvements if the tone seems inappropriate for general professional communication. Text:\n\n"${inputs.gtc_text}"`
+        },
+        { id: 'image-alt-text-generator', icon: 'closed_caption', name: 'Image Alt-Text Generator', description: 'Generates descriptive alt-text for images.', type: 'llm_vision_chat', model: MODELS.chatCompletion, visionModel: MODELS.vision,
+          fields: [ { id: 'iatg_image', label: 'Upload image for alt-text:', type: 'file', accept: 'image/*' } ],
+          prompt: (inputs) => `Based on the image described as: "${inputs.iatg_image_desc}", generate concise and descriptive alt text suitable for web accessibility. Focus on the main subject and context.`
+        },
+        { id: 'keyword-extractor', icon: 'key', name: 'Keyword Extractor', description: 'Extracts main keywords from text.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'ke_text', label: 'Paste text to extract keywords:', type: 'textarea', placeholder: 'Artificial intelligence is transforming various industries, from healthcare to finance...' } ],
+          prompt: (inputs) => `Extract the top 5-10 main keywords and key phrases (single or multi-word) from the following text. List them clearly:\n\n${inputs.ke_text}`
+        },
+        { id: 'readability-estimator', icon: 'visibility_auto', name: 'Readability Estimator', description: 'Estimates text readability.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ { id: 're_text', label: 'Paste text to estimate readability:', type: 'textarea', placeholder: 'Enter text to analyze its complexity...' } ],
+          prompt: (inputs) => `Analyze the following text and provide an estimated Flesch-Kincaid Grade Level. Also, give a brief qualitative assessment of its readability (e.g., "Easy to read for a general audience", "Fairly complex, suitable for an academic audience", "Very technical, requires expert knowledge"). Text:\n\n"${inputs.re_text}"`
+        },
+        { id: 'text-sentiment-checker', icon: 'mood', name: 'Text Sentiment Checker', description: 'Checks sentiment of text snippets.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'tsc_text_single', label: 'Paste text snippet for sentiment analysis:', type: 'text', placeholder: 'e.g., I love this product!' } ],
+          prompt: (inputs) => `Analyze the sentiment of the following text. Classify it as Positive, Negative, or Neutral. Provide a brief explanation for your classification. Text: "${inputs.tsc_text_single}"`
+        },
+        { id: 'tweet-snippet-creator', icon: 'sms', name: 'Tweet Snippet Creator', description: 'Creates tweet-sized snippets from text.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'twsc_paragraph', label: 'Paste a paragraph or long text:', type: 'textarea', placeholder: 'One key takeaway from our recent research is that consistent branding across all platforms leads to higher customer recall and trust...' } ],
+          prompt: (inputs) => `Take the following text and generate 2-3 tweet options (under 280 characters each) that summarize its key point or offer an engaging hook. Include 1-2 relevant hashtags for each tweet.\n\nText: "${inputs.twsc_paragraph}"`
+        },
+        { id: 'quote-finder-from-text', icon: 'format_quote', name: 'Quote Finder from Text', description: 'Extracts impactful sentences.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'qfft_text', label: 'Paste text to find quotable sentences:', type: 'textarea', placeholder: 'Enter a larger block of text here...' } ],
+          prompt: (inputs) => `From the following text, extract 3-5 impactful, insightful, or highly quotable sentences. Present them as a list.\n\nText:\n${inputs.qfft_text}`
+        },
+        { id: 'faq-generator', icon: 'quiz', name: 'FAQ Generator', description: 'Generates FAQs from content.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'fg_content', label: 'Paste content to generate FAQs from:', type: 'textarea', placeholder: 'Enter your article, product description, or service details...' } ],
+          prompt: (inputs) => `Based on the following content, generate a list of 3-5 frequently asked questions (FAQs) along with their concise answers derived directly from the text. Format as: Q: [Question]\nA: [Answer]\n\nContent:\n${inputs.fg_content}`
+        },
+        { id: 'eli5-text-simplifier', icon: 'child_care', name: 'ELI5 Text Simplifier', description: 'Explains complex text in simple terms.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'eli5_text', label: 'Paste complex text to simplify:', type: 'textarea', placeholder: 'Quantum entanglement is a physical phenomenon...' } ],
+          prompt: (inputs) => `Explain the following text as if you were talking to a 5-year-old. Use very simple words, short sentences, and relatable analogies if possible.\n\nText: "${inputs.eli5_text}"`
+        },
+        { id: 'feature-to-benefit-converter', icon: 'sync_alt', name: 'Feature to Benefit Converter', description: 'Converts product features into benefits.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'ftb_features', label: 'List product features (one per line):', type: 'textarea', placeholder: 'e.g., Durable material\nLong battery life\nLightweight design\n1080p HD display' } ],
+          prompt: (inputs) => `For each product feature listed below, describe the primary benefit it provides to the customer. Focus on "what's in it for them" and the value they get. Format as:\nFeature: [Feature]\nBenefit: [Benefit]\n\nFeatures:\n${inputs.ftb_features}`
+        },
+        { id: 'call-to-action-generator', icon: 'ads_click', name: 'Call-to-Action Generator', description: 'Generates compelling CTAs.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'ctag_context', label: 'Describe content/goal for CTA:', type: 'text', placeholder: 'e.g., Sign up for newsletter about AI tools' } ],
+          prompt: (inputs) => `Generate 5 compelling Call-to-Action (CTA) phrases related to: "${inputs.ctag_context}". Make them short, action-oriented, and persuasive. Vary the style (e.g., direct, benefit-driven, curiosity-driven).`
+        },
+        { id: 'intent-spotter', icon: 'saved_search', name: 'Intent Spotter', description: 'Identifies user intent from short text.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ { id: 'is_text', label: 'Enter short text to spot intent:', type: 'text', placeholder: 'e.g., How do I reset my password?' } ],
+          prompt: (inputs) => `Analyze the following user query and identify the primary intent. Examples of intents: "Find Information", "Make a Purchase", "Get Support", "Compare Options", "Provide Feedback", "Navigate". Query: "${inputs.is_text}"\n\nIdentified Intent: [Your classification]\nBrief Rationale: [Why you chose this intent]`
+        },
+        { id: 'poll-quiz-question-generator', icon: 'poll', name: 'Poll/Quiz Question Generator', description: 'Generates poll/quiz questions.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ { id: 'pqqg_topic', label: 'Topic for poll/quiz question:', type: 'text', placeholder: 'e.g., Favorite programming language' }, { id: 'pqqg_type', label: 'Type:', type: 'select', options: ['Poll Question', 'Quiz Question (with answer)'] } ],
+          prompt: (inputs) => {
+            if (inputs.pqqg_type === "Poll Question") {
+                return `Generate a single, engaging poll question about "${inputs.pqqg_topic}" with 3-4 plausible and distinct answer options. Format as:\nQuestion: [Question]\nOptions:\n- [Option 1]\n- [Option 2]\n- [Option 3]\n- [Option 4 (optional)]`;
+            } else {
+                return `Generate a single, interesting quiz question about "${inputs.pqqg_topic}" with 3-4 plausible answer options, one of which is correct. Clearly indicate the correct answer. Format as:\nQuestion: [Question]\nOptions:\nA) [Option A]\nB) [Option B]\nC) [Option C]\nD) [Option D (optional)]\nCorrect Answer: [Letter of correct option] - [Correct Option Text]`;
+            }
+          }
+        },
+        { id: 'product-description-crafter', icon: 'inventory_2', name: 'Product Description Crafter', description: 'Creates persuasive product descriptions.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'pdc_name', label: 'Product Name:', type: 'text', placeholder: 'e.g., QuantumLeap Smartwatch X1'}, {id: 'pdc_features', label: 'Key Features (comma-separated):', type: 'textarea', placeholder: 'e.g., AI health tracking, 7-day battery, waterproof'}, {id: 'pdc_audience', label: 'Target Audience:', type: 'text', placeholder: 'e.g., Tech-savvy fitness enthusiasts'} ],
+          prompt: (inputs) => `Craft a persuasive product description (around 150-200 words) for "${inputs.pdc_name}". Key features: ${inputs.pdc_features}. Target audience: ${inputs.pdc_audience}. Highlight unique selling points and benefits.`
+        },
+        { id: 'ad-copy-generator', icon: 'campaign', name: 'Ad Copy Generator', description: 'Generates short ad copy variations.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'acg_product', label: 'Product/Service:', type: 'text', placeholder: 'e.g., "FreshStart Coffee Beans"'}, {id: 'acg_platform', label: 'Target Platform:', type: 'select', options: ['Facebook Ad', 'Google Search Ad', 'Instagram Story Ad']}, {id: 'acg_message', label: 'Key Message/Offer:', type: 'text', placeholder: 'e.g., Organic, ethically sourced, 15% off first order'} ],
+          prompt: (inputs) => `Generate 3 short, punchy ad copy variations for ${inputs.acg_platform} promoting "${inputs.acg_product}". Key message: "${inputs.acg_message}". Ensure each variation has a clear call to action.`
+        },
+        { id: 'story-plot-suggester', icon: 'auto_stories', name: 'Story Plot Suggester', description: 'Outlines potential story plots.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ {id: 'sps_genre', label: 'Genre:', type: 'text', placeholder: 'e.g., Sci-Fi Mystery'}, {id: 'sps_character', label: 'Main Character Archetype:', type: 'text', placeholder: 'e.g., Cynical detective'}, {id: 'sps_conflict', label: 'Desired Conflict Type:', type: 'text', placeholder: 'e.g., Man vs. Society'} ],
+          prompt: (inputs) => `Suggest 3 distinct story plot outlines for a ${inputs.sps_genre} featuring a ${inputs.sps_character} dealing with a ${inputs.sps_conflict} conflict. Each outline should include a setup, inciting incident, rising action points, climax, and resolution idea.`
+        },
+        { id: 'code-explainer-simple', icon: 'code_blocks', name: 'Code Explainer (Simple)', description: 'Explains simple code snippets.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ {id: 'ces_code', label: 'Paste Code Snippet (max 20 lines):', type: 'textarea', placeholder: 'e.g., function example(a, b) { return a + b; }'}, {id: 'ces_language', label: 'Programming Language:', type: 'text', placeholder: 'e.g., JavaScript'} ],
+          prompt: (inputs) => `Explain the following ${inputs.ces_language} code snippet line by line, then provide an overall summary of its purpose and functionality. Keep the explanation clear and concise, suitable for a beginner. Code:\n\`\`\`${inputs.ces_language}\n${inputs.ces_code}\n\`\`\``
+        },
+        { id: 'recipe-idea-generator', icon: 'restaurant_menu', name: 'Recipe Idea Generator', description: 'Suggests recipes based on ingredients.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'rig_ingredients', label: 'Main Ingredients (comma-separated):', type: 'text', placeholder: 'e.g., chicken, broccoli, rice'}, {id: 'rig_meal_type', label: 'Meal Type:', type: 'select', options: ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert']} ],
+          prompt: (inputs) => `Generate 3 recipe ideas for ${inputs.rig_meal_type} using these main ingredients: ${inputs.rig_ingredients}. For each idea, provide a name and a brief 1-2 sentence description of the dish.`
+        },
+        { id: 'persona-creator', icon: 'person_search', name: 'Persona Creator', description: 'Develops detailed user personas.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'pc_audience', label: 'Describe your target audience/customer:', type: 'textarea', placeholder: 'e.g., Millennial urban dwellers, environmentally conscious, love minimalist design, frequent online shoppers for sustainable products.'} ],
+          prompt: (inputs) => `Based on the following target audience description, create a detailed user persona. Include: a fictional name, age, occupation, key characteristics, goals, frustrations/pain points related to relevant products/services, and a short bio. Audience: "${inputs.pc_audience}"`
+        },
+        { id: 'analogy-generator', icon: 'compare_arrows', name: 'Analogy Generator', description: 'Creates simple analogies for complex topics.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ {id: 'ag_concept', label: 'Complex Concept or Topic:', type: 'text', placeholder: 'e.g., Blockchain technology'} ],
+          prompt: (inputs) => `Generate 2-3 simple analogies to explain the concept of "${inputs.ag_concept}" to someone unfamiliar with it. Each analogy should be relatable and easy to understand.`
+        },
+        { id: 'creative-writing-prompt-generator', icon: 'draw', name: 'Creative Writing Prompts', description: 'Generates unique writing prompts.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'cwpg_genre', label: 'Select Genre (optional):', type: 'select', options: ['Any', 'Sci-Fi', 'Fantasy', 'Mystery', 'Thriller', 'Romance', 'Historical Fiction', 'Contemporary']} ],
+          prompt: (inputs) => `Generate 5 unique and inspiring creative writing prompts. ${inputs.cwpg_genre !== 'Any' ? 'The prompts should be suitable for the ' + inputs.cwpg_genre + ' genre.' : 'The prompts can be for any genre.'} Make them open-ended to encourage imagination.`
+        },
+        { id: 'image-style-idea', icon: 'style', name: 'Image Style Idea', description: 'Describes an image in a new artistic style.', type: 'llm_vision_chat', model: MODELS.chatCompletion, visionModel: MODELS.vision,
+          fields: [ { id: 'isi_image', label: 'Upload an image:', type: 'file', accept: 'image/*' }, {id: 'isi_style', label: 'Desired New Style:', type: 'text', placeholder: 'e.g., "Van Gogh", "Cyberpunk", "Watercolor"'} ],
+          prompt: (inputs) => `Based on the uploaded image (described as: "${inputs.isi_image_desc}"), describe in detail how it might look if re-imagined in a "${inputs.isi_style}" artistic style. Focus on changes to colors, textures, mood, and key elements.`
+        },
+        { id: 'business-name-generator', icon: 'storefront', name: 'Business Name Generator', description: 'Suggests potential business names.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'bng_industry', label: 'Industry:', type: 'text', placeholder: 'e.g., Coffee Shop, Tech Startup, Eco-friendly Cleaning'}, {id: 'bng_keywords', label: 'Keywords/Concepts (comma-separated):', type: 'text', placeholder: 'e.g., innovative, green, community, digital'}, {id: 'bng_style', label: 'Desired Name Style:', type: 'select', options: ['Modern', 'Classic', 'Playful', 'Elegant', 'Techy']} ],
+          prompt: (inputs) => `Generate 10 potential business names for a business in the "${inputs.bng_industry}" industry. Incorporate keywords/concepts: "${inputs.bng_keywords}". The desired name style is "${inputs.bng_style}".`
+        },
+        { id: 'domain-name-suggester', icon: 'language', name: 'Domain Name Suggester', description: 'Suggests available-sounding domain names.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'dns_keywords', label: 'Business Name or Keywords:', type: 'text', placeholder: 'e.g., "QuantumLeap AI" or "eco friendly solutions"'} ],
+          prompt: (inputs) => `Suggest 10 creative and available-sounding domain name ideas based on "${inputs.dns_keywords}". Include variations with common TLDs (like .com, .io, .ai, .co). Note: I cannot check actual availability.`
+        },
+        { id: 'lyrics-idea-generator', icon: 'music_note', name: 'Lyrics Idea Generator', description: 'Sparks ideas for song lyrics.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'lig_mood', label: 'Song Mood:', type: 'text', placeholder: 'e.g., melancholic, upbeat, reflective'}, {id: 'lig_theme', label: 'Theme/Topic:', type: 'text', placeholder: 'e.g., lost love, new beginnings, city life'}, {id: 'lig_genre', label: 'Genre (optional):', type: 'text', placeholder: 'e.g., Pop, Folk, Indie Rock'} ],
+          prompt: (inputs) => `Generate lyrical concepts and a few sample lines for a ${inputs.lig_genre || ''} song with a "${inputs.lig_mood}" mood about "${inputs.lig_theme}". Suggest ideas for a verse and a chorus.`
+        },
+        { id: 'pros-and-cons-lister', icon: 'balance', name: 'Pros and Cons Lister', description: 'Lists pros and cons for a topic.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ {id: 'pac_topic', label: 'Topic, Product, or Decision:', type: 'text', placeholder: 'e.g., "Remote work", "Buying an electric car", "Learning Python"'} ],
+          prompt: (inputs) => `Provide a balanced list of pros and cons for "${inputs.pac_topic}". Aim for 3-5 points for each side, with brief explanations.`
+        },
+        { id: 'meeting-agenda-creator', icon: 'event_note', name: 'Meeting Agenda Creator', description: 'Creates structured meeting agendas.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'mac_objective', label: 'Meeting Objective:', type: 'text', placeholder: 'e.g., Finalize Q3 marketing strategy'}, {id: 'mac_topics', label: 'Key Topics (comma-separated):', type: 'textarea', placeholder: 'e.g., Budget review, Campaign A analysis, New proposals, Timeline discussion'}, {id: 'mac_duration', label: 'Meeting Duration (e.g., 60 minutes):', type: 'text', placeholder: '60 minutes'} ],
+          prompt: (inputs) => `Create a structured meeting agenda for a ${inputs.mac_duration} meeting with the objective: "${inputs.mac_objective}". Key topics to cover: ${inputs.mac_topics}. Allocate approximate times for each topic and include slots for introduction and wrap-up/next steps.`
+        },
+        { id: 'slogan-generator', icon: 'campaign', name: 'Slogan Generator', description: 'Creates catchy slogans.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'sg_brand', label: 'Brand/Product Name:', type: 'text', placeholder: 'e.g., "NovaDesk Ergonomics"'}, {id: 'sg_values', label: 'Core Values/Benefits (comma-separated):', type: 'text', placeholder: 'e.g., comfort, productivity, health, modern design'} ],
+          prompt: (inputs) => `Generate 5 catchy and memorable slogans for a brand/product named "${inputs.sg_brand}" that emphasizes these core values/benefits: ${inputs.sg_values}.`
+        },
+        { id: 'fitness-plan-generator', icon: 'fitness_center', name: 'Fitness Plan Generator', description: 'Generates basic workout or diet plan ideas.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'fpg_goal', label: 'Fitness Goal:', type: 'text', placeholder: 'e.g., Lose weight, Build muscle, Improve endurance'}, {id: 'fpg_duration', label: 'Duration (e.g., 1 week, 1 month):', type: 'text', placeholder: '1 week'}, {id: 'fpg_preference', label: 'Diet/Workout Type (optional):', type: 'text', placeholder: 'e.g., Keto, Vegan, Bodyweight, HIIT'} ],
+          prompt: (inputs) => `Generate a simple ${inputs.fpg_duration} fitness plan focusing on the goal: "${inputs.fpg_goal}". ${inputs.fpg_preference ? 'Consider a ' + inputs.fpg_preference + ' approach. ' : ''}Include a general overview for diet and 3-4 sample exercises for a workout, or a brief diet outline.`
+        },
+        { id: 'productivity-habit-builder', icon: 'timer', name: 'Productivity Habit Builder', description: 'Suggests habits to boost productivity.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'phb_area', label: 'Area to Improve:', type: 'text', placeholder: 'e.g., Time management, Focus, Task completion'} ],
+          prompt: (inputs) => `Suggest 5 actionable daily habits to improve "${inputs.phb_area}". For each habit, provide a brief explanation of how it helps.`
+        },
+        { id: 'language-phrasebook-creator', icon: 'translate', name: 'Language Phrasebook Creator', description: 'Generates common phrases for a language.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'lpbc_language', label: 'Target Language:', type: 'text', placeholder: 'e.g., Spanish, Japanese, German'}, {id: 'lpbc_category', label: 'Phrase Category:', type: 'text', placeholder: 'e.g., Greetings, Travel, Shopping, Emergency'} ],
+          prompt: (inputs) => `Generate 10 common and useful phrases for "${inputs.lpbc_category}" in "${inputs.lpbc_language}". Provide the phrase in ${inputs.lpbc_language} and its English translation.`
+        },
+        { id: 'travel-itinerary-planner', icon: 'travel_explore', name: 'Travel Itinerary Planner', description: 'Creates basic travel itinerary suggestions.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'tip_destination', label: 'Destination:', type: 'text', placeholder: 'e.g., Rome, Italy'}, {id: 'tip_days', label: 'Number of Days:', type: 'number', placeholder: '3'}, {id: 'tip_interests', label: 'Interests (comma-separated, optional):', type: 'text', placeholder: 'e.g., History, Food, Art, Shopping'} ],
+          prompt: (inputs) => `Create a suggested travel itinerary for ${inputs.tip_days} days in "${inputs.tip_destination}". ${inputs.tip_interests ? 'Focus on interests like: ' + inputs.tip_interests + '. ' : ''}Include daily highlights for activities and approximate mealtimes.`
+        },
+        { id: 'gift-idea-suggester', icon: 'redeem', name: 'Gift Idea Suggester', description: 'Suggests gift ideas based on criteria.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'gis_recipient', label: 'Recipient (e.g., Mom, Best Friend, Coworker):', type: 'text', placeholder: 'e.g., My sister'}, {id: 'gis_interests', label: 'Recipient Interests (comma-separated):', type: 'text', placeholder: 'e.g., Reading, Hiking, Cooking, Tech'}, {id: 'gis_occasion', label: 'Occasion (optional):', type: 'text', placeholder: 'e.g., Birthday, Christmas, Anniversary'} ],
+          prompt: (inputs) => `Suggest 5 gift ideas for "${inputs.gis_recipient}" who has interests in "${inputs.gis_interests}". ${inputs.gis_occasion ? 'The occasion is ' + inputs.gis_occasion + '.' : ''} Provide a brief rationale for each suggestion.`
+        },
+        { id: 'simple-fact-checker', icon: 'fact_check', name: 'Fact Checker (Simple)', description: 'Provides a quick assessment of a simple claim.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ {id: 'sfc_claim', label: 'Enter a simple claim to check:', type: 'text', placeholder: 'e.g., The Earth is flat.'} ],
+          prompt: (inputs) => `Is the following claim generally considered true or false based on common knowledge? Provide a very brief explanation (1-2 sentences). Claim: "${inputs.sfc_claim}"`
+        },
+        { id: 'debate-point-generator', icon: 'gavel', name: 'Debate Point Generator', description: 'Generates arguments for or against a topic.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ {id: 'dpg_topic', label: 'Debate Topic:', type: 'text', placeholder: 'e.g., Universal Basic Income'}, {id: 'dpg_side', label: 'Perspective:', type: 'select', options: ['Arguments For', 'Arguments Against']} ],
+          prompt: (inputs) => `Generate 3 strong arguments ${inputs.dpg_side.toLowerCase()} "${inputs.dpg_topic}". Each argument should be concise and persuasive.`
+        },
+        { id: 'character-name-generator', icon: 'person_add', name: 'Character Name Generator', description: 'Generates names for fictional characters.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'cng_gender', label: 'Gender (optional):', type: 'select', options: ['Any', 'Male', 'Female', 'Neutral']}, {id: 'cng_origin', label: 'Cultural/Ethnic Origin (optional):', type: 'text', placeholder: 'e.g., Japanese, Irish, African'}, {id: 'cng_vibe', label: 'Name Vibe (e.g., classic, modern, fantasy):', type: 'text', placeholder: 'e.g., Mysterious'} ],
+          prompt: (inputs) => `Generate 10 unique character names. ${inputs.cng_gender !== 'Any' ? 'Gender: ' + inputs.cng_gender + '. ' : ''}${inputs.cng_origin ? 'Cultural/Ethnic Origin: ' + inputs.cng_origin + '. ' : ''}Vibe: "${inputs.cng_vibe}". Provide both first and last names where appropriate.`
+        },
+        { id: 'newsletter-content-ideas', icon: 'newspaper', name: 'Newsletter Content Ideas', description: 'Suggests content ideas for newsletters.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'nci_topic', label: 'Newsletter Main Topic:', type: 'text', placeholder: 'e.g., Digital Marketing Tips'}, {id: 'nci_frequency', label: 'Frequency (e.g., Weekly, Monthly):', type: 'text', placeholder: 'Weekly'} ],
+          prompt: (inputs) => `Suggest 5 distinct content section ideas for a "${inputs.nci_frequency}" newsletter on the topic of "${inputs.nci_topic}". For each idea, provide a catchy title and a 1-2 sentence description.`
+        },
+        { id: 'book-summary-generator', icon: 'menu_book', name: 'Book Summary Generator', description: 'Summarizes main points of a book concept.', type: 'llm_chat', model: MODELS.thinking,
+          fields: [ {id: 'bsg_title', label: 'Book Title (or concept):', type: 'text', placeholder: 'e.g., "The Art of War"'}, {id: 'bsg_main_idea', label: 'Main Idea/Purpose:', type: 'textarea', placeholder: 'e.g., How to achieve strategic advantage through understanding conflict.'} ],
+          prompt: (inputs) => `Provide a concise 3-4 sentence summary of the main points and takeaways for a book titled "${inputs.bsg_title}" with the main idea: "${inputs.bsg_main_idea}".`
+        },
+        { id: 'event-planner-assistant', icon: 'celebration', name: 'Event Planner Assistant', description: 'Helps brainstorm elements for an event.', type: 'llm_chat', model: MODELS.chatCompletion,
+          fields: [ {id: 'epa_event_type', label: 'Type of Event:', type: 'text', placeholder: 'e.g., Corporate Gala, Birthday Party, Product Launch'}, {id: 'epa_theme', label: 'Desired Theme (optional):', type: 'text', placeholder: 'e.g., "Roaring Twenties", "Sustainable Future"'}, {id: 'epa_attendees', label: 'Approx. Attendees:', type: 'number', placeholder: '100'} ],
+          prompt: (inputs) => `Brainstorm 5 key elements or ideas for a "${inputs.epa_event_type}" event for approximately ${inputs.epa_attendees} attendees. ${inputs.epa_theme ? 'The desired theme is "' + inputs.epa_theme + '". ' : ''}Consider aspects like decor, entertainment, food, or unique activities.`
+        },
+        { id: 'youtube-video-idea-generator', icon: 'video_library', name: 'YouTube Video Idea Generator', description: 'Generates engaging YouTube video ideas.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'yt_channel_niche', label: 'Channel Niche/Topic:', type: 'text', placeholder: 'e.g., DIY Home Projects, Tech Reviews, Cooking for Beginners'}, {id: 'yt_video_format', label: 'Preferred Video Format (optional):', type: 'select', options: ['Any', 'Tutorial', 'Review', 'Vlog', 'Challenge', 'Listicle']} ],
+            prompt: (inputs) => `Generate 5 engaging YouTube video ideas for a channel focused on "${inputs.yt_channel_niche}". ${inputs.yt_video_format !== 'Any' ? 'Consider a ' + inputs.yt_video_format + ' format. ' : ''}For each idea, provide a catchy title and a brief concept (1-2 sentences).`
+        },
+        { id: 'tiktok-challenge-idea', icon: 'music_video', name: 'TikTok Challenge Idea', description: 'Creates unique TikTok challenge concepts.', type: 'llm_chat', model: MODELS.chatCompletion, // Using music_video as a proxy icon
+            fields: [ {id: 'tt_theme', label: 'Challenge Theme (e.g., dance, comedy, art):', type: 'text', placeholder: 'e.g., Food Transformation'}, {id: 'tt_difficulty', label: 'Difficulty (optional):', type: 'select', options: ['Easy', 'Medium', 'Hard']} ],
+            prompt: (inputs) => `Create a unique and engaging TikTok challenge idea based on the theme "${inputs.tt_theme}". ${inputs.tt_difficulty ? 'The difficulty should be ' + inputs.tt_difficulty + '. ' : ''}Describe the challenge, suggest a catchy hashtag, and mention any props or sounds that might be used.`
+        },
+        { id: 'story-character-backstory', icon: 'history_edu', name: 'Character Backstory Generator', description: 'Develops a brief backstory for a character.', type: 'llm_chat', model: MODELS.thinking,
+            fields: [ {id: 'cb_name', label: 'Character Name:', type: 'text', placeholder: 'e.g., Elara Vance'}, {id: 'cb_archetype', label: 'Character Archetype/Role:', type: 'text', placeholder: 'e.g., Reluctant Hero, Wise Mentor'}, {id: 'cb_setting', label: 'Story Setting (optional):', type: 'text', placeholder: 'e.g., Medieval Fantasy, Cyberpunk City'} ],
+            prompt: (inputs) => `Develop a brief (3-5 sentences) backstory for a character named "${inputs.cb_name}" who is a "${inputs.cb_archetype}". ${inputs.cb_setting ? 'The story setting is ' + inputs.cb_setting + '. ' : ''}Focus on one key event or motivation from their past.`
+        },
+        { id: 'product-review-outline', icon: 'rate_review', name: 'Product Review Outline', description: 'Creates an outline for a product review.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'pro_product_name', label: 'Product Name:', type: 'text', placeholder: 'e.g., "Aura Smart Mug"'}, {id: 'pro_product_type', label: 'Product Type:', type: 'text', placeholder: 'e.g., Smart Home Gadget'} ],
+            prompt: (inputs) => `Create a structured outline for a product review of "${inputs.pro_product_name}" (${inputs.pro_product_type}). Include sections for: Introduction, Key Features, Pros, Cons, User Experience/Performance, and Conclusion/Recommendation.`
+        },
+        { id: 'website-about-us-generator', icon: 'info', name: 'Website "About Us" Generator', description: 'Drafts content for an "About Us" page.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'wau_company_name', label: 'Company/Brand Name:', type: 'text', placeholder: 'e.g., "Evergreen Solutions"'}, {id: 'wau_mission', label: 'Mission/Core Values (briefly):', type: 'textarea', placeholder: 'e.g., To provide sustainable and eco-friendly products for everyday life.'}, {id: 'wau_unique_selling_point', label: 'Unique Selling Proposition:', type: 'text', placeholder: 'e.g., Ethically sourced materials, handcrafted quality'} ],
+            prompt: (inputs) => `Draft a compelling "About Us" section (approx. 150-200 words) for a company named "${inputs.wau_company_name}". Their mission is: "${inputs.wau_mission}". Their unique selling point is: "${inputs.wau_unique_selling_point}". Include a brief origin story or founding principle if appropriate.`
+        },
+        { id: 'song-structure-suggester', icon: 'queue_music', name: 'Song Structure Suggester', description: 'Suggests common song structures.', type: 'llm_chat', model: MODELS.thinking,
+            fields: [ {id: 'sss_genre', label: 'Song Genre:', type: 'text', placeholder: 'e.g., Pop, Rock, Folk, EDM'}, {id: 'sss_mood', label: 'Desired Song Mood:', type: 'text', placeholder: 'e.g., Upbeat and energetic, Emotional ballad'} ],
+            prompt: (inputs) => `Suggest 2-3 common song structures suitable for a "${inputs.sss_genre}" song with a "${inputs.sss_mood}" mood. For each structure, list the typical sections (e.g., Verse, Chorus, Bridge, Intro, Outro) in order.`
+        },
+        { id: 'interactive-story-choice', icon: 'fork_right', name: 'Interactive Story Choice Generator', description: 'Generates a scenario and choices.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'isc_setting', label: 'Story Setting/Genre:', type: 'text', placeholder: 'e.g., Haunted House, Space Exploration, Fantasy Quest'} ],
+            prompt: (inputs) => `Create a short scenario (2-3 sentences) for an interactive story set in a "${inputs.isc_setting}" genre. Then, provide 2-3 distinct choices the player can make, each leading to a different potential outcome or path. Example: "You find an ancient, glowing orb. Do you: A) Touch it, B) Leave it, C) Try to smash it?"`
+        },
+        { id: 'podcast-interview-questions', icon: 'question_answer', name: 'Podcast Interview Questions', description: 'Generates interview questions for a guest.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'piq_guest_expertise', label: 'Guest\'s Area of Expertise/Topic:', type: 'text', placeholder: 'e.g., Artificial Intelligence Ethics, Sustainable Fashion'}, {id: 'piq_podcast_theme', label: 'Podcast Theme (optional):', type: 'text', placeholder: 'e.g., Future of Technology'} ],
+            prompt: (inputs) => `Generate 5 insightful and engaging interview questions for a podcast guest whose expertise is "${inputs.piq_guest_expertise}". ${inputs.piq_podcast_theme ? 'The podcast theme is "' + inputs.piq_podcast_theme + '". ' : ''}Aim for open-ended questions that encourage detailed responses.`
+        },
+        { id: 'marketing-email-sequence-idea', icon: 'forward_to_inbox', name: 'Marketing Email Sequence Idea', description: 'Outlines a short email sequence.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'mes_goal', label: 'Goal of the Email Sequence:', type: 'text', placeholder: 'e.g., Nurture new subscribers, Promote a new product, Recover abandoned carts'}, {id: 'mes_audience', label: 'Target Audience:', type: 'text', placeholder: 'e.g., Potential customers, Existing clients'} ],
+            prompt: (inputs) => `Outline a 3-email sequence for the goal: "${inputs.mes_goal}", targeting "${inputs.mes_audience}". For each email, provide a brief subject line idea and a 1-sentence summary of its main content/purpose.`
+        },
+        { id: 'elevator-pitch-crafter', icon: 'business_chip', name: 'Elevator Pitch Crafter', description: 'Helps craft a concise elevator pitch.', type: 'llm_chat', model: MODELS.chatCompletion, // Using business_chip for Material Symbols
+            fields: [ {id: 'epc_idea', label: 'Your Idea/Product/Service:', type: 'text', placeholder: 'e.g., An app that connects local artists with buyers'}, {id: 'epc_target', label: 'Target Listener (e.g., investor, potential customer):', type: 'text', placeholder: 'e.g., Potential Investor'} ],
+            prompt: (inputs) => `Help craft a concise and compelling elevator pitch (30-60 seconds, or 3-5 sentences) for "${inputs.epc_idea}", targeting a "${inputs.epc_target}". The pitch should clearly state the problem, solution, and unique value proposition.`
+        },
+        { id: 'tutorial-step-by-step-generator', icon: 'checklist', name: 'Tutorial Step-by-Step Generator', description: 'Breaks down a task into steps.', type: 'llm_chat', model: MODELS.thinking,
+            fields: [ {id: 'tsbsg_task', label: 'Task to Create Tutorial For:', type: 'text', placeholder: 'e.g., How to bake a simple chocolate cake, How to set up a new email account'} ],
+            prompt: (inputs) => `Break down the task "${inputs.tsbsg_task}" into a clear, step-by-step tutorial. Provide 5-7 concise steps. Start each step with an action verb.`
+        },
+        { id: 'blog-post-conclusion-writer', icon: 'edit_document', name: 'Blog Post Conclusion Writer', description: 'Writes a summary/conclusion for a blog post.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'bpc_main_points', label: 'Main Points/Summary of Blog Post:', type: 'textarea', placeholder: 'e.g., 1. Importance of SEO. 2. Key SEO strategies. 3. Tools for SEO.'}, {id: 'bpc_cta', label: 'Desired Call to Action (optional):', type: 'text', placeholder: 'e.g., Share your favorite SEO tip in the comments!'} ],
+            prompt: (inputs) => `Write a concise and impactful concluding paragraph for a blog post that covered these main points: "${inputs.bpc_main_points}". ${inputs.bpc_cta ? 'Include a call to action: "' + inputs.bpc_cta + '". ' : ''}The conclusion should summarize key takeaways and leave the reader with a final thought.`
+        },
+        { id: 'creative-name-for-project', icon: 'emoji_objects', name: 'Creative Project Name Generator', description: 'Generates creative names for projects/initiatives.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'cpn_project_type', label: 'Type of Project/Initiative:', type: 'text', placeholder: 'e.g., Community garden, Coding bootcamp, Online art gallery'}, {id: 'cpn_keywords', label: 'Keywords/Themes (comma-separated):', type: 'text', placeholder: 'e.g., growth, tech, beauty, connection'} ],
+            prompt: (inputs) => `Generate 10 creative and memorable names for a project or initiative that is a "${inputs.cpn_project_type}" and relates to these keywords/themes: "${inputs.cpn_keywords}".`
+        },
+        { id: 'caption-for-photo-with-mood', icon: 'add_a_photo', name: 'Photo Caption with Mood', description: 'Generates a caption for an image based on mood.', type: 'llm_vision_chat', model: MODELS.chatCompletion, visionModel: MODELS.vision,
+            fields: [ {id: 'cfpwm_image', label: 'Upload Image:', type: 'file', accept: 'image/*'}, {id: 'cfpwm_mood', label: 'Desired Mood (e.g., joyful, serene, mysterious):', type: 'text', placeholder: 'e.g., Serene and peaceful'} ],
+            prompt: (inputs) => `Based on the uploaded image (described as: "${inputs.cfpwm_image_desc}"), write 2-3 caption options that evoke a "${inputs.cfpwm_mood}" mood. Include relevant emojis or a short related quote if appropriate.`
+        },
+        { id: 'workout-variation-suggester', icon: 'sports_gymnastics', name: 'Workout Variation Suggester', description: 'Suggests variations for common exercises.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'wvs_exercise', label: 'Common Exercise:', type: 'text', placeholder: 'e.g., Push-up, Squat, Plank'} ],
+            prompt: (inputs) => `Suggest 3-4 variations for the common exercise: "${inputs.wvs_exercise}". For each variation, briefly explain how it differs or what it targets differently.`
+        },
+        { id: 'daily-affirmation-generator', icon: 'self_improvement', name: 'Daily Affirmation Generator', description: 'Creates positive daily affirmations.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'dag_focus_area', label: 'Focus Area (e.g., confidence, creativity, peace):', type: 'text', placeholder: 'e.g., Confidence'} ],
+            prompt: (inputs) => `Generate 5 positive daily affirmations focused on "${inputs.dag_focus_area}". Make them concise and empowering.`
+        },
+        { id: 'short-story-starter', icon: 'history_toggle_off', name: 'Short Story Starter', description: 'Provides an opening sentence/paragraph for a story.', type: 'llm_chat', model: MODELS.thinking,
+            fields: [ {id: 'sss_genre', label: 'Story Genre:', type: 'text', placeholder: 'e.g., Mystery, Sci-Fi, Fantasy'}, {id: 'sss_mood', label: 'Desired Mood:', type: 'text', placeholder: 'e.g., Suspenseful, Whimsical, Ominous'} ],
+            prompt: (inputs) => `Provide an intriguing opening sentence or short paragraph (2-3 sentences) to start a short story in the "${inputs.sss_genre}" genre with a "${inputs.sss_mood}" mood.`
+        },
+        { id: 'presentation-outline-creator', icon: 'slideshow', name: 'Presentation Outline Creator', description: 'Creates a basic outline for a presentation.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'poc_topic', label: 'Presentation Topic:', type: 'text', placeholder: 'e.g., The Future of Renewable Energy'}, {id: 'poc_duration', label: 'Approximate Duration (e.g., 15 minutes):', type: 'text', placeholder: '15 minutes'} ],
+            prompt: (inputs) => `Create a basic outline for a "${inputs.poc_duration}" presentation on the topic: "${inputs.poc_topic}". Include key sections like Introduction, 2-3 Main Points/Body Sections, and Conclusion/Q&A.`
+        },
+        { id: 'resume-skill-enhancer', icon: 'person_pin_circle', name: 'Resume Skill Enhancer', description: 'Suggests impactful ways to phrase skills on a resume.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'rse_skill', label: 'Skill to Enhance:', type: 'text', placeholder: 'e.g., "Communication" or "Managed projects"'}, {id: 'rse_context', label: 'Context/Example of Use (optional):', type: 'textarea', placeholder: 'e.g., Led a team of 5 to complete a project on time and under budget.'} ],
+            prompt: (inputs) => `Suggest 2-3 more impactful ways to phrase the skill "${inputs.rse_skill}" for a resume. ${inputs.rse_context ? 'Consider this context: "' + inputs.rse_context + '". ' : ''}Focus on using action verbs and quantifying achievements if possible.`
+        },
+        { id: 'mindfulness-exercise-idea', icon: 'spa', name: 'Mindfulness Exercise Idea', description: 'Suggests a simple mindfulness exercise.', type: 'llm_chat', model: MODELS.chatCompletion,
+            fields: [ {id: 'mei_duration', label: 'Desired Duration (e.g., 1 minute, 5 minutes):', type: 'text', placeholder: 'e.g., 5 minutes'}, {id: 'mei_focus', label: 'Focus (e.g., breathing, sounds, gratitude):', type: 'text', placeholder: 'e.g., Breathing'} ],
+            prompt: (inputs) => `Describe a simple mindfulness exercise of approximately "${inputs.mei_duration}" focused on "${inputs.mei_focus}". Provide clear, step-by-step instructions.`
+        }
+    ];
+
+    // --- Core JavaScript Functions (renderTools, activateTool, API calls, etc.) ---
+    // (The JavaScript functions for rendering, activating tools, and API calls remain largely the same as in the previous response)
+
+    function renderTools() {
+        if (!toolGrid) return;
+        toolGrid.innerHTML = '';
+        allTools.forEach(tool => {
+            const card = document.createElement('div');
+            card.classList.add('weconnect-tool-card');
+            card.dataset.toolId = tool.id;
+            card.innerHTML = `
+                <div class="icon-container"> <span class="material-symbols-outlined">${tool.icon}</span> </div>
+                <h3 class="tool-name">${tool.name}</h3>
+                <p class="tool-description">${tool.description}</p>
+                <span class="launch-prompt">Use Tool</span>
+            `;
+            card.addEventListener('click', () => activateTool(tool.id));
+            toolGrid.appendChild(card);
+        });
+    }
+
+    function activateTool(toolId) {
+        const tool = allTools.find(t => t.id === toolId);
+        if (!tool) return;
+
+        if (toolGrid) toolGrid.classList.add('hidden');
+        if (activeToolInterface) activeToolInterface.classList.remove('hidden');
+        if (mainSectionTitle) mainSectionTitle.textContent = tool.name; 
+
+        if (tool.type === 'external_link_placeholder' || tool.type === 'client_side_placeholder') {
+            activeToolInterface.innerHTML = `
+                <h3 class="tool-interface-title">${tool.name}</h3>
+                <p>${tool.description}</p>
+                <p style="margin-top:10px;"><em>This tool's full interface is planned for a separate page or requires client-side logic not yet implemented in this integrated view.</em></p>
+                ${tool.href ? `<p style="margin-top:10px;"><a href="${tool.href}" class="button-like secondary" target="_blank" rel="noopener noreferrer">Open Placeholder Page</a></p>` : ''}
+                <div class="button-group"> <button id="backToToolsBtn" class="secondary">Back to Tools</button> </div>
+            `;
+            const backBtn = document.getElementById('backToToolsBtn');
+            if(backBtn) backBtn.addEventListener('click', showToolGrid);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        activeToolInterface.innerHTML = ''; 
+
+        const title = document.createElement('h3');
+        title.classList.add('tool-interface-title');
+        title.textContent = tool.name;
+        activeToolInterface.appendChild(title);
+
+        if (tool.fields) {
+            tool.fields.forEach(field => {
+                const label = document.createElement('label');
+                label.htmlFor = field.id;
+                label.textContent = field.label;
+                activeToolInterface.appendChild(label);
+
+                if (field.type === 'textarea') {
+                    const textarea = document.createElement('textarea');
+                    textarea.id = field.id;
+                    textarea.placeholder = field.placeholder || '';
+                    activeToolInterface.appendChild(textarea);
+                } else if (field.type === 'select') {
+                    const select = document.createElement('select');
+                    select.id = field.id;
+                    field.options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt;
+                        select.appendChild(option);
+                    });
+                    activeToolInterface.appendChild(select);
+                } else if (field.type === 'file') {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.id = field.id;
+                    input.accept = field.accept || '';
+                    activeToolInterface.appendChild(input);
+                    if (field.accept.includes('image')) {
+                        const preview = document.createElement('img');
+                        preview.id = field.id + '_preview';
+                        preview.classList.add('preview-image');
+                        preview.style.display = 'none'; preview.style.maxWidth = '200px'; preview.style.marginTop = '5px';
+                        activeToolInterface.appendChild(preview);
+                        input.addEventListener('change', () => imagePreview(input, preview));
+                    }
+                } else { 
+                    const input = document.createElement('input');
+                    input.type = field.type;
+                    input.id = field.id;
+                    input.placeholder = field.placeholder || '';
+                    if (field.type === 'number' && field.min !== undefined) input.min = field.min;
+                    if (field.type === 'number' && field.max !== undefined) input.max = field.max;
+                    activeToolInterface.appendChild(input);
+                }
+            });
+        }
+
+        const buttonGroup = document.createElement('div');
+        buttonGroup.classList.add('button-group');
+
+        const generateBtn = document.createElement('button');
+        generateBtn.textContent = tool.type === 'llm_image' ? 'Generate Image' : 'Generate';
+        generateBtn.id = 'generateToolOutputBtn';
+        generateBtn.addEventListener('click', () => handleToolGeneration(tool));
+        buttonGroup.appendChild(generateBtn);
+
+        const backBtn = document.createElement('button');
+        backBtn.classList.add('secondary');
+        backBtn.textContent = 'Back to Tools';
+        backBtn.id = 'backToToolsBtn';
+        backBtn.addEventListener('click', showToolGrid);
+        buttonGroup.appendChild(backBtn);
+        activeToolInterface.appendChild(buttonGroup);
+
+        const spinner = document.createElement('div');
+        spinner.classList.add('tool-spinner');
+        spinner.id = tool.id + '_spinner';
+        activeToolInterface.appendChild(spinner);
+
+        const outputDiv = document.createElement('div');
+        outputDiv.classList.add('tool-output');
+        outputDiv.id = tool.id + '_output';
+        activeToolInterface.appendChild(outputDiv);
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showToolGrid() {
+        if(activeToolInterface) activeToolInterface.classList.add('hidden');
+        if(activeToolInterface) activeToolInterface.innerHTML = '';
+        if(toolGrid) toolGrid.classList.remove('hidden');
+        if(mainSectionTitle) mainSectionTitle.textContent = 'Creator Tools';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function handleToolGeneration(tool) {
+        if (TOGETHER_API_KEY === "YOUR_TOGETHER_API_KEY_PLACEHOLDER") {
+            alert("Please set your Together AI API Key in the script to use this tool.");
+            return;
+        }
+         if (TOGETHER_API_KEY === "3b1c02603a0137c8c8b265ef1ed02c3e448c089a44f052ca6acf54210fa6b34c" && Math.random() < 0.3) {
+             const spinnerEl = document.getElementById(tool.id + '_spinner');
+             const outputEl = document.getElementById(tool.id + '_output');
+             if (spinnerEl) spinnerEl.style.display = 'none';
+             if (outputEl) outputEl.innerHTML = '<p style="color:var(--error-color);">Simulated API Error. Please try again later or use a valid API key.</p>';
+             return;
+        }
+
+        const outputElement = document.getElementById(tool.id + '_output');
+        const spinnerElement = document.getElementById(tool.id + '_spinner');
+        if (!outputElement || !spinnerElement) {
+            console.error("Output or spinner element not found for tool:", tool.id);
+            return;
+        }
+        outputElement.innerHTML = '';
+        spinnerElement.style.display = 'block';
+
+        const inputs = {};
+        let imageBase64ForVision = null;
+
+        if (tool.fields) {
+            for (const field of tool.fields) {
+                const el = document.getElementById(field.id);
+                if (!el) {
+                    console.warn(`Element not found for field ID: ${field.id}`);
+                    continue;
+                }
+                if (field.type === 'file' && el.files && el.files[0]) {
+                    if (tool.type === 'llm_vision' || tool.type === 'llm_vision_chat') {
+                        try {
+                            imageBase64ForVision = await fileToBase64(el.files[0]);
+                            if (tool.type === 'llm_vision_chat') {
+                                const visionDescPrompt = "Describe this image briefly for context in a subsequent task.";
+                                const previewEl = document.getElementById(field.id + '_preview');
+                                if (previewEl && previewEl.src && previewEl.style.display !== 'none') {
+                                    outputElement.innerHTML = `<img src="${previewEl.src}" class="preview-image" style="max-width:200px; margin-bottom:10px;">`;
+                                } else if (imageBase64ForVision) {
+                                    outputElement.innerHTML = `<img src="${imageBase64ForVision}" class="preview-image" style="max-width:200px; margin-bottom:10px;">`;
+                                }
+
+                                const imageDesc = await callTogetherVision(imageBase64ForVision, visionDescPrompt, tool.visionModel, outputElement, spinnerElement, true);
+                                if (!imageDesc) {
+                                    outputElement.innerHTML += '<p style="color:var(--error-color);">Could not get image description. Aborting.</p>';
+                                    spinnerElement.style.display = 'none'; return;
+                                }
+                                inputs[field.id + '_desc'] = imageDesc; 
+                            }
+                        } catch (e) {
+                            console.error("Error processing file for vision:", e);
+                            outputElement.innerHTML = `<p style="color:var(--error-color);">Error processing image. Please try another.</p>`;
+                            spinnerElement.style.display = 'none'; return;
+                        }
+                    }
+                } else {
+                    inputs[field.id] = el.value;
+                }
+            }
+        }
+
+        try {
+            let resultTextOrUrl;
+            if (tool.type === 'llm_chat' || tool.type === 'llm_thinking' || tool.type === 'llm_vision_chat') {
+                const prompt = tool.prompt(inputs);
+                resultTextOrUrl = await callTogetherChatCompletion(prompt, tool.model, outputElement, spinnerElement);
+                outputElement.textContent = resultTextOrUrl; 
+            } else if (tool.type === 'llm_image') {
+                resultTextOrUrl = await callTogetherImageGeneration(inputs[tool.fields[0].id], tool.model, outputElement, spinnerElement);
+                if (resultTextOrUrl) {
+                    const img = document.createElement('img');
+                    img.src = resultTextOrUrl;
+                    img.classList.add('generated-image');
+                    outputElement.innerHTML = ''; 
+                    outputElement.appendChild(img);
+                } else {
+                     outputElement.textContent = "Image generation failed or no image data received.";
+                }
+            } else if (tool.type === 'llm_vision') {
+                if (!imageBase64ForVision) { throw new Error("Image required for vision tool."); }
+                const visionResult = await callTogetherVision(imageBase64ForVision, "Describe this image comprehensively.", tool.model, outputElement, spinnerElement);
+                resultTextOrUrl = tool.promptFromVision ? tool.promptFromVision(visionResult) : visionResult;
+                outputElement.textContent = resultTextOrUrl; 
+            }
+        } catch (error) {
+            console.error("Error handling tool generation:", error);
+            outputElement.innerHTML = `<p style="color:var(--error-color);">Error: ${error.message}</p>`;
+        } finally {
+            spinnerElement.style.display = 'none';
+        }
+    }
+
+    async function callApi(endpoint, body, outputElement, spinnerElement) {
+        try {
+            const response = await fetch(`https://api.together.xyz/v1/${endpoint}`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${TOGETHER_API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) {
+                const errText = await response.text(); let detail = errText;
+                try { const errJson = JSON.parse(errText); detail = errJson.error?.message || errJson.detail || errText; } catch (e) {}
+                throw new Error(`API Error (${response.status}): ${detail}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error("API Call Error:", error);
+            if (outputElement) outputElement.innerHTML = `<p style="color:var(--error-color);">API Error: ${error.message}</p>`;
+            if (spinnerElement) spinnerElement.style.display = 'none';
+            throw error;
+        }
+    }
+
+    async function callTogetherChatCompletion(prompt, model, outputElement, spinnerElement) {
+        const body = { model: model, messages: [{ role: "user", content: prompt }], max_tokens: 1024, temperature: 0.7 };
+        const data = await callApi("chat/completions", body, outputElement, spinnerElement);
+        return data.choices?.[0]?.message?.content?.trim() || "No content received.";
+    }
+    async function callTogetherImageGeneration(prompt, model, outputElement, spinnerElement) {
+        const body = { model: model, prompt: prompt, n: 1, response_format: "b64_json", steps: 30, width: 512, height: 512 };
+        const data = await callApi("images/generations", body, outputElement, spinnerElement);
+        return data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : null;
+    }
+    async function callTogetherVision(imageBase64, promptText, model, outputElement, spinnerElement, isIntermediate = false) {
+        const body = { model: model, messages: [{ role: "user", content: [ { type: "image_url", image_url: { url: imageBase64 } }, { type: "text", text: promptText } ] }], max_tokens: 512 };
+        if (!isIntermediate && outputElement) { 
+            const currentOutputContent = outputElement.innerHTML; 
+            outputElement.innerHTML = `<img src="${imageBase64}" class="preview-image" style="max-width:200px; margin-bottom:10px;">`;
+            if (currentOutputContent.includes('<p style="color:var(--error-color)')) { 
+                 outputElement.innerHTML += currentOutputContent;
+            }
+        }
+        const data = await callApi("chat/completions", body, outputElement, spinnerElement);
+        return data.choices?.[0]?.message?.content?.trim() || (isIntermediate ? null : "No description received.");
+    }
+
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+    function imagePreview(fileInputOrEl, previewImgEl) {
+        const input = typeof fileInputOrEl === 'string' ? document.getElementById(fileInputOrEl) : fileInputOrEl;
+        const preview = typeof previewImgEl === 'string' ? document.getElementById(previewImgEl) : previewImgEl;
+        if (input && preview && input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) { preview.src = e.target.result; preview.style.display = 'block'; }
+            reader.readAsDataURL(input.files[0]);
+        } else if (preview) { preview.src = "#"; preview.style.display = 'none'; }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (pageLoadingElement) { pageLoadingText.textContent = 'Loading...'; pageLoadingElement.classList.remove('hidden'); }
+        renderTools();
+        // No call to setupNavigation() as bottom nav is removed
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log("User is signed in:", user.uid);
+                if (pageLoadingElement) pageLoadingElement.classList.add('hidden');
+            } else {
+                console.log("User is signed out. Redirecting...");
+                if (pageLoadingElement) pageLoadingElement.classList.add('hidden');
+                const currentPath = window.location.pathname;
+                if (!currentPath.includes('signin.html') && !currentPath.includes('signup.html')) {
+                    window.location.href = 'signin.html';
+                }
+            }
+        });
+        if (signOutIcon) {
+            signOutIcon.addEventListener('click', async () => {
+                if (confirm("Are you sure you want to sign out?")) {
+                    try {
+                        if (pageLoadingElement) { pageLoadingText.textContent = 'Signing out...'; pageLoadingElement.classList.remove('hidden'); }
+                        await auth.signOut();
+                    } catch (error) {
+                        console.error("Error signing out:", error); alert("Failed to sign out.");
+                        if (pageLoadingElement) pageLoadingElement.classList.add('hidden');
+                    }
+                }
+            });
+        }
+        // Touch event listeners
+        document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+        document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now(); if (now - lastTouchEnd <= 300) { event.preventDefault(); } lastTouchEnd = now;
+        }, { passive: false });
+    });
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

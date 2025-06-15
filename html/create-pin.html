@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>WeConnect - Create & Confirm PIN</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase v9+ Modular SDKs (UPDATED to 11.6.1) -->
+    <!-- Use type="module" and the correct CDNs -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+    <!-- Add more services if needed (update version) -->
+
+    <!-- Removed: External firebase-config.js script -->
+    <!-- <script src="js/firebase-config.js"></script> -->
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            background: white; /* Added background */
+            border-radius: 16px; /* Added border-radius */
+            padding: 30px; /* Added padding */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Added box-shadow */
+        }
+        h1 {
+            font-size: 20px;
+            color: #059669;
+            margin-bottom: 15px;
+        }
+        .pin-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .pin-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .pin-input {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            text-align: center;
+            border: 1px solid #ccc; /* Added border */
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.05); /* Adjusted shadow */
+            outline: none;
+            transition: box-shadow 0.3s, background-color 0.3s, border-color 0.3s; /* Added border-color transition */
+        }
+        .pin-input:focus {
+            box-shadow: 0 0 5px rgba(5, 150, 105, 0.5);
+            background-color: #f0fdf4;
+            border-color: #059669; /* Highlight border on focus */
+        }
+         .pin-input:valid {
+             border-color: #a7f3d0; /* Light green for valid input */
+         }
+        .btn {
+            background-color: #059669;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            transition: background-color 0.3s, transform 0.2s;
+            width: 100%;
+            max-width: 230px; /* Kept max-width for button */
+            display: block; /* Make button a block element */
+            margin: 20px auto 0; /* Center the button */
+        }
+        .btn:hover {
+            background-color: #047857; /* Darker green hover effect */
+            transform: scale(1.02);
+        }
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Step Indicator Styles (Adjusted for this page) */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative; /* Needed for line positioning */
+        }
+         /* Line connecting steps */
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 10%; /* Start after first circle */
+            right: 10%; /* End before last circle */
+            height: 3px;
+            background: #e0e0e0; /* Default line color */
+            transform: translateY(-50%);
+            z-index: 1; /* Behind steps */
+        }
+         .step {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #aaa; /* Inactive color */
+            padding-bottom: 5px;
+            position: relative; /* Needed for z-index */
+            z-index: 2; /* Above the line */
+             /* Circle indicator */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+         }
+         .step::before {
+            content: '';
+            display: block;
+            width: 20px;
+            height: 20px;
+            background: #e0e0e0; /* Default circle color */
+            border-radius: 50%;
+            margin-bottom: 8px;
+            border: 3px solid #fff; /* White ring */
+            box-shadow: 0 0 0 2px #e0e0e0; /* Outline matching circle color */
+         }
+         .step.completed {
+            color: #10b981; /* Darker green */
+         }
+         .step.completed::before {
+             background: #059669; /* Filled circle */
+             box-shadow: 0 0 0 2px #059669; /* Outline matching fill color */
+         }
+         /* Connect the completed steps line */
+         .step:nth-child(1).completed ~ .step-indicator::before {
+              background: linear-gradient(to right, #059669 33%, #e0e0e0 33%); /* Line partially green */
+         }
+          .step:nth-child(2).completed ~ .step-indicator::before {
+              background: linear-gradient(to right, #059669 66%, #e0e0e0 66%); /* Line more green */
+         }
+         .step:nth-child(3).completed ~ .step-indicator::before {
+              background: #059669; /* Line fully green */
+         }
+
+
+        /* Styles for Modals (Copy-pasted from signup/signin) */
+        .loading-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loading-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-modal .loading-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="createPinContainer">
+        <h1>Create a 4-Digit PIN</h1>
+         <!-- Step Indicator (Updated for 3 main steps + PIN) -->
+         <div class="step-indicator">
+             <div class="step completed">ID FRONT</div>
+             <div class="step completed">ID BACK</div>
+             <div class="step completed">SELFIE</div>
+              <!-- This step indicates the PIN is the current step -->
+             <div class="step" style="color: #059669; border-bottom: none;">PIN</div>
+         </div>
+        <p class="pin-info">Secure your account with a 4-digit PIN. This PIN is required for transactions.</p>
+        <div class="pin-row">
+            <input class="pin-input" type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+            <input class="pin-input" type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+            <input class="pin-input" type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+            <input class="pin-input" type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+        </div>
+        <button id="createPinBtn" class="btn" disabled>Next</button>
+    </div>
+
+    <div class="container" id="confirmPinContainer" style="display: none;">
+        <h1>Confirm your 4-Digit PIN</h1>
+         <!-- Step Indicator (Updated for 3 main steps + PIN) -->
+         <div class="step-indicator">
+             <div class="step completed">ID FRONT</div>
+             <div class="step completed">ID BACK</div>
+             <div class="step completed">SELFIE</div>
+              <!-- This step indicates the PIN is the current step -->
+             <div class="step" style="color: #059669; border-bottom: none;">PIN</div>
+         </div>
+        <p class="pin-info">Re-enter the PIN you created.</p>
+        <div class="pin-row">
+            <input class="pin-input" type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+            <input class="pin-input" type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+            <input class="pin-input" type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+            <input class="pin-input" type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+        </div>
+        <button id="confirmPinBtn" class="btn" disabled>Confirm PIN</button>
+    </div>
+
+    <!-- Loading Modal (Added HTML structure) -->
+    <div id="loadingModal" class="loading-modal hidden">
+      <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Saving PIN...</p>
+      </div>
+    </div>
+
+    <script type="module">
+        // --- Firebase Configuration (UPDATED) ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Your specific API Key
+          authDomain: "daisy-n7g20a.firebaseapp.com",
+          databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com", // Note: databaseURL is for RTDB, Firestore uses projectId
+          projectId: "daisy-n7g20a",
+          storageBucket: "daisy-n7g20a.appspot.com",
+          messagingSenderId: "225362605902",
+          appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+
+        // --- Import Firebase Functions (UPDATED CDNs) ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Note: Hashing PINs client-side is NOT recommended for high security.
+        // For a production app, implement hashing on a trusted server (e.g., Cloud Functions).
+        // This simple SHA-256 is for demonstration purposes based on the user's request
+        // to handle logic client-side and store the PIN using Firebase.
+        import { sha256 } from 'https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/src/sha256.min.js';
+
+
+        // --- Initialize Firebase ---
+        const app = initializeApp(firebaseConfig);
+
+        // --- Get Service Instances ---
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+
+        // --- DOM Elements ---
+        const createPinContainer = document.getElementById('createPinContainer');
+        const confirmPinContainer = document.getElementById('confirmPinContainer');
+
+        const createPins = [...createPinContainer.querySelectorAll('.pin-input')];
+        const confirmPins = [...confirmPinContainer.querySelectorAll('.pin-input')];
+        const createPinBtn = document.getElementById('createPinBtn');
+        const confirmPinBtn = document.getElementById('confirmPinBtn');
+        const loadingModal = document.getElementById('loadingModal'); // Get the loading modal
+
+
+        let createdPIN = "";
+        let confirmedPIN = "";
+
+        // --- Loading Indicator Functions ---
+        function showLoadingIndicator(message = 'Loading...') {
+            const loadingText = loadingModal.querySelector('p');
+            if (loadingText) {
+                loadingText.textContent = message;
+            }
+            loadingModal.classList.remove('hidden');
+            loadingModal.classList.add('visible');
+        }
+
+        function hideLoadingIndicator() {
+             loadingModal.classList.remove('visible');
+             setTimeout(() => {
+                 loadingModal.classList.add('hidden');
+             }, 300); // Match this duration to your CSS transition time
+        }
+        // --- End Loading Indicator Functions ---
+
+
+        // Function to handle PIN input flow
+        function handleInput(pins, callback) {
+            pins.forEach((p, i) => {
+                // Prevent non-numeric input and limit to 1 character
+                p.addEventListener('input', (event) => {
+                    // Remove any non-digit characters
+                    p.value = p.value.replace(/\D/g, '');
+                    // Limit to 1 character
+                    if (p.value.length > 1) {
+                        p.value = p.value.slice(0, 1);
+                    }
+
+                    if (p.value.length === 1 && i < pins.length - 1) {
+                        pins[i + 1].focus();
+                    }
+                    callback(); // Update state and button
+                });
+                p.addEventListener('keydown', (e) => {
+                    // Handle backspace: if current input is empty, move to previous
+                    if (e.key === 'Backspace' && p.value === '' && i > 0) {
+                         e.preventDefault(); // Prevent default backspace behavior
+                        pins[i - 1].focus();
+                         pins[i-1].value = ''; // Clear the previous input as well
+                         callback(); // Update state and button
+                    }
+                });
+                 // Handle paste
+                p.addEventListener('paste', (e) => {
+                     e.preventDefault(); // Prevent default paste
+                     const pasteData = e.clipboardData.getData('text');
+                     const digits = pasteData.replace(/\D/g, '').slice(0, pins.length - i); // Get only digits, limit length
+                     for(let j = 0; j < digits.length; j++) {
+                         if (i + j < pins.length) {
+                             pins[i + j].value = digits[j];
+                             if (i + j < pins.length - 1) {
+                                 pins[i + j + 1].focus();
+                             } else {
+                                 pins[i + j].focus(); // Focus on the last filled input
+                             }
+                         }
+                     }
+                     callback(); // Update state and button
+                 });
+            });
+             // Set focus to the first input on load
+             if (pins.length > 0) {
+                 pins[0].focus();
+             }
+        }
+
+        // Check created PIN
+        handleInput(createPins, () => {
+            createdPIN = createPins.map(p => p.value).join('');
+            createPinBtn.disabled = createdPIN.length !== 4;
+        });
+
+        // Check confirmed PIN
+        handleInput(confirmPins, () => {
+            confirmedPIN = confirmPins.map(p => p.value).join('');
+            confirmPinBtn.disabled = confirmedPIN.length !== 4;
+        });
+
+        // Proceed to Confirm PIN screen
+        createPinBtn.addEventListener('click', () => {
+            if (createdPIN.length === 4) {
+                createPinContainer.style.display = 'none';
+                confirmPinContainer.style.display = 'block';
+                confirmPins.forEach(p => (p.value = "")); // Clear confirm fields
+                if (confirmPins.length > 0) {
+                    confirmPins[0].focus(); // Focus on first confirm input
+                }
+                 confirmPinBtn.disabled = true; // Disable confirm button initially
+            }
+        });
+
+        // Confirm the PIN and save to Firebase
+        confirmPinBtn.addEventListener('click', async () => {
+            if (createdPIN.length !== 4 || confirmedPIN.length !== 4) {
+                alert("Please enter a complete 4-digit PIN.");
+                return;
+            }
+
+            if (createdPIN === confirmedPIN) {
+                showLoadingIndicator('Saving PIN...');
+                confirmPinBtn.disabled = true; // Disable button during save
+
+                const user = auth.currentUser;
+                if (!user) {
+                    console.error("No user is currently logged in.");
+                    hideLoadingIndicator();
+                    alert('No user is currently logged in. Please sign up first.');
+                    window.location.href = 'signup.html';
+                    return;
+                }
+
+                try {
+                    // *** SECURITY WARNING ***
+                    // Storing a PIN, even hashed client-side, is NOT ideal.
+                    // Server-side hashing is strongly recommended for production.
+                    // This uses a simple client-side SHA-256 for demonstration.
+                    const hashedPIN = sha256(confirmedPIN); // Use the imported sha256 function
+                    console.log("Generated Hash (for demonstration):", hashedPIN);
+
+
+                    const userDocRef = doc(db, "users", user.uid); // Get Firestore document reference
+                    await updateDoc(userDocRef, { // Use updateDoc to add/update fields
+                        pin: hashedPIN, // Store the hashed PIN
+                        is_pin_created: true // Update the status field
+                    });
+
+                    console.log('PIN successfully set and saved to Firestore!');
+                    hideLoadingIndicator(); // Hide loader
+                    alert('PIN successfully set!');
+
+                    // Redirect to home.html
+                    window.location.href = 'home.html'; // Redirect to home.html
+
+
+                } catch (error) {
+                    console.error("Error saving PIN:", error);
+                    hideLoadingIndicator();
+                    confirmPinBtn.disabled = false; // Re-enable button
+                    if (error.code === 'permission-denied' || (error.message && error.message.includes('PERMISSION_DENIED'))) {
+                         alert('Error: Permission denied. Check Firebase Security Rules for Firestore.');
+                    }
+                    else {
+                         alert('Error saving PIN: ' + error.message);
+                    }
+                    // Clear fields on error for security
+                    confirmPins.forEach(p => (p.value = ""));
+                    if (confirmPins.length > 0) {
+                        confirmPins[0].focus();
+                    }
+                }
+
+            } else {
+                alert('PINs do not match. Please try again.');
+                confirmPins.forEach(p => (p.value = ""));
+                if (confirmPins.length > 0) {
+                    confirmPins[0].focus();
+                }
+                 confirmPinBtn.disabled = true; // Disable confirm button after mismatch
+            }
+        });
+
+
+        // Optional: Check auth state on page load to ensure user is logged in
+        // If not logged in, maybe redirect to signin or signup
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                console.log("No user logged in, redirecting to signin.");
+                // Redirect if no user is logged in
+                // alert("You must be logged in to create a PIN."); // Optional alert
+                window.location.href = "signin.html";
+            } else {
+                console.log("User logged in:", user.uid);
+                // You could optionally check here if a PIN already exists for this user
+                // and redirect them directly to home.html if it does.
+                /*
+                const userDocRef = doc(db, "users", user.uid);
+                getDoc(userDocRef).then(docSnap => {
+                    if (docSnap.exists() && docSnap.data().is_pin_created) {
+                         console.log("PIN already exists, redirecting to home.");
+                         window.location.href = "home.html";
+                    }
+                }).catch(error => console.error("Error checking existing PIN:", error));
+                */
+            }
+        });
+
+
+        // Initial focus and event listeners setup
+        // This part runs when the script loads
+        handleInput(createPins, () => {
+            createdPIN = createPins.map(p => p.value).join('');
+            createPinBtn.disabled = createdPIN.length !== 4;
+        });
+
+        // Ensure confirm inputs are hidden initially and their listeners are set up when shown
+        // The event listener is attached once, but the 'handleInput' call needs to be after the element exists
+        // It's already set up globally by the initial script execution.
+
+    </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

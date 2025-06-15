@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Wallet & Tokens</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #333; /* Dark Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --spacing-unit: 15px; /* Base spacing */
+      --border-radius: 8px;
+      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --box-shadow-stronger: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* --- Base Styles --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* Prevent tap highlight */
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-bottom: calc(60px + var(--spacing-unit)); /* Space for bottom nav + padding */
+      max-width: 420px; /* Limit width for mobile view */
+      margin: 0 auto; /* Center the content area */
+      overflow-x: hidden; /* Prevent horizontal scroll */
+      position: relative;
+    }
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, transform 0.1s, box-shadow 0.2s ease;
+    }
+    button:active {
+        transform: translateY(1px) scale(0.98);
+    }
+
+    /* --- Utility Classes --- */
+    .primary-button {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      padding: 10px var(--spacing-unit);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .primary-button:hover {
+      background-color: #192F4A; /* Slightly darker primary */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+     .secondary-button {
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        padding: 10px var(--spacing-unit);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+    }
+     .secondary-button:hover {
+        background-color: rgba(31, 58, 92, 0.05); /* Light hover effect */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+     }
+
+    .material-symbols-outlined {
+      font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24
+    }
+
+    /* --- Header --- */
+    .header {
+      background-color: var(--background-dark);
+      color: var(--text-dark);
+      padding: 10px var(--spacing-unit);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; /* Keep header sticky */
+      top: 0; /* Stick to the top */
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: 56px;
+    }
+    .header-logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .header-logo-img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+    .header-logo-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-left: 8px;
+      color: var(--primary-color);
+    }
+    .header-icons-right {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing-unit) * 0.5);
+    }
+    .header-icon {
+      position: relative;
+      cursor: pointer;
+      color: var(--text-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    .header-icon:hover { background-color: rgba(0,0,0,0.05); }
+    .header-icon:active { background-color: rgba(0,0,0,0.1); transform: scale(0.95); }
+     .header-icon .material-symbols-outlined {
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      background-color: #D0021B; /* Red badge */
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 50%;
+      padding: 2px 5px;
+      min-width: 16px;
+      text-align: center;
+      line-height: 1;
+      display: none; /* Hidden by default */
+      z-index: 1; /* Above icon */
+    }
+    .badge.visible {
+      display: block;
+    }
+
+    /* --- Page Title --- */
+    .page-title-container {
+        padding: var(--spacing-unit) var(--spacing-unit) 0;
+    }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    /* --- Main Content Area --- */
+    .main-content {
+      padding: var(--spacing-unit);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-unit); /* Space between sections */
+    }
+
+    /* --- Wallet Address Card --- */
+    .wallet-address-card {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-unit);
+      box-shadow: var(--box-shadow);
+    }
+    .wallet-address-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: calc(var(--spacing-unit) * 0.8);
+    }
+    .wallet-address-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .wallet-status {
+      display: flex;
+      align-items: center;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+    .wallet-status.connected {
+      background-color: #E6F7ED;
+      color: #2E7D32;
+    }
+    .wallet-status.disconnected {
+      background-color: #FEEBC8;
+      color: #926319;
+    }
+    .wallet-status .material-symbols-outlined {
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    .wallet-address-container {
+      display: flex;
+      align-items: center;
+      background-color: #f8f9fa;
+      border-radius: var(--border-radius);
+      padding: 10px;
+      margin-bottom: var(--spacing-unit);
+      overflow: hidden;
+    }
+    .wallet-address {
+      flex: 1;
+      font-size: 0.9rem;
+      color: var(--text-medium);
+      font-family: monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .copy-button {
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      margin-left: 10px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+     .copy-button:hover { background-color: #192F4A; }
+    .copy-button .material-symbols-outlined {
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    .wallet-connect-button {
+      width: 100%;
+      padding: 12px 0;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .wallet-connect-button .material-symbols-outlined {
+      font-size: 20px;
+      margin-right: 8px;
+    }
+
+    /* --- WCX Token Card --- */
+    .wcx-token-card {
+      background: linear-gradient(135deg, #1F3A5C, #2C5282);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-unit);
+      color: white;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .wcx-token-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+    }
+    .wcx-token-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .wcx-token-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+    .wcx-token-card-title img {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background-color: rgba(255,255,255,0.2);
+    }
+    .wcx-token-balance {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .wcx-token-value {
+      font-size: 1rem;
+      opacity: 0.8;
+      margin-bottom: 15px;
+    }
+    .wcx-token-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .wcx-token-actions button {
+      flex: 1;
+      padding: 10px 0;
+      border-radius: var(--border-radius);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .wcx-token-actions .primary-button {
+      background-color: white;
+      color: var(--primary-color);
+    }
+    .wcx-token-actions .primary-button:hover {
+        background-color: #f0f0f0;
+    }
+    .wcx-token-actions .secondary-button {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+    }
+    .wcx-token-actions .secondary-button:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+    .wcx-token-actions .material-symbols-outlined {
+      font-size: 18px;
+      margin-right: 6px;
+    }
+
+    /* --- Token List Card --- */
+    .token-list-card {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-unit);
+      box-shadow: var(--box-shadow);
+    }
+    .token-list-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: calc(var(--spacing-unit) * 0.8);
+    }
+    .token-list-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .token-list-refresh {
+      font-size: 0.9rem;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .token-list-refresh:hover {
+        background-color: rgba(31, 58, 92, 0.05);
+    }
+    .token-list-refresh .material-symbols-outlined {
+      font-size: 18px;
+      margin-right: 4px;
+      transition: transform 0.5s ease;
+    }
+    .token-list-refresh.refreshing .material-symbols-outlined {
+        transform: rotate(360deg);
+    }
+    .token-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 100px; /* Placeholder height for loading */
+      position: relative;
+    }
+     .token-list .list-message {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-medium);
+        font-size: 0.9rem;
+    }
+    .token-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: var(--border-radius);
+      transition: background-color 0.2s;
+    }
+    .token-item:hover {
+        background-color: #f1f3f5;
+    }
+    .token-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+      overflow: hidden;
+      background-color: #e9ecef; /* Placeholder bg for icon */
+    }
+    .token-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .token-details {
+      flex: 1;
+    }
+    .token-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+    }
+    .token-symbol {
+      font-size: 0.8rem;
+      color: var(--text-medium);
+      margin-left: 5px;
+      text-transform: uppercase;
+    }
+    .token-price {
+      font-size: 0.8rem;
+      color: var(--text-medium);
+    }
+    .token-balance-info {
+        text-align: right;
+    }
+    .token-user-balance {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-dark);
+    }
+    .token-user-value {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+    .token-change { /* This will show price change for market tokens */
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: right;
+    }
+    .token-change.positive {
+      color: #4CAF50; /* Green for positive change */
+    }
+    .token-change.negative {
+      color: #F44336; /* Red for negative change */
+    }
+
+    /* --- Loading Indicator --- */
+    #pageLoading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001;
+        transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+     #pageLoading.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s linear 0s;
+    }
+     #pageLoading .loading-text {
+         font-size: 1.1rem;
+         font-weight: 500;
+         color: var(--text-dark);
+     }
+    #pageLoading .spinner {
+         border: 4px solid #f3f3f3;
+         border-top: 4px solid var(--primary-color);
+         border-radius: 50%;
+         width: 30px;
+         height: 30px;
+         animation: spin 1s linear infinite;
+         margin-bottom: 15px;
+    }
+     @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* --- Bottom Navigation --- */
+    .bottom-nav {
+      background-color: var(--background-dark);
+      border-top: 1px solid #e0e0e0;
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 5px 0;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      height: 60px;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light);
+      flex: 1;
+      padding: 10px 0;
+      transition: color 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
+      height: 100%;
+      border-radius: var(--border-radius);
+      margin: 0 2px;
+    }
+    .nav-item.active {
+       color: var(--primary-color);
+    }
+    .nav-item:hover:not(.active) {
+        color: var(--primary-color);
+        background-color: rgba(31, 58, 92, 0.04);
+    }
+    .nav-item:active { transform: scale(0.95); }
+    .nav-item .material-symbols-outlined {
+      font-size: 28px;
+    }
+    .center-button-nav {
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         width: 50px;
+         height: 50px;
+         border-radius: 50%;
+         background-color: var(--background-dark);
+         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+         margin-top: -20px;
+         cursor: pointer;
+         border: 3px solid var(--background-light);
+         position: relative;
+         flex-shrink: 0;
+         transition: transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .center-button-nav.active {
+        border-color: var(--primary-color);
+    }
+    .center-button-nav:hover:not(.active){
+        box-shadow: 0 0 0 4px rgba(31, 58, 92, 0.1), 0 2px 5px rgba(0, 0, 0, 0.15);
+    }
+    .center-button-nav:active { transform: scale(0.95); }
+    .center-button-nav img {
+         width: 28px;
+         height: 28px;
+         object-fit: contain;
+     }
+  </style>
+</head>
+<body>
+
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <header class="header">
+    <div class="header-logo-container">
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+      <span class="header-logo-text">WeConnect</span>
+    </div>
+    <div class="header-icons-right">
+      <div class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span>
+      </div>
+      <div class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span>
+      </div>
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-title-container">
+    <h1 class="page-title" id="pageTitle"></h1>
+  </div>
+
+  <main class="main-content">
+    <div class="wallet-address-card">
+      <div class="wallet-address-card-header">
+        <div class="wallet-address-card-title">Wallet Address</div>
+        <div class="wallet-status disconnected" id="walletStatus">
+          <span class="material-symbols-outlined">error</span>
+          Disconnected
+        </div>
+      </div>
+      <div class="wallet-address-container">
+        <div class="wallet-address" id="walletAddress">Not Connected</div>
+        <button class="copy-button" id="copyAddressButton">
+          <span class="material-symbols-outlined">content_copy</span>
+          Copy
+        </button>
+      </div>
+      <button class="primary-button wallet-connect-button" id="connectWalletButton">
+        <span class="material-symbols-outlined">link</span>
+        Connect Wallet
+      </button>
+    </div>
+
+    <div class="wcx-token-card">
+      <div class="wcx-token-card-header">
+        <div class="wcx-token-card-title">
+          <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WCX Token">
+          WCX Token
+        </div>
+      </div>
+      <div class="wcx-token-balance" id="wcxTokenBalance">0.00 WCX</div>
+      <div class="wcx-token-value" id="wcxTokenValue">≈ $0.00 USD</div>
+      <div class="wcx-token-actions">
+        <button class="primary-button" id="buyWcxButton">
+          <span class="material-symbols-outlined">add_shopping_cart</span>
+          Buy
+        </button>
+        <button class="secondary-button" id="sendWcxButton">
+          <span class="material-symbols-outlined">send</span>
+          Send
+        </button>
+      </div>
+    </div>
+
+    <div class="token-list-card">
+      <div class="token-list-card-header">
+        <div class="token-list-card-title">Market Tokens</div>
+        <div class="token-list-refresh" id="refreshTokensButton" title="Refresh token prices">
+          <span class="material-symbols-outlined">refresh</span>
+          Refresh
+        </div>
+      </div>
+      <div class="token-list" id="tokenList">
+        <!-- Token items will be loaded here by JavaScript -->
+         <div class="list-message">Loading token data...</div>
+      </div>
+    </div>
+  </main>
+
+  <div class="bottom-nav">
+    <div class="nav-item" data-target-url="content.html" title="Content">
+      <span class="material-symbols-outlined">edit_square</span>
+    </div>
+    <div class="nav-item" data-target-url="tools.html" title="Tools">
+      <span class="material-symbols-outlined">build</span>
+    </div>
+    <div class="center-button-nav" data-target-url="home.html" title="Home">
+        <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="Home">
+    </div>
+    <div class="nav-item active" data-target-url="business.html" title="Business">
+      <span class="material-symbols-outlined">business_center</span>
+    </div>
+    <div class="nav-item" data-target-url="userprofile.html" title="Profile">
+      <span class="material-symbols-outlined">account_circle</span>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } else { firebase.app(); }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const walletStatusElement = document.getElementById('walletStatus');
+    const walletAddressElement = document.getElementById('walletAddress');
+    const copyAddressButtonElement = document.getElementById('copyAddressButton');
+    const connectWalletButtonElement = document.getElementById('connectWalletButton');
+    const wcxTokenBalanceElement = document.getElementById('wcxTokenBalance');
+    const wcxTokenValueElement = document.getElementById('wcxTokenValue');
+    const buyWcxButtonElement = document.getElementById('buyWcxButton');
+    const sendWcxButtonElement = document.getElementById('sendWcxButton');
+    const refreshTokensButtonElement = document.getElementById('refreshTokensButton');
+    const tokenListElement = document.getElementById('tokenList');
+    const pageTitleElement = document.getElementById('pageTitle');
+
+    const notificationsIcon = document.getElementById('notificationsIcon');
+    const messagesIcon = document.getElementById('messagesIcon');
+    const notificationBadge = document.getElementById('notificationBadge');
+    const messageBadge = document.getElementById('messageBadge');
+    const signOutIcon = document.getElementById('signOutIcon');
+
+    // --- Haptic Feedback Function ---
+    function triggerHapticFeedback(type = 'medium') {
+        if (window.navigator.vibrate) {
+            let duration = 50; // Default medium
+            if (type === 'light') duration = 20;
+            else if (type === 'strong') duration = 100;
+            else if (type === 'selection') duration = 10;
+            window.navigator.vibrate(duration);
+        }
+    }
+    
+    function formatCurrency(amount, currency = '$', decimals = 2) {
+      const numericAmount = Number(amount) || 0;
+      return currency + numericAmount.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function formatWalletAddress(address) {
+      if (!address || address.length < 10) return 'Not Connected';
+      return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+    }
+
+    async function fetchAndDisplayWalletData(userId) {
+        try {
+            const userDocRef = db.collection('users').doc(userId);
+            const userDoc = await userDocRef.get();
+            
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const isWalletConnected = userData.walletConnected || false;
+                const currentWalletAddress = userData.walletAddress || '';
+                
+                if (isWalletConnected) {
+                    walletStatusElement.classList.add('connected');
+                    walletStatusElement.classList.remove('disconnected');
+                    walletStatusElement.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Connected';
+                    walletAddressElement.textContent = formatWalletAddress(currentWalletAddress);
+                    connectWalletButtonElement.innerHTML = '<span class="material-symbols-outlined">link_off</span> Disconnect Wallet';
+                } else {
+                    walletStatusElement.classList.add('disconnected');
+                    walletStatusElement.classList.remove('connected');
+                    walletStatusElement.innerHTML = '<span class="material-symbols-outlined">error</span> Disconnected';
+                    walletAddressElement.textContent = 'Not Connected';
+                    connectWalletButtonElement.innerHTML = '<span class="material-symbols-outlined">link</span> Connect Wallet';
+                }
+                
+                const wcxBalance = userData.token_balance || 0; // Assuming 'token_balance' is WCX
+                const wcxPriceUSD = 0.25; // Mock price for WCX
+                wcxTokenBalanceElement.textContent = `${Number(wcxBalance).toFixed(2)} WCX`;
+                wcxTokenValueElement.textContent = `≈ ${formatCurrency(wcxBalance * wcxPriceUSD)} USD`;
+                
+                await fetchTokenPrices(); // Fetch market tokens
+                
+            } else {
+                console.warn("User document not found for UID:", userId);
+                pageLoadingText.textContent = 'User data not found.';
+                tokenListElement.innerHTML = '<div class="list-message">Could not load user data.</div>';
+            }
+        } catch (error) {
+            console.error("Error fetching wallet data:", error);
+            pageLoadingText.textContent = 'Error loading data.';
+            tokenListElement.innerHTML = '<div class="list-message">Error loading wallet data.</div>';
+            alert("An error occurred while loading your wallet data.");
+        } finally {
+             pageLoadingElement.classList.add('hidden');
+        }
+    }
+
+    async function fetchTokenPrices() {
+        tokenListElement.innerHTML = '<div class="list-message"><div class="spinner" style="margin: 0 auto 10px auto;"></div>Fetching market data...</div>';
+        refreshTokensButtonElement.classList.add('refreshing');
+
+        try {
+            // CoinGecko API for top 10 coins by market cap in USD
+            const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h');
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            const tokens = await response.json();
+            
+            tokenListElement.innerHTML = ''; // Clear previous list or loading message
+
+            if (tokens.length === 0) {
+                tokenListElement.innerHTML = '<div class="list-message">No market token data available.</div>';
+                return;
+            }
+
+            tokens.forEach(token => {
+                const priceChange = token.price_change_percentage_24h;
+                const changeClass = priceChange >= 0 ? 'positive' : 'negative';
+                const changeSign = priceChange >= 0 ? '+' : '';
+
+                const tokenItemHTML = `
+                    <div class="token-item">
+                        <div class="token-icon">
+                            <img src="${token.image}" alt="${token.name}">
+                        </div>
+                        <div class="token-details">
+                            <div class="token-name">
+                                ${token.name}
+                                <span class="token-symbol">${token.symbol}</span>
+                            </div>
+                            <div class="token-price">${formatCurrency(token.current_price, '$', token.current_price < 1 ? 4 : 2)} USD</div>
+                        </div>
+                        <div class="token-change ${changeClass}">
+                            ${changeSign}${Number(priceChange).toFixed(2)}%
+                        </div>
+                    </div>
+                `;
+                tokenListElement.insertAdjacentHTML('beforeend', tokenItemHTML);
+            });
+
+        } catch (error) {
+            console.error("Error fetching token prices:", error);
+            tokenListElement.innerHTML = `<div class="list-message" style="color: red;">Error loading token prices. Please try again. (${error.message})</div>`;
+        } finally {
+            refreshTokensButtonElement.classList.remove('refreshing');
+        }
+    }
+
+    copyAddressButtonElement.addEventListener('click', () => {
+        triggerHapticFeedback('light');
+        const addressToCopy = walletAddressElement.dataset.fullAddress || walletAddressElement.textContent; // Use full if available
+        if (addressToCopy && addressToCopy !== 'Not Connected') {
+            navigator.clipboard.writeText(addressToCopy).then(() => {
+                const originalText = copyAddressButtonElement.innerHTML;
+                copyAddressButtonElement.innerHTML = '<span class="material-symbols-outlined">check</span> Copied!';
+                setTimeout(() => {
+                    copyAddressButtonElement.innerHTML = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert("Failed to copy address.");
+            });
+        } else {
+            alert("No wallet address to copy.");
+        }
+    });
+
+    connectWalletButtonElement.addEventListener('click', async () => {
+        triggerHapticFeedback();
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        pageLoadingElement.classList.remove('hidden');
+        pageLoadingText.textContent = 'Processing...';
+
+        const userDocRef = db.collection('users').doc(user.uid);
+        try {
+            const userDoc = await userDocRef.get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const isWalletConnected = userData.walletConnected || false;
+                
+                if (isWalletConnected) { // Disconnect
+                    await userDocRef.update({ walletConnected: false, walletAddress: '' });
+                    alert("Wallet disconnected successfully!");
+                } else { // Connect (Mock)
+                    const randomWalletAddress = '0x' + Array.from({length: 40}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+                    await userDocRef.update({ 
+                        walletConnected: true, 
+                        walletAddress: randomWalletAddress,
+                        // token_balance: (userData.token_balance || 0) + (Math.random() * 100) // Optionally add some WCX on connect
+                    });
+                     walletAddressElement.dataset.fullAddress = randomWalletAddress; // Store full for copy
+                    alert("Wallet connected successfully (Mock)! Address: " + randomWalletAddress);
+                }
+                await fetchAndDisplayWalletData(user.uid); // Refresh UI
+            }
+        } catch (error) {
+            console.error("Error connecting/disconnecting wallet:", error);
+            alert("Failed to update wallet status. Please try again.");
+        } finally {
+            pageLoadingElement.classList.add('hidden');
+        }
+    });
+
+    buyWcxButtonElement.addEventListener('click', () => { triggerHapticFeedback(); alert("Buy WCX functionality coming soon!"); });
+    sendWcxButtonElement.addEventListener('click', () => { triggerHapticFeedback(); alert("Send WCX functionality coming soon!"); });
+    refreshTokensButtonElement.addEventListener('click', () => { triggerHapticFeedback('light'); fetchTokenPrices(); });
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            fetchAndDisplayWalletData(user.uid);
+        } else {
+            pageLoadingElement.classList.add('hidden');
+            window.location.href = 'signin.html';
+        }
+    });
+
+    if (notificationsIcon) notificationsIcon.addEventListener('click', () => { triggerHapticFeedback('light'); window.location.href = 'notifications.html'; });
+    if (messagesIcon) messagesIcon.addEventListener('click', () => { triggerHapticFeedback('light'); window.location.href = 'messages.html'; });
+
+    if(signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            triggerHapticFeedback('light');
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                    pageLoadingElement.classList.remove('hidden');
+                    pageLoadingText.textContent = 'Signing out...';
+                    await auth.signOut();
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out.");
+                    pageLoadingElement.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    document.querySelectorAll('.bottom-nav .nav-item, .bottom-nav .center-button-nav').forEach(item => {
+        item.addEventListener('click', () => {
+            triggerHapticFeedback();
+            const targetUrl = item.dataset.targetUrl;
+            if (targetUrl && !item.classList.contains('active')) {
+                window.location.href = targetUrl;
+            } else if (item.classList.contains('active')) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    });
+
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // Initial load check for page loading element
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (!pageLoadingElement.classList.contains('hidden') && !auth.currentUser) {
+             pageLoadingElement.classList.add('hidden'); // Ensure it's hidden if auth is slow
+          }
+        }, 1500);
+    });
+
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WeConnect Wallet - Word Counter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="/manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+</head>
+<body class="bg-gray-100 flex flex-col mx-auto min-h-screen w-full">
+  <!-- Header -->
+  <header class="bg-green-600 text-white p-4 text-lg font-semibold flex items-center justify-between sticky top-0 z-50">
+    <h1 class="text-xl font-bold">Word Counter</h1>
+    <a href="#" class="icon-button" onclick="window.history.back();">
+      <span class="material-icons">close</span>
+    </a>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col items-center p-4 space-y-4">
+    <div class="bg-white rounded-lg shadow p-4 w-full max-w-md">
+      <h2 class="text-lg font-bold mb-4">Count Words and Characters</h2>
+      <div class="space-y-4">
+        <!-- Text Input -->
+        <div>
+          <label for="textInput" class="block text-sm font-medium text-gray-700">Enter Text</label>
+          <textarea id="textInput" placeholder="Type or paste your text here..." class="w-full p-2 border rounded"></textarea>
+        </div>
+        <!-- Count Button -->
+        <button onclick="countWords()" class="bg-green-500 text-white px-4 py-2 rounded w-full">
+          Count
+        </button>
+        <!-- Result Display -->
+        <div id="result" class="text-center text-lg font-semibold mt-4"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+          apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // USE YOUR ACTUAL API KEY
+          authDomain: "daisy-n7g20a.firebaseapp.com",
+          databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+          projectId: "daisy-n7g20a",
+          storageBucket: "daisy-n7g20a.appspot.com",
+          messagingSenderId: "225362605902",
+          appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Ensure user is authenticated
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'signin.html';
+      }
+    });
+
+    // Count words and characters
+    function countWords() {
+      const text = document.getElementById('textInput').value.trim();
+      const words = text.split(/\s+/).filter(word => word.length > 0).length;
+      const characters = text.length;
+      document.getElementById('result').innerText = `Words: ${words}, Characters: ${characters}`;
+    }
+  </script>
+</body>
+</html>
+
+<script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

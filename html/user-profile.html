@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - User Profile</title>
+  <!-- Disable Zoom -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+  <!-- Font Awesome for Social Icons and Action Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --secondary-color: #4A90E2; /* Blue Accent */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #2c3e50; /* Darker Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --border-color: #e0e0e0; /* Subtle Border */
+      --spacing-unit: 16px; /* Base spacing */
+      --border-radius: 10px; /* Slightly softer radius */
+      --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+      --header-height: 60px; /* Define header height */
+      --bottom-nav-height: 65px; /* Define bottom nav height */
+    }
+
+    /* --- Base Styles --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      overscroll-behavior-y: contain;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-top: var(--header-height);
+      padding-bottom: calc(var(--bottom-nav-height) + var(--spacing-unit));
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+    }
+    a {
+      color: var(--secondary-color);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, transform 0.1s;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    input, textarea, select {
+      font-family: inherit;
+    }
+
+    /* --- Utility Classes --- */
+    .primary-button {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      padding: 12px var(--spacing-unit);
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: center;
+      width: 100%;
+    }
+    .primary-button:hover {
+      background-color: #192F4A;
+    }
+    .primary-button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+
+    /* --- Header (Sticky) --- */
+    .header {
+      background-color: var(--background-dark);
+      padding: 0 var(--spacing-unit);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: var(--header-height);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .header-logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .header-logo-img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+    .header-logo-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-left: 10px;
+      color: var(--primary-color);
+    }
+    .header-icons-right {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--spacing-unit) / 2);
+    }
+    .header-icon {
+      position: relative;
+      cursor: pointer;
+      color: var(--text-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      transition: background-color 0.2s ease;
+      text-decoration: none;
+    }
+    .header-icon:hover,
+    .header-icon:focus {
+      background-color: #f0f0f0;
+      color: var(--primary-color);
+    }
+    .header-icon .material-symbols-outlined {
+      font-size: 26px;
+    }
+    .badge {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: #E74C3C;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 50%;
+      padding: 2px 5px;
+      min-width: 16px;
+      text-align: center;
+      line-height: 1.1;
+      display: none;
+      z-index: 1;
+      border: 1px solid white;
+    }
+    .badge.visible {
+      display: block;
+    }
+
+    /* --- Main Content Area --- */
+    .main-content {
+      padding: var(--spacing-unit);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-unit);
+    }
+
+    /* --- Profile Header Section --- */
+    .profile-header {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: var(--spacing-unit);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+    .profile-avatar-container {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      margin-bottom: calc(var(--spacing-unit) * 0.8);
+      cursor: pointer;
+    }
+    .profile-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: #eee;
+      object-fit: cover;
+      border: 4px solid var(--background-dark);
+      box-shadow: 0 0 0 2px var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 500;
+      color: var(--text-medium);
+    }
+    #avatarUploadInput {
+      display: none;
+    }
+    .edit-avatar-icon {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      border: 2px solid var(--background-dark);
+      pointer-events: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .profile-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 5px;
+    }
+    .profile-id {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .profile-id span {
+      margin-left: 8px;
+    }
+
+    /* --- Action Buttons (Chat & Video) --- */
+    .profile-actions {
+      display: flex;
+      gap: calc(var(--spacing-unit) * 0.6);
+      margin-top: var(--spacing-unit);
+    }
+    .action-button {
+      background-color: var(--secondary-color);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+    .action-button:hover {
+      background-color: #3B7BD3;
+    }
+    .action-button:active {
+      transform: scale(0.98);
+    }
+    .action-button .material-symbols-outlined,
+    .action-button .fa-solid {
+      font-size: 20px;
+      vertical-align: middle;
+    }
+
+    /* --- Social Links Section --- */
+    .profile-social-links {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: var(--spacing-unit);
+      text-align: center;
+    }
+    .profile-social-links h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-medium);
+      margin-bottom: calc(var(--spacing-unit) * 0.8);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .social-icons-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--spacing-unit);
+    }
+    .social-icon-link {
+      color: var(--text-medium);
+      font-size: 24px;
+      transition: color 0.2s ease, transform 0.2s ease;
+      display: inline-block;
+    }
+    .social-icon-link:hover {
+      color: var(--primary-color);
+      transform: translateY(-2px);
+    }
+    .social-icon-link.fa-youtube:hover {
+      color: #FF0000;
+    }
+    .social-icon-link.fa-facebook:hover {
+      color: #1877F2;
+    }
+    .social-icon-link.fa-x-twitter:hover {
+      color: #1DA1F2;
+    }
+    .social-icon-link.fa-instagram:hover {
+      color: #E4405F;
+    }
+    .social-icon-link.fa-linkedin:hover {
+      color: #0A66C2;
+    }
+    .social-icon-link.fa-globe:hover {
+      color: var(--secondary-color);
+    }
+
+    /* --- Profile Navigation Groups --- */
+    .profile-nav-group {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      overflow: hidden;
+      margin-bottom: var(--spacing-unit);
+    }
+    .profile-nav-group h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-light);
+      padding: calc(var(--spacing-unit)*0.7) var(--spacing-unit);
+      background-color: #f9f9f9;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .profile-nav-group:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .profile-nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(var(--spacing-unit) * 0.9) var(--spacing-unit);
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      text-decoration: none;
+      color: var(--text-dark);
+    }
+    .profile-nav-item:last-child {
+      border-bottom: none;
+    }
+    .profile-nav-item:hover {
+      background-color: #f8f9fa;
+    }
+    .profile-nav-item-info {
+      display: flex;
+      align-items: center;
+    }
+    .profile-nav-item-info .material-symbols-outlined,
+    .profile-nav-item-info .fa-solid {
+      font-size: 22px;
+      color: var(--primary-color);
+      margin-right: calc(var(--spacing-unit) * 0.9);
+      width: 24px;
+      text-align: center;
+    }
+    .profile-nav-item-label {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .profile-nav-item .arrow-icon {
+      font-size: 20px;
+      color: var(--text-light);
+    }
+    .profile-nav-item.disabled {
+      opacity: 0.6;
+      cursor: default;
+      pointer-events: none;
+      background-color: transparent;
+    }
+    .profile-nav-item.disabled .profile-nav-item-label {
+      color: var(--text-light);
+    }
+
+    /* --- Loading Indicator --- */
+    #pageLoading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+      transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+    #pageLoading.hidden {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0s linear 0s;
+    }
+    #pageLoading .loading-text {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-dark);
+      margin-top: 15px;
+    }
+    #pageLoading .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary-color);
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* --- Bottom Navigation --- */
+    .bottom-nav {
+      background-color: var(--background-dark);
+      border-top: 1px solid var(--border-color);
+      width: 100%;
+      max-width: 430px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 5px 0;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      height: var(--bottom-nav-height);
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.08);
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light);
+      flex: 1;
+      padding: 10px 0;
+      transition: color 0.2s ease;
+      text-decoration: none;
+    }
+    .nav-item.active {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+    .nav-item .material-symbols-outlined {
+      font-size: 30px;
+    }
+    .center-button-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background-color: var(--background-dark);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+      margin-top: -25px;
+      cursor: pointer;
+      border: 4px solid var(--background-light);
+      position: relative;
+      flex-shrink: 0;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+      text-decoration: none;
+    }
+    .center-button-nav:hover {
+      transform: translateY(-2px);
+    }
+    .center-button-nav.active {
+      border-color: var(--secondary-color);
+    }
+    .center-button-nav img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+
+    /* --- Verification Badge Style --- */
+    .verification-status {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 15px;
+      vertical-align: middle;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .verified {
+      background-color: #E8F5E9;
+      color: #388E3C;
+      border: 1px solid #C8E6C9;
+    }
+    .not-verified {
+      background-color: #FFF3E0;
+      color: #EF6C00;
+      border: 1px solid #FFE0B2;
+    }
+    .verify-link-text {
+      color: var(--secondary-color);
+      font-weight: 600;
+    }
+    .verified .material-symbols-outlined,
+    .not-verified .material-symbols-outlined {
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading">
+    <div class="spinner"></div>
+    <p class="loading-text">Loading Profile...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo-container">
+      <a href="home.html" style="display: flex; align-items: center; text-decoration: none;">
+        <img
+          src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff"
+          alt="WeConnect Logo"
+          class="header-logo-img"
+        >
+        <span class="header-logo-text">WeConnect</span>
+      </a>
+    </div>
+    <div class="header-icons-right">
+      <a href="notifications.html" class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span>
+      </a>
+      <a href="messages.html" class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span>
+      </a>
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content - User Profile -->
+  <main class="main-content">
+    <!-- Profile Header Section -->
+    <div class="profile-header">
+      <div class="profile-avatar-container" id="avatarContainer">
+        <img
+          src="https://cdn-icons-png.flaticon.com/256/5600/5600583.png"
+          alt="Avatar"
+          class="profile-avatar"
+          id="profileAvatar"
+        >
+        <input type="file" id="avatarUploadInput" accept="image/*">
+        <div class="edit-avatar-icon"><span class="material-symbols-outlined">photo_camera</span></div>
+      </div>
+      <div class="profile-name" id="profileName">Loading...</div>
+      <div class="profile-id">
+        <span id="profileMemberIdText">ID: Loading...</span>
+        <span id="verificationBadgeContainer"></span>
+      </div>
+      <!-- Action Buttons: Chat & Video Call -->
+      <div class="profile-actions" id="profileActions">
+        <a href="#" id="chatButton" class="action-button">
+          <span class="material-symbols-outlined">chat</span>
+          <span>Chat</span>
+        </a>
+        <a href="#" id="videoCallButton" class="action-button">
+          <span class="material-symbols-outlined">video_call</span>
+          <span>Video Call</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Social Links Section -->
+    <div class="profile-social-links" id="socialLinksSection" style="display: none;">
+      <h3>Connect</h3>
+      <div class="social-icons-container" id="socialIconsContainer">
+        <!-- Social icons injected by JS -->
+      </div>
+    </div>
+
+    <!-- Profile Navigation Groups -->
+    <div class="profile-nav-group">
+      <h3>Account</h3>
+      <a href="#" class="profile-nav-item" id="editProfileLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">edit</span>
+          <span class="profile-nav-item-label">Edit Profile</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+      <a href="#" class="profile-nav-item" id="verifyAccountLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">verified_user</span>
+          <span class="profile-nav-item-label" id="verifyLabel">Verify Account</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+      <div class="profile-nav-item" id="changePasswordLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">lock_reset</span>
+          <span class="profile-nav-item-label">Change Password</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </div>
+      <a href="preferences.html" class="profile-nav-item" id="preferencesLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">tune</span>
+          <span class="profile-nav-item-label">Preferences</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+      <a href="settings.html" class="profile-nav-item" id="settingsLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">settings</span>
+          <span class="profile-nav-item-label">Settings</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+    </div>
+
+    <div class="profile-nav-group">
+      <h3>Activity & Finance</h3>
+      <a href="subscription.html" class="profile-nav-item" id="subscriptionLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">workspace_premium</span>
+          <span class="profile-nav-item-label">Subscription</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+      <a href="payments.html" class="profile-nav-item" id="paymentsLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">payments</span>
+          <span class="profile-nav-item-label">Payment Methods</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+      <a href="transactions.html" class="profile-nav-item" id="transactionsLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">receipt_long</span>
+          <span class="profile-nav-item-label">Transactions</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+    </div>
+
+    <div class="profile-nav-group">
+      <h3>Support & Legal</h3>
+      <a href="sharelink.html" class="profile-nav-item" id="shareLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">share</span>
+          <span class="profile-nav-item-label">Share Profile Link</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+      <a href="terms.html" class="profile-nav-item" id="termsLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">gavel</span>
+          <span class="profile-nav-item-label">Terms of Service</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+      <a href="privacy.html" class="profile-nav-item" id="privacyLink">
+        <div class="profile-nav-item-info">
+          <span class="material-symbols-outlined">policy</span>
+          <span class="profile-nav-item-label">Privacy Policy</span>
+        </div>
+        <span class="material-symbols-outlined arrow-icon">arrow_forward_ios</span>
+      </a>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <a href="content.html" class="nav-item" title="Content">
+      <span class="material-symbols-outlined">edit_square</span>
+    </a>
+    <a href="tools.html" class="nav-item" title="Tools">
+      <span class="material-symbols-outlined">build</span>
+    </a>
+    <a href="home.html" class="center-button-nav" title="Home">
+      <img
+        src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff"
+        alt="Home"
+      >
+    </a>
+    <a href="business.html" class="nav-item" title="Business">
+      <span class="material-symbols-outlined">business_center</span>
+    </a>
+    <a href="user-profile.html" class="nav-item active" title="Profile">
+      <span class="material-symbols-outlined">account_circle</span>
+    </a>
+  </div>
+
+  <script>
+    // Firebase Configuration (as provided)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+      authDomain: "daisy-n7g20a.firebaseapp.com",
+      databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+      projectId: "daisy-n7g20a",
+      storageBucket: "daisy-n7g20a.appspot.com",
+      messagingSenderId: "225362605902",
+      appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    } else {
+      firebase.app();
+    }
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const profileNameElement = document.getElementById('profileName');
+    const profileMemberIdTextElement = document.getElementById('profileMemberIdText');
+    const verificationBadgeContainer = document.getElementById('verificationBadgeContainer');
+    const profileAvatarElement = document.getElementById('profileAvatar');
+    const avatarContainer = document.getElementById('avatarContainer');
+    const avatarUploadInput = document.getElementById('avatarUploadInput');
+    const verifyAccountLink = document.getElementById('verifyAccountLink');
+    const verifyLabel = document.getElementById('verifyLabel');
+    const changePasswordLink = document.getElementById('changePasswordLink');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const socialLinksSection = document.getElementById('socialLinksSection');
+    const socialIconsContainer = document.getElementById('socialIconsContainer');
+    const chatButton = document.getElementById('chatButton');
+    const videoCallButton = document.getElementById('videoCallButton');
+    const editProfileLink = document.getElementById('editProfileLink');
+
+    let currentUserData = null;
+    let targetUid = null;   // UID of the profile being viewed
+    let currentUserUid = null; // UID of the signed-in user
+
+    // Utility to get query parameter
+    function getQueryParam(key) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(key);
+    }
+
+    // --- Fetch and Display Target User’s Data ---
+    async function fetchAndDisplayUserData() {
+      pageLoadingElement.classList.remove('hidden');
+      pageLoadingText.textContent = 'Loading Profile...';
+      try {
+        const userDoc = await db.collection('users').doc(targetUid).get();
+        if (userDoc.exists) {
+          currentUserData = userDoc.data();
+
+          // Update Profile Header
+          profileNameElement.textContent = currentUserData.displayName || 'User';
+          profileMemberIdTextElement.textContent = `ID: ${currentUserData.memberId || 'N/A'}`;
+          profileAvatarElement.src = currentUserData.photo || 'https://cdn-icons-png.flaticon.com/256/5600/5600583.png';
+
+          // Verification Status
+          updateVerificationStatus(currentUserData.is_verified);
+
+          // Social Links
+          displaySocialLinks(currentUserData);
+
+          // If viewing another user’s profile, hide edit avatar and edit profile links
+          if (targetUid !== currentUserUid) {
+            avatarContainer.style.pointerEvents = 'none';
+            avatarContainer.querySelector('.edit-avatar-icon').style.display = 'none';
+            editProfileLink.classList.add('disabled');
+            editProfileLink.href = '#';
+            changePasswordLink.style.display = 'none';
+            verifyAccountLink.classList.add('disabled');
+            verifyAccountLink.href = '#';
+          }
+
+          // Configure Chat & Video Buttons
+          configureActionButtons();
+
+          pageLoadingElement.classList.add('hidden');
+        } else {
+          console.warn("User document not found:", targetUid);
+          profileNameElement.textContent = 'User Not Found';
+          profileMemberIdTextElement.textContent = 'ID: N/A';
+          profileAvatarElement.src = 'https://cdn-icons-png.flaticon.com/256/5600/5600583.png';
+          updateVerificationStatus(false);
+          displaySocialLinks({});
+          chatButton.style.display = 'none';
+          videoCallButton.style.display = 'none';
+          editProfileLink.classList.add('disabled');
+          editProfileLink.href = '#';
+          changePasswordLink.style.display = 'none';
+          verifyAccountLink.classList.add('disabled');
+          verifyAccountLink.href = '#';
+          pageLoadingText.textContent = 'Profile not found.';
+          setTimeout(() => pageLoadingElement.classList.add('hidden'), 1500);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        profileNameElement.textContent = 'Error';
+        profileMemberIdTextElement.textContent = 'ID: Error';
+        updateVerificationStatus(false);
+        displaySocialLinks({});
+        chatButton.style.display = 'none';
+        videoCallButton.style.display = 'none';
+        editProfileLink.classList.add('disabled');
+        editProfileLink.href = '#';
+        changePasswordLink.style.display = 'none';
+        verifyAccountLink.classList.add('disabled');
+        verifyAccountLink.href = '#';
+        pageLoadingText.textContent = 'Failed to load profile.';
+        setTimeout(() => pageLoadingElement.classList.add('hidden'), 2000);
+      }
+    }
+
+    // --- Update Verification Status UI ---
+    function updateVerificationStatus(isVerified) {
+      verificationBadgeContainer.innerHTML = '';
+      const badge = document.createElement('span');
+      badge.className = `verification-status ${isVerified ? 'verified' : 'not-verified'}`;
+
+      const icon = document.createElement('span');
+      icon.className = 'material-symbols-outlined';
+      icon.textContent = isVerified ? 'check_circle' : 'cancel';
+
+      badge.appendChild(icon);
+      badge.appendChild(document.createTextNode(isVerified ? ' Verified' : ' Not Verified'));
+      verificationBadgeContainer.appendChild(badge);
+
+      if (isVerified) {
+        verifyLabel.textContent = 'Account Verified';
+        verifyAccountLink.classList.add('disabled');
+        verifyLabel.classList.remove('verify-link-text');
+      } else {
+        verifyLabel.textContent = 'Verify Account';
+        if (targetUid === currentUserUid) {
+          verifyAccountLink.classList.remove('disabled');
+          verifyAccountLink.href = 'signup2.html';
+          verifyLabel.classList.add('verify-link-text');
+        } else {
+          verifyAccountLink.classList.add('disabled');
+          verifyAccountLink.href = '#';
+          verifyLabel.classList.remove('verify-link-text');
+        }
+      }
+    }
+
+    // --- Display Social Links ---
+    function displaySocialLinks(userData) {
+      socialIconsContainer.innerHTML = '';
+      let hasLinks = false;
+
+      const socialPlatforms = [
+        { key: 'youtubeUrl', icon: 'fa-brands fa-youtube', label: 'YouTube' },
+        { key: 'facebookUrl', icon: 'fa-brands fa-facebook', label: 'Facebook' },
+        { key: 'twitterUrl', icon: 'fa-brands fa-x-twitter', label: 'X (Twitter)' },
+        { key: 'instagramUrl', icon: 'fa-brands fa-instagram', label: 'Instagram' },
+        { key: 'linkedinUrl', icon: 'fa-brands fa-linkedin', label: 'LinkedIn' },
+        { key: 'websiteUrl', icon: 'fa-solid fa-globe', label: 'Website' }
+      ];
+
+      socialPlatforms.forEach(platform => {
+        const url = userData[platform.key];
+        if (url && url.trim() !== '') {
+          hasLinks = true;
+          const link = document.createElement('a');
+          link.href = url.startsWith('http') ? url : `https://${url}`;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.className = `social-icon-link ${platform.icon}`;
+          link.setAttribute('aria-label', platform.label);
+          link.title = platform.label;
+          socialIconsContainer.appendChild(link);
+        }
+      });
+
+      socialLinksSection.style.display = hasLinks ? 'block' : 'none';
+    }
+
+    // --- Configure Chat & Video Buttons ---
+    function configureActionButtons() {
+      // Chat: navigate to messages.html?chatWith=targetUid
+      chatButton.href = `messages.html?chatWith=${targetUid}`;
+
+      // Video Call: navigate to videocall.html?with=targetUid
+      videoCallButton.addEventListener('click', () => {
+        window.location.href = `videocall.html?with=${targetUid}`;
+      });
+    }
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUserUid = user.uid;
+        // Determine targetUid from query params
+        const uidParam = getQueryParam('uid');
+        if (uidParam && uidParam.trim() !== '') {
+          targetUid = uidParam;
+        } else {
+          // If no uid provided, view own profile
+          targetUid = currentUserUid;
+        }
+        fetchAndDisplayUserData();
+      } else {
+        window.location.href = 'signin.html';
+      }
+    });
+
+    // --- Sign Out Logic ---
+    signOutIcon.addEventListener('click', async () => {
+      if (confirm("Are you sure you want to sign out?")) {
+        try {
+          pageLoadingElement.classList.remove('hidden');
+          pageLoadingText.textContent = 'Signing out...';
+          await auth.signOut();
+        } catch (error) {
+          console.error("Error signing out:", error);
+          alert("Failed to sign out. Please try again.");
+          pageLoadingElement.classList.add('hidden');
+        }
+      }
+    });
+
+    // --- Handle Edit Profile Link ---
+    editProfileLink.addEventListener('click', (e) => {
+      if (targetUid !== currentUserUid) {
+        e.preventDefault();
+        return;
+      }
+      // Navigate to edit-profile.html
+      window.location.href = 'edit-profile.html';
+    });
+
+    // --- Handle "Change Password" Click ---
+    changePasswordLink.addEventListener('click', () => {
+      if (targetUid !== currentUserUid) return; // Only own profile
+      const user = auth.currentUser;
+      if (user && user.email) {
+        const providerId = user.providerData.length > 0 ? user.providerData[0].providerId : 'password';
+        if (providerId !== 'password') {
+          alert(`Password reset not available for ${providerId} login.`);
+          return;
+        }
+        if (confirm(`Send password reset email to ${user.email}?`)) {
+          pageLoadingElement.classList.remove('hidden');
+          pageLoadingText.textContent = 'Sending email...';
+          auth.sendPasswordResetEmail(user.email)
+            .then(() => {
+              pageLoadingElement.classList.add('hidden');
+              alert("Password reset email sent! Check inbox/spam.");
+            })
+            .catch((error) => {
+              pageLoadingElement.classList.add('hidden');
+              console.error("Error sending password reset:", error);
+              let message = "Failed to send reset email.";
+              if (error.code === 'auth/too-many-requests') {
+                message = "Too many requests. Try again later.";
+              } else if (error.code === 'auth/user-not-found') {
+                message = "Account not found.";
+              } else {
+                message += ` (${error.message})`;
+              }
+              alert(message);
+            });
+        }
+      } else {
+        alert("Cannot send reset email. Email info missing.");
+      }
+    });
+
+    // --- Handle Avatar Upload ---
+    avatarContainer.addEventListener('click', () => {
+      if (targetUid !== currentUserUid) return;
+      avatarUploadInput.click();
+    });
+    avatarUploadInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert("Select a valid image (JPG, PNG, GIF).");
+        event.target.value = null;
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File too large. Must be under 5MB.");
+        event.target.value = null;
+        return;
+      }
+      uploadAvatar(file);
+      event.target.value = null;
+    });
+
+    async function uploadAvatar(file) {
+      const user = auth.currentUser;
+      if (!user || user.uid !== targetUid) {
+        alert("Not authorized to change avatar.");
+        return;
+      }
+      pageLoadingElement.classList.remove('hidden');
+      pageLoadingText.textContent = 'Uploading avatar...';
+      profileAvatarElement.style.opacity = '0.5';
+
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const fileExtension = safeFileName.split('.').pop();
+      const avatarRef = storage.ref(`users/${user.uid}/avatar_${Date.now()}.${fileExtension}`);
+
+      try {
+        const metadata = { contentType: file.type };
+        const snapshot = await avatarRef.put(file, metadata);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+
+        await db.collection('users').doc(user.uid).update({
+          photo: downloadURL,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await user.updateProfile({ photoURL: downloadURL });
+        profileAvatarElement.src = downloadURL;
+        if (currentUserData) currentUserData.photo = downloadURL;
+        alert("Avatar updated.");
+      } catch (error) {
+        console.error("Error uploading avatar:", error);
+        let msg = "Failed to upload avatar.";
+        if (error.code) msg += ` (${error.code})`;
+        alert(msg);
+      } finally {
+        pageLoadingElement.classList.add('hidden');
+        pageLoadingText.textContent = 'Loading Profile...';
+        profileAvatarElement.style.opacity = '1';
+      }
+    }
+
+    // --- Prevent Multi-Touch Zoom / Double-Tap Zoom ---
+    document.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // --- Prevent Scroll Restoration on Back ---
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Products - Magnetar Dashboard</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- No Mapbox CSS needed -->
+
+    <style>
+        /* --- START: Embedded CSS --- */
+
+        /* --- Base Variables (Consistent Light Theme) --- */
+        :root {
+            --font-family-base: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --primary-color: #4A90E2; --primary-color-darker: #357ABD;
+            --text-primary: #333333; --text-secondary: #777777; --text-on-primary: #ffffff;
+            --background-main: #F8F9FA; --background-card: #ffffff; --background-nav: #ffffff;
+            --border-color: #EAECEF; --border-nav: #EAECEF;
+            --shadow-card: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 1px 2px rgba(0, 0, 0, 0.06);
+            --radius-card: 12px; --space-unit: 4px; --header-height: 55px; --navbar-height: 60px;
+            --sidebar-width: 230px;
+            --content-padding-mobile: calc(var(--space-unit) * 4); --content-padding-tablet: calc(var(--space-unit) * 6); --content-padding-desktop: calc(var(--space-unit) * 8);
+            --desktop-max-width: 1140px;
+            --input-background: #ffffff; --input-border: #D1D5DB; --input-border-focus: var(--primary-color);
+            --input-text: var(--text-primary); --placeholder-text: #9CA3AF;
+            --danger-color: #ef4444; --danger-text: #b91c1c; --danger-bg: #fee2e2;
+            --primary-color-rgb: 74, 144, 226;
+        }
+
+        /* --- Dark Theme Overrides --- */
+        [data-theme="dark"] {
+            --primary-color: #5A9BEA; --primary-color-darker: #4A80D2;
+            --text-primary: #E5E7EB; --text-secondary: #9CA3AF;
+            --background-main: #111827; --background-card: #1F2937; --background-nav: #1F2937;
+            --border-color: #374151; --border-nav: #374151;
+            --shadow-card: 0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.2);
+            --input-background: #374151; --input-border: #4B5563; --input-focus-border: var(--primary-color);
+            --input-text: var(--text-primary); --placeholder-text: #6B7280;
+            --danger-color: #f87171; --danger-text: #fecaca; --danger-bg: #450a0a;
+            --primary-color-rgb: 90, 155, 234;
+        }
+
+        /* --- General Reset & Base Styles --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-family-base); background-color: var(--background-main); color: var(--text-primary);
+            font-size: 14px; line-height: 1.5; padding-top: var(--header-height);
+            padding-bottom: var(--navbar-height); /* Ensure space for bottom navbar */
+            overflow-x: hidden; transition: background-color 0.2s ease, color 0.2s ease, padding-left 0.3s ease;
+        }
+        a { text-decoration: none; color: inherit; }
+        img { max-width: 100%; height: auto; display: block; }
+
+        /* --- Header --- */
+        .page-header {
+            background-color: var(--background-nav); border-bottom: 1px solid var(--border-nav);
+            padding: 0 var(--content-padding-mobile); height: var(--header-height);
+            display: flex; align-items: center; justify-content: space-between;
+            position: fixed; top: 0; left: 0; right: 0; width: 100%;
+            z-index: 100; gap: calc(var(--space-unit) * 3);
+            transition: background-color 0.2s ease, border-bottom-color 0.2s ease, left 0.3s ease, width 0.3s ease;
+        }
+        .header-action-icon {
+            color: var(--text-primary); font-size: 20px; cursor: pointer;
+            padding: calc(var(--space-unit) * 1.5); line-height: 1; margin: calc(var(--space-unit) * -1.5); flex-shrink: 0;
+            transition: color 0.2s ease;
+        }
+         .header-action-icon.back-icon { color: var(--text-primary);}
+        .header-action-icon:hover { color: var(--primary-color); }
+        .header-title {
+             font-size: 18px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+             flex-grow: 1; color: var(--text-primary);
+        }
+        .header-icons { display: flex; align-items: center; gap: calc(var(--space-unit) * 4); flex-shrink: 0; }
+
+        /* --- Filters Bar --- */
+        .filters-container {
+            padding: calc(var(--space-unit) * 2) var(--content-padding-mobile);
+            background-color: var(--background-nav);
+            border-bottom: 1px solid var(--border-nav);
+            position: sticky; top: var(--header-height); /* Stick below header */
+            z-index: 99;
+            white-space: nowrap;
+            overflow-x: auto;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .filters-container::-webkit-scrollbar { display: none; }
+
+        .filter-btn {
+            display: inline-block; padding: calc(var(--space-unit) * 1.5) calc(var(--space-unit) * 3);
+            margin-right: calc(var(--space-unit) * 2); border: 1px solid var(--input-border);
+            border-radius: 20px; background-color: var(--input-background); color: var(--text-secondary);
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .filter-btn.active {
+            background-color: var(--text-primary); color: var(--background-main); border-color: var(--text-primary);
+        }
+        [data-theme="dark"] .filter-btn.active {
+            background-color: var(--primary-color); color: var(--text-on-primary); border-color: var(--primary-color);
+        }
+        .filter-btn:hover:not(.active) { border-color: var(--text-secondary); }
+
+        /* --- Search & Sort Bar --- */
+        .search-sort-container {
+            padding: calc(var(--space-unit) * 3) var(--content-padding-mobile);
+            display: flex; gap: calc(var(--space-unit) * 2); align-items: center;
+             background-color: var(--background-main);
+        }
+        .search-input-wrapper { position: relative; flex-grow: 1; }
+        .search-input {
+            width: 100%; height: 40px; padding: 0 calc(var(--space-unit) * 3) 0 calc(var(--space-unit) * 9);
+            border: 1px solid var(--input-border); border-radius: var(--radius-card); background-color: var(--input-background);
+            color: var(--input-text); font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-input::placeholder { color: var(--placeholder-text); }
+        .search-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 1px var(--primary-color); }
+        .search-icon {
+             position: absolute; left: calc(var(--space-unit) * 3); top: 50%; transform: translateY(-50%);
+             color: var(--text-secondary); font-size: 16px; pointer-events: none;
+        }
+        .sort-filter-btn {
+            flex-shrink: 0; width: 40px; height: 40px; border: 1px solid var(--input-border);
+            border-radius: var(--radius-card); background-color: var(--input-background);
+            color: var(--text-secondary); font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s;
+        }
+        .sort-filter-btn:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+        /* --- Product List --- */
+        .product-list-container {
+             /* Removed mobile padding/bg to be added in list item */
+        }
+        .product-list { list-style: none; padding: 0; margin: 0; }
+        .product-list-item {
+            display: flex; align-items: center; gap: calc(var(--space-unit) * 3);
+            padding: calc(var(--space-unit) * 3) var(--content-padding-mobile); /* Added padding */
+            background-color: var(--background-card); /* Added background */
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer; transition: background-color 0.1s ease;
+        }
+        .product-list-item:last-child { border-bottom: none; }
+        .product-list-item:hover { background-color: rgba(0,0,0,0.02); }
+        [data-theme="dark"] .product-list-item:hover { background-color: rgba(255,255,255,0.03); }
+
+        .product-thumbnail {
+            width: 50px; height: 50px; object-fit: cover;
+            border-radius: 6px; background-color: var(--border-color); flex-shrink: 0;
+        }
+        .product-details { flex-grow: 1; }
+        .product-name { font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-unit); display: block; font-size: 15px;}
+        .product-subtext { font-size: 13px; color: var(--text-secondary); }
+        .stock-unavailable { color: var(--danger-text); font-weight: 500; }
+
+        /* Loading / Message Styles */
+        .list-message-container { padding: calc(var(--space-unit) * 5) var(--content-padding-mobile); text-align: center; color: var(--text-secondary); display: flex; align-items:center; justify-content: center; flex-wrap: wrap; gap: var(--space-unit) }
+        .stat-loader { border: 3px solid rgba(0,0,0,0.1); border-radius: 50%; border-top: 3px solid var(--primary-color); width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        [data-theme="dark"] .stat-loader { border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary-color); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Sidebar Styles */
+        #sidebarNav {
+            display: none; flex-direction: column; position: fixed; top: 0; left: 0; /* Adjust top to 0 */
+            width: var(--sidebar-width); height: 100vh; /* Adjust height to 100vh */
+            background-color: var(--background-nav); border-right: 1px solid var(--border-nav);
+            padding: var(--content-padding-mobile) 0; z-index: 110; /* Adjust z-index */ overflow-y: auto;
+            transition: background-color 0.2s ease, border-right-color 0.2s ease;
+        }
+         /* Add padding to sidebar nav items to match header padding */
+        #sidebarNav .sidebar-nav-item { padding-left: var(--content-padding-mobile); padding-right: var(--content-padding-mobile); }
+
+
+        /* --- Bottom Navigation (Consistent with home.html & order-details.html) --- */
+        .bottom-navbar {
+            display: flex; justify-content: space-around; align-items: center; /* Center vertically */
+            background-color: var(--background-nav);
+            border-top: 1px solid var(--border-nav); padding: var(--space-unit) 0; height: var(--navbar-height);
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+            transition: background-color 0.2s ease, border-top-color 0.2s ease; box-shadow: 0 -1px 3px rgba(0,0,0,0.04);
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            color: var(--text-secondary); flex: 1; padding: calc(var(--space-unit)*0.5) 2px; /* Adjusted padding */
+            cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 6px;
+            transition: color 0.2s, background-color 0.2s;
+        }
+        .nav-item i {
+             font-size: 24px; /* Consistent icon size */
+             margin-bottom: 0;
+             height: var(--navbar-height); /* Icon container takes full height */
+             display: flex; align-items: center; justify-content: center; /* Vertically center icon */
+             transition: color 0.2s;
+        }
+        .bottom-navbar .nav-item span { /* Hide text labels */
+             display: none;
+        }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item:active { background-color: rgba(var(--primary-color-rgb, 74, 144, 226), 0.1); }
+        [data-theme="dark"] .nav-item:active { background-color: rgba(var(--primary-color-rgb, 90, 155, 234), 0.15); }
+
+
+        /* Responsive */
+        @media (min-width: 992px) { /* Desktop */
+             body { padding-left: var(--sidebar-width); padding-top: var(--header-height); padding-bottom: 0;} /* Adjust padding for sidebar */
+            .page-header { left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); padding: 0 calc(var(--space-unit) * 4); height: var(--header-height);} /* Adjust header position/width */
+            .header-action-icon.back-icon { display: none; } /* Hide back button on desktop */
+            .header-title { text-align: left; flex-grow: 0; margin-right: auto; } /* Align title left */
+            .filters-container {
+                 top: var(--header-height); /* Stick below header */
+                 left: var(--sidebar-width); width: calc(100% - var(--sidebar-width));
+                 padding: calc(var(--space-unit)*2) var(--content-padding-desktop);
+                 background-color: var(--background-main); /* Background matches body */
+                 border-bottom: none; /* No border on desktop */
+                 z-index: 98; /* Below search/sort if needed */
+            }
+             .search-sort-container {
+                 padding: calc(var(--space-unit) * 3) var(--content-padding-desktop);
+                 /* Inherits background from body */
+                 z-index: 99; /* Above filters */
+             }
+             .product-list-container {
+                 margin: 0 var(--content-padding-desktop); /* Add horizontal margin */
+                 background-color: var(--background-card); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden;
+                 padding: 0; /* Remove padding from container */
+             }
+            .product-list-item {
+                 padding: calc(var(--space-unit) * 3) var(--content-padding-desktop); /* Add padding to items */
+                 background-color: transparent; /* Item bg is transparent, container has bg */
+            }
+            #sidebarNav { display: flex; } /* Show sidebar */
+            .bottom-navbar { display: none; } /* Hide bottom nav on desktop */
+        }
+        @media (min-width: 1200px) { /* Larger Desktop */
+             /* Add larger desktop padding if desired */
+        }
+
+
+        /* --- END: Embedded CSS --- */
+    </style>
+</head>
+<body data-theme="light"> <!-- Default theme -->
+    <!-- Header -->
+    <header class="page-header">
+         <a href="javascript:history.back()" class="header-action-icon back-icon" title="Go Back">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="header-title" id="headerTitle">Products</div>
+        <div class="header-icons">
+             <a href="add-product.html" class="header-action-icon" title="Add Product">
+                <i class="fas fa-plus"></i>
+            </a>
+            <button class="header-action-icon" title="More Options" id="moreOptionsBtn">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <nav id="sidebarNav">
+        <a href="home.html" data-target="page-home" data-title="Dashboard" class="sidebar-nav-item" title="Home"><i class="fas fa-house-chimney"></i><span>Home</span></a>
+        <a href="orders.html" data-target="page-orders" data-title="Orders" class="sidebar-nav-item" title="Orders"><i class="fas fa-receipt"></i><span>Orders</span></a>
+        <a href="products.html" data-target="page-products" data-title="Products" class="sidebar-nav-item active" title="Products"><i class="fas fa-tag"></i><span>Products</span></a>
+        <a href="customers.html" data-target="page-customers" data-title="Customers" class="sidebar-nav-item" title="Customers"><i class="fas fa-users"></i><span>Customers</span></a>
+        <a href="profile.html" data-target="page-profile" data-title="Profile" class="sidebar-nav-item" title="Profile"><i class="far fa-user-circle"></i><span>Profile</span></a>
+    </nav>
+
+    <!-- Filters Bar -->
+    <div class="filters-container">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="active">Active</button>
+        <button class="filter-btn" data-filter="draft">Draft</button>
+        <button class="filter-btn" data-filter="archived">Archived</button>
+    </div>
+
+     <!-- Search & Sort Bar -->
+    <div class="search-sort-container">
+        <div class="search-input-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="search" id="searchInput" class="search-input" placeholder="Filter products">
+        </div>
+        <button class="sort-filter-btn" id="sortBtn" title="Sort Products">
+            <i class="fas fa-sort-amount-down"></i>
+        </button>
+         <button class="sort-filter-btn" id="filterBtn" title="More Filters">
+            <i class="fas fa-filter"></i>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content-wrapper">
+        <div class="product-list-container">
+            <ul class="product-list" id="productList">
+                 <div id="loadingIndicator" class="list-message-container">
+                     <span class="stat-loader"></span> Loading products...
+                 </div>
+                 <!-- No Results/Error messages will be appended here by JS -->
+            </ul>
+         </div>
+    </div> <!-- End Main Content Wrapper -->
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-navbar">
+        <a href="home.html" data-target="page-home" data-title="Dashboard" class="nav-item" title="Home"><i class="fas fa-house-chimney"></i><span>Home</span></a>
+        <a href="orders.html" data-target="page-orders" data-title="Orders" class="nav-item" title="Orders"><i class="fas fa-receipt"></i><span>Orders</span></a>
+        <a href="products.html" data-target="page-products" data-title="Products" class="nav-item active" title="Products"><i class="fas fa-tag"></i><span>Products</span></a>
+        <a href="customers.html" data-target="page-customers" data-title="Customers" class="nav-item" title="Customers"><i class="fas fa-users"></i><span>Users</span></a>
+        <a href="profile.html" data-target="page-profile" data-title="Profile" class="nav-item" title="Profile"><i class="far fa-user-circle"></i><span>Me</span></a>
+    </nav>
+
+    <!-- SDK Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- Embedded JavaScript -->
+    <script>
+        // --- START: Embedded JS ---
+
+        // --- Global State & Variables ---
+        let firebaseApp;
+        let firestore;
+        let productsData = []; // Store fetched data for filtering/sorting
+        let currentFilter = 'all';
+        const COLLECTION_NAME = 'kabarroph_products'; // Verify this collection name
+        const CURRENT_PAGE_ID = 'page-products';
+
+        // --- Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d6672119cd68e7ffc3d01f"
+        };
+
+        // --- Utility Functions ---
+        function renderProductStock(product) {
+            const quantity = parseInt(product['Inventory quantity'] || product.quantity || 0); // Check both fields
+            // Assuming 'Option1 Name' exists if there are variants
+            const hasVariants = !!product['Option1 Name'] || !!product['Option2 Name'] || !!product['Option3 Name'];
+            if (quantity > 0) {
+                let text = `${quantity} available`;
+                if (hasVariants) { text += ` • variants`; } // Indicate if it has variants
+                return `<span class="product-subtext">${text}</span>`;
+            } else {
+                let text = `0 available`;
+                 if (hasVariants) { text += ` • variants`; }
+                return `<span class="product-subtext stock-unavailable">${text}</span>`;
+            }
+        }
+
+        // --- Product Rendering ---
+        function renderProductListItem(product) { // Accept raw product object + id
+            const productId = product.id; // Use the stored id
+            const name = product.Title || product.name || 'Unnamed Product';
+            // Prioritize 'Image Src', then imageUrls array[0], then placeholder
+            const imageUrl = product['Image Src'] || (Array.isArray(product.imageUrls) && product.imageUrls[0]) || 'https://via.placeholder.com/50/eee/ccc?text=?';
+            const stockHtml = renderProductStock(product);
+            const status = (product.Status || 'active').toLowerCase(); // Default to 'active'
+
+            const li = document.createElement('li');
+            li.className = 'product-list-item';
+            li.dataset.productId = productId; // Store the Firestore ID here
+            li.dataset.status = status; // Store status for filtering
+            li.dataset.name = name.toLowerCase(); // Store name for searching
+
+            li.innerHTML = `
+                <img src="${imageUrl}" alt="${name}" class="product-thumbnail" onerror="this.onerror=null; this.src='https://via.placeholder.com/50/eee/ccc?text=?'; console.warn('Image failed to load for product ${productId}')">
+                <div class="product-details">
+                    <span class="product-name">${name}</span>
+                    ${stockHtml}
+                </div>
+            `;
+
+            // Add click event listener to navigate to details page
+            li.addEventListener('click', () => {
+                console.log(`Navigating to details for product ID: ${productId}`);
+                // Navigate to product-details.html passing the Firestore ID
+                window.location.href = `product-details.html?id=${productId}`;
+            });
+
+            return li;
+        }
+
+        // --- Apply Filters & Search ---
+        function applyFiltersAndSearch() {
+            const productListElement = document.getElementById('productList');
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            let hasVisibleItems = false;
+
+            // Remove any previous messages
+            productListElement.querySelectorAll('.list-message-container').forEach(msg => msg.remove());
+
+            const items = productListElement.querySelectorAll('.product-list-item');
+            if (!items || items.length === 0) {
+                 // If there are NO items rendered at all (e.g., fetch failed or empty collection)
+                 // don't show "No products match criteria" unless fetch was successful but returned 0 items.
+                 // This is handled better in fetchAndDisplayProducts.
+                 const loading = document.getElementById('loadingIndicator');
+                 if (!loading || loading.style.display === 'none') {
+                      // If not loading, and no items, this means the initial fetch found nothing.
+                      // The message from fetchAndDisplayProducts will handle it.
+                 }
+                 return;
+             }
+
+            items.forEach(item => {
+                const itemName = item.dataset.name || '';
+                const itemStatus = item.dataset.status || 'active';
+                const matchesSearch = !searchTerm || itemName.includes(searchTerm);
+                const matchesFilter = currentFilter === 'all' || itemStatus === currentFilter;
+                const isVisible = matchesSearch && matchesFilter;
+                item.style.display = isVisible ? 'flex' : 'none';
+                if (isVisible) hasVisibleItems = true;
+            });
+
+            // Handle 'No results' message for filtering/searching rendered items
+            if (!hasVisibleItems) {
+                productListElement.appendChild(createMessage("No products match your current filters or search."));
+            }
+        }
+
+        // --- Data Fetching ---
+        async function fetchAndDisplayProducts() {
+            const productListElement = document.getElementById('productList');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
+            if (!firestore || !productListElement || !loadingIndicator) {
+                console.error("Firestore or required DOM elements not ready.");
+                 if(productListElement) productListElement.appendChild(createMessage("Page setup error. Cannot load products."));
+                return;
+            }
+
+            // Clear previous items and messages
+            productListElement.innerHTML = '';
+            productListElement.appendChild(loadingIndicator); // Ensure loader is in the list
+
+            loadingIndicator.style.display = 'flex';
+             loadingIndicator.innerHTML = '<span class="stat-loader"></span> Loading products...';
+
+
+             try {
+                 // Fetch products, ordered by Title ascending
+                 const querySnapshot = await firestore.collection(COLLECTION_NAME).orderBy('Title', 'asc').get();
+
+                 loadingIndicator.style.display = 'none'; // Hide loader
+
+                 productsData = []; // Reset stored data
+
+                 if (querySnapshot.empty) {
+                     productListElement.appendChild(createMessage("No products found in the store."));
+                 } else {
+                     querySnapshot.forEach(doc => {
+                         // Store fetched data including the document ID
+                         const product = { id: doc.id, ...doc.data() };
+                         productsData.push(product);
+                         // Render the item immediately
+                         const productItemElement = renderProductListItem(product);
+                         productListElement.appendChild(productItemElement);
+                     });
+                      // Apply initial filters/search after all items are added to the DOM
+                      applyFiltersAndSearch();
+                 }
+             } catch (error) {
+                 console.error("Error fetching products: ", error);
+                 loadingIndicator.style.display = 'none'; // Hide loader on error
+                 productListElement.appendChild(createMessage(`Error loading products: ${error.message || 'Unknown error'}`));
+             }
+        }
+
+        // Helper to create consistent message elements
+        function createMessage(text) {
+             const messageDiv = document.createElement('div');
+             messageDiv.className = 'list-message-container'; // Use generic class
+             messageDiv.textContent = text;
+             return messageDiv;
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Firebase
+            try {
+                if (!firebase.apps.length) { firebaseApp = firebase.initializeApp(firebaseConfig); console.log("Firebase Initialized."); }
+                else { firebaseApp = firebase.app(); console.log("Firebase App already exists."); }
+                firestore = firebase.firestore();
+                console.log("Firestore service obtained.");
+
+                 // Enable offline persistence (optional)
+                 firestore.enablePersistence({ synchronizeTabs: true })
+                    .then(() => console.log("Firestore offline persistence enabled."))
+                    .catch((err) => {
+                         if (err.code == 'failed-precondition') { console.warn("Firestore Persistence failed: Multiple tabs open?"); }
+                         else if (err.code == 'unimplemented') { console.warn("Firestore Persistence failed: Browser not supported."); }
+                         else { console.warn("Firestore persistence error:", err); }
+                     });
+
+                // Fetch and display products once Firebase is ready
+                fetchAndDisplayProducts();
+
+            } catch (e) {
+                console.error("Firebase initialization failed:", e);
+                 const loadingIndicator = document.getElementById('loadingIndicator');
+                 const productListElement = document.getElementById('productList');
+                 if(loadingIndicator) loadingIndicator.style.display = 'none';
+                 if(productListElement) {
+                      productListElement.innerHTML = ''; // Clear anything already there
+                      productListElement.appendChild(createMessage("Critical Error: Could not connect to Firebase."));
+                 }
+            }
+
+             // Set active nav item (both bottom and sidebar)
+             document.querySelectorAll('.nav-item[data-target], .sidebar-nav-item[data-target]').forEach(link => {
+                 link.classList.toggle('active', link.dataset.target === CURRENT_PAGE_ID);
+             });
+
+
+            // Filter Button Listeners
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentFilter = button.dataset.filter;
+                    applyFiltersAndSearch(); // Apply filter to currently displayed items
+                });
+            });
+
+            // Search Input Listener
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', applyFiltersAndSearch); // Apply search to currently displayed items
+
+            // Placeholder Listeners
+            document.getElementById('moreOptionsBtn')?.addEventListener('click', () => alert('More options not implemented.'));
+            document.getElementById('sortBtn')?.addEventListener('click', () => alert('Sorting not implemented.'));
+            document.getElementById('filterBtn')?.addEventListener('click', () => alert('Advanced filtering not implemented.'));
+
+            // Theme Toggle (Assuming you have one like in home.html) - Add listener if theme button exists
+            const themeToggleBtn = document.getElementById('themeToggleBtn'); // Add this button in header if you want it here
+             if (themeToggleBtn) {
+                 themeToggleBtn.addEventListener('click', () => {
+                     const body = document.body;
+                     let newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                     body.setAttribute('data-theme', newTheme);
+                     localStorage.setItem('theme', newTheme);
+                     // Update icon if needed (assuming updateThemeIcon function exists)
+                     // updateThemeIcon(newTheme, themeToggleBtn);
+                 });
+                  // Apply initial theme on load (if not already done globally)
+                 const storedTheme = localStorage.getItem('theme') || 'light';
+                 document.body.setAttribute('data-theme', storedTheme);
+                 // updateThemeIcon(storedTheme, themeToggleBtn);
+             }
+
+
+        }); // End DOMContentLoaded
+
+        // --- END: Embedded JS ---
+    </script>
+
+</body>
+</html>

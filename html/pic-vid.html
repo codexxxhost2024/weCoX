@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WeConnect – Pexels Browser</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+<style>
+/* --- CSS Variables --- */
+:root {
+  --primary-color: #1F3A5C;
+  --background-light: #f0f2f5;
+  --text-dark: #333;
+  --text-medium: #555;
+  --text-light: #777;
+  --spacing-unit: 15px;
+  --border-radius: 8px;
+  --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --error-color: #d93025;
+}
+
+/* --- Base Styles --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-light);
+  color: var(--text-dark);
+  max-width: 420px;
+  margin: 0 auto;
+  overflow-x: hidden;
+  min-height: 100vh; /* Ensure body takes at least full viewport height */
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+  font-size: 0.95rem;
+  border-radius: var(--border-radius);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  padding: 12px var(--spacing-unit);
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 600;
+  width: 100%;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:hover:not(:disabled) {
+  background-color: #192F4A;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: var(--spacing-unit);
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-medium);
+}
+
+/* --- Header --- */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 56px;
+  padding: 0 var(--spacing-unit);
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.header-left { /* Added class for left side */
+  display: flex;
+  align-items: center;
+}
+
+.back-button, /* Renamed class */
+.header-icon { /* Renamed class */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: -8px;
+  color: var(--text-medium);
+  cursor: pointer;
+}
+
+.header-title { /* Renamed class */
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-left: 8px;
+}
+
+/* --- Main Content --- */
+main {
+  padding: var(--spacing-unit);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+}
+
+.tool-card { /* Renamed class */
+  background-color: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: var(--spacing-unit);
+}
+
+.placeholder-text { /* Renamed class */
+  color: var(--text-light);
+  font-style: italic;
+  text-align: center;
+  min-height: 40px;
+  padding: 10px 0; /* Added padding */
+}
+
+/* --- Visual Results Grid (Photos/Videos) --- */
+.visual-grid { /* New class */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Responsive grid */
+    gap: 10px; /* Gap between items */
+    margin-top: var(--spacing-unit);
+}
+
+.visual-item { /* New class for grid items (both photos and videos) */
+    position: relative; /* For overlay icons */
+    width: 100%;
+    height: 100px; /* Fixed height for grid items */
+    overflow: hidden; /* Hide overflow if object-fit cover doesn't fill */
+    border-radius: 4px;
+    background-color: #eee; /* Placeholder background */
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    display: flex; /* Use flex to center content if needed */
+    justify-content: center;
+    align-items: center;
+}
+
+.visual-item:hover {
+    transform: scale(1.05); /* Simple hover effect */
+}
+
+.visual-item img { /* Image or Video thumbnail */
+    width: 100%;
+    height: 100%; /* Fill the item container */
+    object-fit: cover; /* Cover the area, might crop */
+    display: block;
+}
+
+/* Overlay icon for videos */
+.visual-item .play-icon-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.9); /* White with slight transparency */
+    font-size: 40px; /* Larger icon */
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5); /* Shadow for visibility */
+    pointer-events: none; /* Allow clicks to pass through to the item */
+}
+
+
+/* --- Load More Button --- */
+#more { /* Target by ID */
+  display: none; /* Hidden by default */
+  margin-top: var(--spacing-unit);
+}
+
+#more.visible { /* Class added by JS when visible */
+  display: block; /* Show when visible class is present */
+}
+
+
+/* --- Loading Indicator --- */
+#load {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: rgba(255, 255, 255, .9);
+  z-index: 99;
+  /* Initially hidden, JS adds 'visible' class */
+   opacity: 0;
+   visibility: hidden;
+   transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+
+#load.visible { /* Class added by JS when loading */
+   opacity: 1;
+   visibility: visible;
+   transition: opacity 0.3s ease, visibility 0s linear 0s;
+}
+
+
+#load .spin {
+  width: 30px;
+  height: 30px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Loader -->
+<div id="load"><div class="spin"></div><p class="msg">Loading…</p></div>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <span class="material-symbols-outlined back-button" id="back">arrow_back_ios</span>
+    <span class="header-title">Pexels Browser</span>
+  </div>
+  <div class="header-icon" id="logout"><span class="material-symbols-outlined">logout</span></div>
+</header>
+
+<!-- Content -->
+<main>
+  <div class="tool-card">
+    <label for="mediaType">Media Type:</label>
+    <select id="mediaType">
+        <option value="photos">Photos</option>
+        <option value="videos">Videos</option>
+    </select>
+
+    <label for="q">Search Pexels:</label>
+    <input id="q" type="search" placeholder="e.g., nature, technology">
+
+    <label for="orientation">Filter by Orientation:</label>
+    <select id="orientation">
+        <option value="">Any Orientation</option>
+        <option value="landscape">Landscape</option>
+        <option value="portrait">Portrait</option>
+        <option value="square">Square</option>
+    </select>
+
+    <label for="size">Filter by Size:</label>
+     <select id="size">
+         <option value="">Any Size</option>
+         <!-- Pexels size options are standard names that work for both photo and video -->
+         <option value="large">Large</option>
+         <option value="medium">Medium</option>
+         <option value="small">Small</option>
+     </select>
+
+
+    <button id="go">Search</button>
+  </div>
+
+  <div class="tool-card">
+    <p class="placeholder-text" id="status">Select a media type and enter a term to start.</p>
+    <div class="visual-grid" id="results"></div> <!-- Changed to visual-grid -->
+    <button id="more">Load More</button>
+    <!-- Audio player removed -->
+  </div>
+</main>
+
+<script>
+/* ---------- Firebase ---------- */
+const firebaseConfig={
+    apiKey:"AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+    authDomain:"daisy-n7g20a.firebaseapp.com",
+    databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+    projectId:"daisy-n7g20a",
+    storageBucket: "daisy-n7g20a.appspot.com",
+    messagingSenderId: "225362605902",
+    appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+};
+!firebase.apps.length&&firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+
+/* ---------- Pexels API Configuration ---------- */
+// WARNING: Exposing API keys client-side is INSECURE for production applications.
+// Use a backend proxy or serverless function to handle API requests securely.
+const pexelsApiKey = 'nBvOe5WN77FK6c1ezUKdtTRtLFXSQqDsquQNbjnUByka645MXuEaEIKT'; // <-- Your Pexels API Key
+
+/* ---------- DOM ---------- */
+const load=document.getElementById('load'),loadMsg=load.querySelector('.msg');
+const mediaTypeSelect = document.getElementById('mediaType'); // New media type selector
+const q=document.getElementById('q'),
+      orientationFilter = document.getElementById('orientation'), // Existing filter, renamed
+      sizeFilter = document.getElementById('size'), // New size filter
+      go=document.getElementById('go');
+const statusEl=document.getElementById('status'),
+      list=document.getElementById('results'),
+      moreBtn=document.getElementById('more');
+
+/* ---------- State ---------- */
+let page=1,
+    term='',
+    orientation='',
+    size='',
+    mediaType='photos', // Default media type
+    busy=false,
+    totalResultsFound=0; // Total results reported by the API
+
+const per=30; // Results per page
+
+/* ---------- Pexels API Fetch Helper ---------- */
+async function fetchPexelsApi(url) {
+    if (!pexelsApiKey || pexelsApiKey === 'YOUR_PEXELS_API_KEY') { // Check for placeholder key too
+        throw new Error("Pexels API key is not set. Please update pexelsApiKey in the script.");
+    }
+
+    const headers = {
+        Authorization: `Bearer ${pexelsApiKey}`,
+    };
+
+    try {
+        const res = await fetch(url, { headers });
+
+        if (!res.ok) {
+             let errorDetail = `HTTP error: ${res.status} ${res.statusText}`;
+             // Pexels API often includes errors in the body
+             try {
+                 const errorBody = await res.json();
+                 if (errorBody && errorBody.error) {
+                     errorDetail = `Pexels API Error: ${errorBody.error}`;
+                 }
+             } catch(e) { /* Ignore JSON parsing errors */ }
+             console.error("Pexels API HTTP Error:", res.status, errorDetail, res);
+             throw new Error(errorDetail);
+        }
+
+        // Pexels API returns JSON for successful requests
+        return await res.json();
+
+    } catch (e) {
+        console.error("Error fetching from Pexels API:", e);
+        // Propagate a simplified network/fetch error
+        throw new Error(`Network Error or API Issue: ${e.message}`);
+    }
+}
+
+
+/* ---------- API URL Builder ---------- */
+const buildURL=(p)=>{
+    // Pexels uses 'page', not offset directly in search
+    let url = `https://api.pexels.com/${mediaType}/search?query=${encodeURIComponent(term)}&page=${p}&per_page=${per}`;
+
+    // Add optional filters if selected
+    if (orientation) {
+        url += `&orientation=${encodeURIComponent(orientation)}`;
+    }
+     if (size) {
+         url += `&size=${encodeURIComponent(size)}`;
+     }
+
+    return url;
+};
+
+/* ---------- Helpers ---------- */
+const show=L=>{
+    loadMsg.textContent=L;
+    load.classList.add('visible'); // Use class for transition
+    [go,q,mediaTypeSelect,orientationFilter,sizeFilter,moreBtn].forEach(el=>el.disabled=true); // Disable all search controls
+    busy=true;
+};
+
+const hide=()=>{
+    load.classList.remove('visible'); // Use class for transition
+    [go,q,mediaTypeSelect,orientationFilter,sizeFilter].forEach(el=>el.disabled=false); // Re-enable main search controls
+    // Visibility of moreBtn handled by updateMoreButtonState
+    moreBtn.disabled = busy; // Ensure it's disabled while busy (e.g., clicked again quickly)
+    updateMoreButtonState(); // Update visibility based on total count vs displayed
+    busy=false;
+};
+
+// Updates the visibility and enabled state of the "Load More" button
+const updateMoreButtonState = () => {
+    const itemsDisplayed = list.children.length;
+     // Show button if there are items displayed AND more items available according to total count
+     // Pexels total_results might be an estimate, so compare to 8000 max often returned
+     const apiLimit = 8000; // Pexels common total limit for search results
+     const effectiveTotal = Math.min(totalResultsFound, apiLimit);
+
+    if (itemsDisplayed > 0 && itemsDisplayed < effectiveTotal) {
+        moreBtn.classList.add('visible');
+        moreBtn.disabled = busy; // Disable if a load operation is in progress
+    } else {
+        moreBtn.classList.remove('visible'); // Hide if no more items or no results yet
+    }
+};
+
+
+const guard=(fn)=>{if(!busy)fn()};
+
+/* ---------- Auth ---------- */
+// auth state listener handles redirect or hides loading
+auth.onAuthStateChanged(u=>{u?hide():location.href='signin.html'}); // hide() called here after auth check
+
+document.getElementById('logout').onclick=()=>auth.signOut();
+
+/* ---------- Fetch Pexels Data ---------- */
+async function fetchPexelsPage(){
+  show(page===1?`Searching Pexels for “${term}”…`:`Loading page ${page}…`);
+
+  try{
+    const url = buildURL(page);
+    const data = await fetchPexelsApi(url); // Use the Pexels fetch helper
+
+    let results = [];
+    let currentTotalOnPage = 0; // Number of results on this specific page
+
+    // Pexels response structure varies by media type
+    if (mediaType === 'photos') {
+        results = data.photos || [];
+        if (page === 1) { // Total results is for the whole query, available on first page
+             totalResultsFound = data.total_results || 0;
+        }
+         currentTotalOnPage = results.length;
+    } else if (mediaType === 'videos') {
+         results = data.videos || [];
+         if (page === 1) { // Total results is for the whole query, available on first page
+             totalResultsFound = data.total_results || 0;
+         }
+         currentTotalOnPage = results.length;
+    }
+
+
+    if(page===1) {
+        list.innerHTML = ''; // Clear only for the first page of a new search
+         if (totalResultsFound === 0) { // If 0 found on first page, ensure no more pages are expected
+             hasMore = false;
+         }
+    }
+
+    if (results.length > 0) {
+         results.forEach(item => { // 'item' is either a photo or a video object
+           const div=document.createElement('div');
+           div.className='visual-item'; // Use the new class for grid items
+
+           let mediaSrc = '';
+           let altText = '';
+           let clickAction = () => {}; // Default empty action
+           let overlayIcon = ''; // For videos
+
+           if (mediaType === 'photos') {
+               // Use a medium size source URL for the grid
+               mediaSrc = item.src.medium || item.src.large || item.src.original || 'placeholder.png';
+               altText = item.alt || `Photo by ${item.photographer}`;
+               div.title = `Photo by ${item.photographer} on Pexels. Click to view original.`;
+
+               // On click, open the original photo in a new tab
+               clickAction = () => {
+                   window.open(item.src.original || item.src.large || item.url, '_blank'); // Fallback to item.url
+               };
+
+           } else if (mediaType === 'videos') {
+               // Use the image property for the video thumbnail
+               mediaSrc = item.image || 'placeholder.png';
+               altText = `Video by ${item.user.name}`;
+               div.title = `Video by ${item.user.name} on Pexels. Duration: ${item.duration}s. Click to view.`;
+               overlayIcon = '<span class="material-symbols-outlined play-icon-overlay">play_circle</span>'; // Add play icon
+
+               // Find a playable video file (e.g., MP4) and open it on click
+               const mp4File = item.video_files.find(file => file.format === 'video/mp4' && file.link); // Look for video/mp4
+               if (mp4File) {
+                    clickAction = () => {
+                        window.open(mp4File.link, '_blank'); // Open video file link in a new tab
+                    };
+                    div.style.cursor = 'pointer'; // Ensure cursor indicates clickable
+               } else {
+                    div.style.cursor = 'default';
+                    div.title = `Video by ${item.user.name} on Pexels. Duration: ${item.duration}s. No playable MP4 file found.`;
+                    clickAction = () => { /* No action if no playable file */ };
+                    overlayIcon = '<span class="material-symbols-outlined play-icon-overlay">not_interested</span>'; // Indicate no preview
+               }
+           }
+
+           const img=document.createElement('img');
+           img.src=mediaSrc;
+           img.alt=altText;
+
+           div.appendChild(img);
+           if (overlayIcon) {
+               div.innerHTML += overlayIcon; // Add the overlay icon HTML
+           }
+
+           div.addEventListener('click', clickAction); // Add the determined click action
+
+           list.appendChild(div);
+         });
+
+         // Only increment page if we got results on this page
+         if (currentTotalOnPage > 0) {
+             page++;
+         }
+
+         // Update status text with current count vs total
+         const itemsDisplayed = list.children.length;
+         const effectiveTotal = Math.min(totalResultsFound, 8000); // Cap at API limit for display realism
+         statusEl.textContent = `Showing ${itemsDisplayed}${effectiveTotal > 0 ? ` of ${effectiveTotal}` : ''} ${mediaType} found for "${term}".`;
+         statusEl.style.color='var(--text-light)';
+
+    } else {
+        // No results found on this page
+        if (page === 1) {
+            statusEl.textContent=`No ${mediaType} found for “${term}”. Try a different term or filters.`;
+            statusEl.style.color='var(--text-light)';
+            totalResultsFound = 0; // Ensure total is 0 if initial search yielded nothing
+        } else {
+             statusEl.textContent=`No more ${mediaType} found for “${term}”.`;
+             statusEl.style.color='var(--text-light)';
+        }
+         // Ensure page doesn't increment if no results were returned on the current page load
+         // (unless it's the very first empty page, where page is already 1)
+         if (currentTotalOnPage === 0 && page > 1) {
+              // Do not increment page; stay on the current page number
+         }
+    }
+
+    // Update hasMore state based on current items vs total found AFTER adding results
+    hasMore = list.children.length < totalResultsFound;
+
+
+  }catch(e){
+      console.error("Fetch process failed:", e);
+      statusEl.textContent=`Failed to fetch from Pexels: ${e.message}`;
+      statusEl.style.color='var(--error-color)';
+      totalResultsFound = list.children.length; // Cap total at current count on error to hide load more
+      hasMore = false; // Ensure no more pages on error
+  } finally {
+      hide(); // Ensure hide is called
+  }
+}
+
+/* ---------- UI Actions ---------- */
+const startSearch=()=>guard(()=>{
+    const currentTerm = q.value.trim();
+    const currentOrientation = orientationFilter.value;
+    const currentSize = sizeFilter.value;
+    const currentMediaType = mediaTypeSelect.value;
+
+    // Only perform a new search if term or filters have changed or it's the very first search
+    // Check if totalResultsFound > 0 to allow restarting a search that previously found 0
+    if (currentTerm === term && currentOrientation === orientation && currentSize === size && currentMediaType === mediaType && list.children.length > 0 && totalResultsFound > 0 && !busy) {
+        console.log("Same search parameters, results already displayed.");
+        // Check if all results are currently displayed
+        const itemsDisplayed = list.children.length;
+        const apiLimit = 8000;
+        const effectiveTotal = Math.min(totalResultsFound, apiLimit);
+
+        if (itemsDisplayed >= effectiveTotal) {
+             statusEl.textContent = `All ${effectiveTotal} ${mediaType} results for “${term}” are shown.`;
+             statusEl.style.color = 'var(--text-light)';
+             moreBtn.classList.remove('visible'); // Hide 'Load More' button
+        } else {
+             // Same search, but not all results loaded, ensure load more button is visible
+             updateMoreButtonState(); // Call helper to ensure button state is correct
+        }
+        return; // Exit if no new search needed
+    }
+
+    // Update state variables for the new search
+    term = currentTerm;
+    orientation = currentOrientation;
+    size = currentSize;
+    mediaType = currentMediaType;
+
+    if (!term) {
+        statusEl.textContent = `Please enter a search term for ${mediaType}.`;
+        statusEl.style.color = 'var(--text-medium)';
+        list.innerHTML = ''; // Clear previous results
+        totalResultsFound = 0; // Reset total
+        hasMore = false; // No results = no more pages
+        page = 1; // Reset page state
+        updateMoreButtonState(); // Hide load more button
+        busy = false; // Ensure busy is false after handling empty input
+        return; // Do not search if term is empty
+    }
+
+    // Reset state for a new search
+    page = 1;
+    totalResultsFound = 0; // Reset total count for new search
+    hasMore = false; // Reset hasMore before the first fetch
+
+
+    // Clear previous results immediately for visual feedback
+    list.innerHTML = '';
+    moreBtn.classList.remove('visible'); // Hide button until we know if there are more pages
+    statusEl.textContent = `Starting new search for ${mediaType}…`; // Immediate feedback
+    statusEl.style.color = 'var(--text-medium)';
+
+
+    fetchPexelsPage(); // Start fetching the first page
+});
+
+/* ---------- UI Event Listeners ---------- */
+go.onclick = startSearch;
+q.onkeypress = e => e.key === 'Enter' && startSearch();
+// Changing filters or media type starts a new search
+orientationFilter.onchange = startSearch;
+sizeFilter.onchange = startSearch;
+mediaTypeSelect.onchange = startSearch;
+
+
+moreBtn.onclick=()=>guard(fetchPexelsPage); // Load the next page
+
+/* ---------- Navigation ---------- */
+document.getElementById('back').onclick=()=>location.href='tools.html';
+
+/* ---------- Touch-zoom lock ---------- */
+['touchstart','touchmove'].forEach(evt=>document.addEventListener(evt,e=>e.touches.length>1&&e.preventDefault(),{passive:false}));
+let last=0;document.addEventListener('touchend',e=>{const now=Date.now();if(now-last<=300)e.preventDefault();last=now},{passive:false});
+
+/* ---------- Init ---------- */
+show('Checking session…'); // Initial show of loader
+// Auth state listener will call hide() when ready
+</script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

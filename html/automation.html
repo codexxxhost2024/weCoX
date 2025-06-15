@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WeConnect - Blog Auto Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Inter Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <!-- Material Symbols Outlined -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+    <!-- Firebase v8 SDK Scripts (Only Auth needed now) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Removed Firestore and Storage -->
+    <!-- End Firebase v8 SDK Scripts -->
+
+    <style>
+        /* --- CSS Variables (from Automation Theme) --- */
+        :root {
+            --primary-color: #1F3A5C; /* Dark blue */
+            --background-light: #f0f2f5; /* Light grey background */
+            --background-dark: #ffffff; /* White card background */
+            --text-dark: #333;
+            --text-medium: #555;
+            --text-light: #777;
+            --accent-color: #4A90E2; /* Light blue accent */
+            --success-color: #28a745; /* Green for success */
+            --warning-color: #ff9800; /* Orange for warnings */
+            --error-color: #D0021B; /* Red for errors */
+            --spacing-unit: 15px;
+            --border-radius: 8px;
+            --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --input-bg: #ffffff; /* Input background */
+            --input-border: #ced4da;
+            --input-focus-border: var(--accent-color);
+            --input-focus-shadow: rgba(74, 144, 226, 0.2);
+            --button-primary-bg: var(--primary-color);
+            --button-primary-hover-bg: #162a42; /* Darker primary */
+            --button-secondary-bg: var(--accent-color);
+            --button-secondary-hover-bg: #3a7bc8; /* Darker accent */
+            --button-tertiary-bg: #6c757d; /* Grey */
+            --button-tertiary-hover-bg: #5a6268;
+            --loader-color: var(--primary-color);
+        }
+
+        /* --- Base Styles --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Inter', sans-serif; background-color: var(--background-light);
+            color: var(--text-dark); min-height: 100vh;
+            max-width: 420px; margin: 0 auto; overflow-x: hidden; position: relative;
+            padding-top: 56px; /* Space for sticky header */
+            padding-bottom: var(--spacing-unit);
+        }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .hidden { display: none !important; }
+
+        /* --- Header (Sticky with Back Button) --- */
+        .sticky-header { background-color: var(--background-dark); padding: 0 var(--spacing-unit); display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: 56px; }
+        .header-left { display: flex; align-items: center; flex-grow: 1; min-width: 0; }
+        .back-button { background: none; border: none; padding: 0; margin-right: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-medium); width: 36px; height: 36px; flex-shrink: 0; }
+        .back-button .material-symbols-outlined { font-size: 24px; }
+        .header-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
+        .header-icons-right { display: flex; align-items: center; gap: calc(var(--spacing-unit) / 3); flex-shrink: 0; }
+        .header-icon { position: relative; cursor: pointer; color: var(--text-medium); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; margin: -6px; /* Adjust margin for smaller hit area */ }
+        .header-icon .material-symbols-outlined { font-size: 24px; }
+
+        /* --- Page Loading Indicator --- */
+        #pageLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s; opacity: 1; visibility: visible; } /* Initially visible */
+        #pageLoading.hidden { opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+        #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+        #pageLoading .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--loader-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- Main Content & Sections --- */
+        .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: calc(var(--spacing-unit) * 1.5); }
+        .content-section { background-color: var(--background-dark); border-radius: var(--border-radius); padding: var(--spacing-unit); box-shadow: var(--box-shadow); }
+        .content-section h2 {
+            font-size: 1.2rem; font-weight: 600; color: var(--primary-color);
+            margin-bottom: var(--spacing-unit); text-align: center;
+            padding-bottom: calc(var(--spacing-unit) / 2); border-bottom: 1px solid #eee;
+        }
+        .content-section h3 {
+            font-size: 1rem; font-weight: 600; color: var(--text-medium);
+            margin-bottom: calc(var(--spacing-unit) / 2);
+        }
+        .content-section h4 {
+             font-size: 0.9rem; font-weight: 600; color: var(--text-medium);
+             margin-bottom: calc(var(--spacing-unit) / 3);
+        }
+        label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-medium); margin-bottom: calc(var(--spacing-unit) / 2); }
+        textarea, input[type="text"] {
+            width: 100%; padding: calc(var(--spacing-unit) / 1.5); background-color: var(--input-bg);
+            border: 1px solid var(--input-border); border-radius: calc(var(--border-radius) / 2);
+            font-size: 0.95rem; color: var(--text-dark); line-height: 1.4;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        textarea:focus, input[type="text"]:focus {
+            outline: none; border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 2px var(--input-focus-shadow);
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        .button-container { margin-top: var(--spacing-unit); display: flex; justify-content: flex-end; align-items: center; gap: calc(var(--spacing-unit) / 2); }
+        .button {
+            padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 500;
+            border: none; border-radius: calc(var(--border-radius) / 2); cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease; text-align: center;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5em;
+            line-height: 1; /* Ensure text aligns with loader */
+        }
+        .button-primary { background-color: var(--button-primary-bg); color: white; }
+        .button-primary:hover:not(:disabled) { background-color: var(--button-primary-hover-bg); }
+        .button-secondary { background-color: var(--button-secondary-bg); color: white; }
+        .button-secondary:hover:not(:disabled) { background-color: var(--button-secondary-hover-bg); }
+         .button-tertiary { background-color: var(--button-tertiary-bg); color: white; }
+        .button-tertiary:hover:not(:disabled) { background-color: var(--button-tertiary-hover-bg); }
+        .button-small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* --- Loaders --- */
+        .loader-inline {
+            border: 3px solid #f3f3f3; border-top: 3px solid var(--loader-color); border-radius: 50%;
+            width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle;
+        }
+        .image-loader-container {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 150px; background-color: #f8f9fa; border: 1px dashed var(--input-border);
+            border-radius: var(--border-radius); margin-top: var(--spacing-unit); text-align: center;
+        }
+        .image-loader-container .loader-inline { width: 30px; height: 30px; border-width: 4px; margin-bottom: 10px;}
+        .image-loader-container span { font-size: 0.9rem; color: var(--text-light); }
+
+        /* --- Error/Status Messages --- */
+        .message-output { padding: calc(var(--spacing-unit) * 0.8); margin-top: var(--spacing-unit); border-radius: calc(var(--border-radius) / 2); font-size: 0.9rem; border: 1px solid transparent; }
+        .message-output.error { background-color: #ffebee; color: var(--error-color); border-color: #ef9a9a; }
+        .message-output.success { background-color: #e8f5e9; color: var(--success-color); border-color: #a5d6a7; }
+        .message-output.info { background-color: #e3f2fd; color: var(--accent-color); border-color: #90caf9; }
+        .message-output strong { font-weight: 600; }
+
+        /* --- Output Areas --- */
+        .output-area-container { margin-top: var(--spacing-unit); }
+        .output-area-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: calc(var(--spacing-unit) / 2); }
+        .output-area {
+            background-color: #f8f9fa; /* Light background for output */
+            padding: calc(var(--spacing-unit) * 0.8); border-radius: calc(var(--border-radius) / 2);
+            border: 1px solid #eee; max-height: 250px; /* Reduced max-height */
+            overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;
+            font-size: 0.9rem; line-height: 1.5; color: var(--text-dark);
+        }
+        /* Custom scrollbar */
+        .output-area::-webkit-scrollbar { width: 6px; }
+        .output-area::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+        .output-area::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 3px; }
+        .output-area::-webkit-scrollbar-thumb:hover { background-color: #bbb; }
+        .output-area { scrollbar-width: thin; scrollbar-color: #ccc #f1f1f1; }
+
+        #generated-image {
+            display: block; width: 100%; height: auto; border-radius: calc(var(--border-radius) / 2);
+            border: 1px solid var(--input-border); margin-top: var(--spacing-unit);
+        }
+        #image-placeholder-container { margin-top: var(--spacing-unit); }
+        #image-placeholder { text-align: center; color: var(--text-light); padding: calc(var(--spacing-unit) * 2) 0; border: 1px dashed var(--input-border); border-radius: calc(var(--border-radius) / 2); font-size: 0.9rem; }
+
+        /* --- Footer --- */
+        .footer { text-align: center; color: var(--text-light); margin-top: calc(var(--spacing-unit) * 2); padding-bottom: var(--spacing-unit); font-size: 0.8rem; }
+        /* Removed strong styling as the warning is gone */
+
+    </style>
+</head>
+<body>
+
+    <!-- Page Loading Indicator -->
+    <div id="pageLoading">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading...</p>
+    </div>
+
+    <!-- Sticky Header -->
+    <header class="sticky-header">
+        <div class="header-left">
+            <button class="back-button" id="backButton">
+                <span class="material-symbols-outlined">arrow_back_ios_new</span>
+            </button>
+            <h1 class="header-title">Blog Auto Generator</h1>
+        </div>
+        <div class="header-icons-right">
+            <div id="signOutIcon" class="header-icon">
+                <span class="material-symbols-outlined">logout</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+        <!-- == BlogMasterGPT Section == -->
+        <section id="blogmaster-section" class="content-section">
+            <h2>1. Generate Blog Content</h2>
+            <div>
+                <label for="prompt-input">Enter your blog topic or instructions:</label>
+                <textarea
+                    id="prompt-input"
+                    rows="5"
+                    placeholder="e.g., Write a blog post about the benefits of using WeConnect for team collaboration..."
+                ></textarea>
+            </div>
+
+            <div class="button-container">
+                <div id="loading-indicator-blog" class="loader-inline hidden"></div>
+                <button id="generate-blog-button" class="button button-primary">
+                    Generate Blog Post
+                </button>
+            </div>
+
+             <div id="error-message-blog" class="message-output error hidden">
+                <strong class="font-bold">Blog Error:</strong>
+                <span id="error-text-blog"></span>
+            </div>
+
+            <!-- Blog Output Sub-Section -->
+            <div id="output-section-blog" class="hidden">
+                <div class="output-area-container">
+                     <div class="output-area-header">
+                        <h4>Generated Blog Post:</h4>
+                        <button id="copy-blog-button" class="button button-tertiary button-small" disabled>Copy Text</button>
+                    </div>
+                    <div id="blog-output" class="output-area"></div>
+                </div>
+
+                <div class="output-area-container">
+                     <div class="output-area-header">
+                        <h4>Generated Hashtags:</h4>
+                        <button id="copy-hashtags-button" class="button button-tertiary button-small" disabled>Copy Hashtags</button> <!-- Added -->
+                     </div>
+                     <div id="hashtags-output" class="output-area"></div>
+                 </div>
+                <div class="output-area-container">
+                    <div class="output-area-header">
+                        <h4>Image Prompt:</h4>
+                        <button id="copy-image-prompt-button" class="button button-tertiary button-small" disabled>Copy Prompt</button> <!-- Added -->
+                    </div>
+                    <div id="image-prompt-output" class="output-area"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- == Image Generation Section == -->
+        <section id="image-generator-section" class="content-section">
+            <h2>2. Generate Blog Banner</h2>
+            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: var(--spacing-unit); text-align: center;">Uses the "Image Prompt" generated above.</p>
+            <div style="text-align: center;">
+                 <button
+                     id="generate-image-button"
+                     class="button button-secondary"
+                     disabled <!-- Initially disabled -->
+                 >
+                     Generate Banner Image
+                 </button>
+            </div>
+
+            <div id="loading-indicator-image" class="image-loader-container hidden">
+                 <div class="loader-inline"></div>
+                 <span>Generating image...</span>
+            </div>
+
+            <div id="error-message-image" class="message-output error hidden">
+               <strong class="font-bold">Image Error:</strong>
+               <span id="error-text-image"></span>
+           </div>
+
+            <div id="image-output-container" class="hidden">
+                <img id="generated-image" src="#" alt="Generated Blog Banner" />
+                 <div class="button-container" style="justify-content: flex-end;">
+                     <button id="download-image-button" class="button button-tertiary button-small" disabled>Download Banner</button>
+                 </div>
+            </div>
+            <div id="image-placeholder-container">
+                 <p id="image-placeholder">Image will appear here after generation.</p>
+            </div>
+        </section>
+
+        <!-- REMOVED Save Blog Section -->
+
+    </main>
+
+    <footer class="footer">
+        Powered by Emilio AI | Frontend by Alex for Master E
+    </footer>
+
+    <script>
+        // --- Firebase Configuration (Only for Auth) ---
+        // !!! MASTER E: SECURITY WARNING !!! Config included directly
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com", // Keep if needed by other parts of app maybe, but not this page
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+         };
+
+        // --- API Configuration ---
+        const BLOG_API_URL = "https://api.together.xyz/v1/chat/completions";
+        const IMAGE_API_URL = "https://api.together.xyz/v1/images/generations";
+        // !!! MASTER E: SECURITY WARNING !!! API Key Embedded Directly
+        const API_BEARER_TOKEN = "144f137285e61f4f20c3af158629a0aaee85f131c8a48cd5ffdd0e6477898407";
+        const BLOG_MODEL = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free";
+        const IMAGE_MODEL = "black-forest-labs/FLUX.1-schnell-Free";
+
+        // --- Firebase Initialization (Only Auth) ---
+        let auth;
+        try {
+            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+            auth = firebase.auth();
+            console.log("Firebase Auth initialized successfully.");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+             // Display error prominently if Firebase fails
+            const mainContent = document.querySelector('.main-content');
+            if(mainContent) {
+                 const errorDiv = document.createElement('div');
+                 errorDiv.className = 'message-output error';
+                 errorDiv.textContent = 'Critical Error: Could not initialize connection to Firebase for authentication.';
+                 mainContent.insertBefore(errorDiv, mainContent.firstChild);
+            }
+        }
+
+        // --- DOM References ---
+        const pageLoadingElement = document.getElementById('pageLoading');
+        const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+        const signOutIcon = document.getElementById('signOutIcon');
+        const backButton = document.getElementById('backButton');
+
+        const promptInput = document.getElementById('prompt-input');
+        const generateBlogButton = document.getElementById('generate-blog-button');
+        const loadingIndicatorBlog = document.getElementById('loading-indicator-blog');
+        const errorMessageDivBlog = document.getElementById('error-message-blog');
+        const errorTextSpanBlog = document.getElementById('error-text-blog');
+        const outputSectionBlog = document.getElementById('output-section-blog');
+        const blogOutputDiv = document.getElementById('blog-output');
+        const imagePromptOutputDiv = document.getElementById('image-prompt-output');
+        const hashtagsOutputDiv = document.getElementById('hashtags-output');
+        const copyBlogButton = document.getElementById('copy-blog-button');
+        const copyHashtagsButton = document.getElementById('copy-hashtags-button'); // New Ref
+        const copyImagePromptButton = document.getElementById('copy-image-prompt-button'); // New Ref
+
+        const generateImageButton = document.getElementById('generate-image-button');
+        const loadingIndicatorImage = document.getElementById('loading-indicator-image');
+        const errorMessageDivImage = document.getElementById('error-message-image');
+        const errorTextSpanImage = document.getElementById('error-text-image');
+        const imageOutputContainer = document.getElementById('image-output-container');
+        const generatedImage = document.getElementById('generated-image');
+        const imagePlaceholderContainer = document.getElementById('image-placeholder-container');
+        const downloadImageButton = document.getElementById('download-image-button');
+
+        // Removed Save Section DOM Refs
+
+         // --- System Prompt ---
+         // (System Prompt content remains the same as previous version)
+         const systemPrompt = `You are BlogMasterGPT, a top-tier blogging assistant crafted to generate highly engaging, SEO-optimized blog posts. Your outputs feature incredibly catchy intro hooks, clear reader-friendly structure, persuasive elements, and prompts for stunning banner images. Your goal is content that doesn't just inform, but captivates, gets shared, and drives action.
+
+Persona:
+- A blend of a sharp content strategist, seasoned professional blogger, and skilled conversion copywriter.
+- Possesses deep knowledge of content marketing, SEO, reader psychology, storytelling, and visual design impact.
+- Committed to making blog content irresistible, compelling readers from the headline right through to the call to action and visuals.
+
+Tone and Style:
+- Engaging, conversational, yet authoritative and informative.
+- Employs vivid language, relatable examples, and smooth transitions.
+- Adapts tone precisely to suit the target audience and niche (e.g., professional, technical, casual, inspirational).
+
+Key Responsibilities:
+- Craft blog posts designed for high search engine ranking, reader engagement, and conversion.
+- Mandatory: Write an exceptionally catchy, scroll-stopping introduction or hook using proven techniques (e.g., AIDA, PAS, Storytelling) to immediately grab reader attention.
+- Structure content logically using headings (H2s, H3s), bullet points, and bold text for excellent readability.
+- Generate a clear and persuasive Call To Action (CTA) relevant to the user's objective.
+- Naturally integrate relevant SEO keywords throughout the text.
+- Mandatory: Conclude the blog post with a curated list of 5-10 relevant, SEO-rich hashtags. Prefix this section clearly with "Hashtags:" on a new line.
+- Mandatory: Seamlessly integrate the link 'https://portfolio.ai-emilio.site/' within the content or near the CTA, encouraging readers to visit for more details or related information.
+
+VISUAL CONTENT CAPABILITY:
+- Generate a detailed image prompt suitable for AI image generators (like Midjourney, DALL-E) to create a hyper-realistic, attention-grabbing blog banner that complements the post's topic and tone.
+- Include keywords for style (e.g., "hyper-realistic," "cinematic lighting," "vibrant color palette," "minimalist design," "dynamic composition") and context (objects, setting, mood).
+- Clearly label this section starting exactly with the text: "Image Prompt:" on a new line.
+
+Example Visual Prompt Output:
+_For a blog titled “The Future of AI in Web Development”_
+Image Prompt:
+Hyper-realistic image of a sleek, glowing circuit board morphing into a beautifully designed website interface on a futuristic computer screen, background shows subtle binary code streams, cinematic blue and purple lighting, 4K resolution, tech-forward and innovative mood.
+
+Your Mission:
+Transform any given topic into a powerhouse content piece featuring:
+1. A truly captivating headline and intro hook.
+2. A value-driven, well-organized body.
+3. A compelling CTA that includes a link to https://portfolio.ai-emilio.site/ or portfolio.ai-emilio.site for more details.
+4. A list of relevant SEO hashtags (prefixed with "Hashtags:").
+5. A powerful image prompt (prefixed with "Image Prompt:") for a matching banner.
+
+Output Requirements:
+- Place the main blog title on the very first line.
+- Format the main blog content for readability (headings, lists where appropriate).
+- Ensure the final output is plain text suitable for direct use.
+- Adhere strictly to the inclusion of the specified link, hashtags section, and image prompt section with their exact prefixes.`;
+
+
+        // --- State Variables ---
+        let currentBlogContent = ""; // Stores only the main blog text
+        let currentFullApiResponse = ""; // Stores the entire raw response
+        let currentImageDataBase64 = ""; // Stores image base64 data
+
+        // --- Event Listeners ---
+        generateBlogButton.addEventListener('click', handleGenerateBlog);
+        generateImageButton.addEventListener('click', handleGenerateImage);
+        copyBlogButton.addEventListener('click', handleCopyBlog);
+        copyHashtagsButton.addEventListener('click', handleCopyHashtags); // Added
+        copyImagePromptButton.addEventListener('click', handleCopyImagePrompt); // Added
+        downloadImageButton.addEventListener('click', handleDownloadImage);
+        if (signOutIcon) signOutIcon.addEventListener('click', handleSignOut);
+        if (backButton) backButton.addEventListener('click', () => window.history.back());
+        // Removed save button listener
+
+        // --- Authentication State Listener ---
+         if (auth) {
+            auth.onAuthStateChanged((user) => {
+              if (user) {
+                console.log("User is signed in:", user.uid);
+                pageLoadingElement.classList.add('hidden'); // Hide loader once authenticated
+              } else {
+                console.log("User is signed out. Redirecting...");
+                window.location.href = 'signin.html';
+              }
+            });
+         } else {
+             console.error("Firebase Auth not available.");
+             pageLoadingElement.classList.add('hidden');
+         }
+
+
+        // --- Sign Out Logic ---
+        async function handleSignOut() {
+             if (auth && confirm("Are you sure you want to sign out?")) {
+                 try {
+                     pageLoadingElement.classList.remove('hidden'); pageLoadingText.textContent = 'Signing out...';
+                     await auth.signOut();
+                     // onAuthStateChanged will redirect
+                 } catch (error) {
+                     console.error("Error signing out:", error); alert("Failed to sign out: " + error.message);
+                     pageLoadingElement.classList.add('hidden'); pageLoadingText.textContent = 'Loading...';
+                 }
+             }
+         }
+
+
+        // --- Blog Generation Logic (API call unchanged) ---
+        async function handleGenerateBlog() {
+             const userPrompt = promptInput.value.trim();
+             if (!userPrompt) { showErrorBlog("Please enter a blog topic or instructions."); return; }
+             setLoadingStateBlog(true); clearOutputBlog(); hideErrorBlog(); resetImageSection(); // Removed resetSaveSection()
+             currentBlogContent = ""; currentFullApiResponse = "";
+
+            try {
+                 const response = await fetch(BLOG_API_URL, { /* ... (Fetch options unchanged) ... */
+                    method: 'POST', headers: { 'Authorization': `Bearer ${API_BEARER_TOKEN}`, 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+                    body: JSON.stringify({ model: BLOG_MODEL, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }], stream: true })
+                 });
+                 if (!response.ok) throw await createApiError(response, "Blog API");
+
+                const reader = response.body.getReader(); const decoder = new TextDecoder();
+                outputSectionBlog.classList.remove('hidden');
+                blogOutputDiv.textContent = ''; hashtagsOutputDiv.textContent = ''; imagePromptOutputDiv.textContent = '';
+
+                while (true) { /* ... (Streaming logic unchanged) ... */
+                    const { done, value } = await reader.read(); if (done) break;
+                    const chunk = decoder.decode(value, { stream: true }); const lines = chunk.split('\n\n');
+                    lines.forEach(line => { if (line.startsWith('data: ')) { const jsonData = line.substring(6).trim(); if (jsonData === '[DONE]') return; try { const parsedData = JSON.parse(jsonData); const deltaContent = parsedData?.choices?.[0]?.delta?.content; if (deltaContent) { currentFullApiResponse += deltaContent; blogOutputDiv.textContent = currentFullApiResponse; } } catch (err) { console.warn('Error parsing stream chunk JSON:', err, 'Chunk Data:', jsonData); if(typeof jsonData === 'string' && !jsonData.startsWith('{')) { currentFullApiResponse += jsonData + "\n"; blogOutputDiv.textContent = currentFullApiResponse; } } } });
+                    blogOutputDiv.scrollTop = blogOutputDiv.scrollHeight;
+                }
+                parseAndDisplayFinalContent(currentFullApiResponse);
+            } catch (error) { showErrorBlog(error.message || 'An unknown error occurred during blog generation.'); }
+            finally { setLoadingStateBlog(false); /* Enable relevant copy buttons in parseAndDisplayFinalContent */ }
+        }
+
+        // --- Image Generation Logic (API call unchanged) ---
+        async function handleGenerateImage() {
+             const imagePrompt = imagePromptOutputDiv.textContent.trim();
+             if (!imagePrompt || imagePrompt === "No image prompt generated." || imagePrompt === "") { showErrorImage("No valid image prompt available."); return; }
+             setLoadingStateImage(true); hideErrorImage();
+             imageOutputContainer.classList.add('hidden'); imagePlaceholderContainer.classList.add('hidden');
+             currentImageDataBase64 = "";
+
+            try {
+                 const response = await fetch(IMAGE_API_URL, { /* ... (Fetch options unchanged) ... */
+                    method: 'POST', headers: { 'Authorization': `Bearer ${API_BEARER_TOKEN}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ model: IMAGE_MODEL, prompt: imagePrompt, width: 1024, height: 576, steps: 4, n: 1, response_format: "b64_json" })
+                 });
+                 if (!response.ok) throw await createApiError(response, "Image API");
+                 const result = await response.json();
+                 if (result.data?.[0]?.b64_json) {
+                     currentImageDataBase64 = result.data[0].b64_json; generatedImage.src = `data:image/png;base64,${currentImageDataBase64}`;
+                     imageOutputContainer.classList.remove('hidden'); downloadImageButton.disabled = false;
+                 } else { throw new Error("Received invalid data format from image API."); }
+            } catch (error) { showErrorImage(error.message || 'An unknown error occurred during image generation.'); imagePlaceholderContainer.classList.remove('hidden'); downloadImageButton.disabled = true; }
+            finally { setLoadingStateImage(false); }
+        }
+
+        // --- Copy/Download Logic ---
+         function handleCopyBlog() {
+            if (!currentBlogContent) return;
+            copyToClipboard(currentBlogContent, copyBlogButton, 'Copy Text', 'Blog post');
+        }
+
+         function handleCopyHashtags() {
+            const text = hashtagsOutputDiv.textContent;
+            if (!text || text === "No hashtags generated.") return;
+            copyToClipboard(text, copyHashtagsButton, 'Copy Hashtags', 'Hashtags');
+         }
+
+         function handleCopyImagePrompt() {
+            const text = imagePromptOutputDiv.textContent;
+            if (!text || text === "No image prompt generated.") return;
+            copyToClipboard(text, copyImagePromptButton, 'Copy Prompt', 'Image prompt');
+         }
+
+         function copyToClipboard(textToCopy, buttonElement, defaultButtonText, contentType) {
+             navigator.clipboard.writeText(textToCopy).then(() => {
+                 buttonElement.textContent = 'Copied!';
+                 buttonElement.disabled = true;
+                 setTimeout(() => {
+                     buttonElement.textContent = defaultButtonText;
+                     buttonElement.disabled = false;
+                 }, 2000);
+             }).catch(err => {
+                 console.error(`Failed to copy ${contentType}:`, err);
+                 // Optionally show a temporary error message near the button or using a modal/toast
+                 const originalText = buttonElement.textContent;
+                 buttonElement.textContent = 'Copy Failed!';
+                 setTimeout(() => { buttonElement.textContent = originalText; }, 2000);
+             });
+         }
+
+
+         function handleDownloadImage() {
+            if (!currentImageDataBase64) return;
+            const link = document.createElement('a'); link.href = `data:image/png;base64,${currentImageDataBase64}`;
+            link.download = 'weconnect_blog_banner.png'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        // --- Helper Functions ---
+        function setLoadingStateBlog(isLoading) { loadingIndicatorBlog.classList.toggle('hidden', !isLoading); generateBlogButton.disabled = isLoading; /* generateBlogButton text content update is removed as button doesn't have text span */ }
+        function clearOutputBlog() {
+             blogOutputDiv.textContent = ''; imagePromptOutputDiv.textContent = ''; hashtagsOutputDiv.textContent = '';
+             outputSectionBlog.classList.add('hidden');
+             copyBlogButton.disabled = true; copyHashtagsButton.disabled = true; copyImagePromptButton.disabled = true; // Disable new copy buttons
+             generateImageButton.disabled = true;
+             currentBlogContent = ""; currentFullApiResponse = "";
+        }
+        function parseAndDisplayFinalContent(fullContent) {
+             // (Parsing logic unchanged from previous version)
+             const imagePromptMarker = "\nImage Prompt:"; const hashtagsMarker = "\nHashtags:"; let blogText = fullContent; let imagePromptText = ""; let hashtagsText = "";
+             let imagePromptIndex = fullContent.lastIndexOf(imagePromptMarker); if (imagePromptIndex !== -1) { imagePromptText = fullContent.substring(imagePromptIndex + imagePromptMarker.length).trim(); blogText = fullContent.substring(0, imagePromptIndex).trim(); } else { const fallbackMarker = "Image Prompt:"; imagePromptIndex = fullContent.lastIndexOf(fallbackMarker); if (imagePromptIndex > fullContent.length * 0.75) { imagePromptText = fullContent.substring(imagePromptIndex + fallbackMarker.length).trim(); blogText = fullContent.substring(0, imagePromptIndex).trim(); } else { imagePromptText = "No image prompt generated."; } }
+             let hashtagsIndex = blogText.lastIndexOf(hashtagsMarker); if (hashtagsIndex !== -1) { hashtagsText = blogText.substring(hashtagsIndex + hashtagsMarker.length).trim(); blogText = blogText.substring(0, hashtagsIndex).trim(); } else { const fallbackMarker = "Hashtags:"; hashtagsIndex = blogText.lastIndexOf(fallbackMarker); if (hashtagsIndex > blogText.length * 0.8) { hashtagsText = blogText.substring(hashtagsIndex + fallbackMarker.length).trim(); blogText = blogText.substring(0, hashtagsIndex).trim(); } else { hashtagsText = "No hashtags generated."; } }
+             blogOutputDiv.textContent = blogText; hashtagsOutputDiv.textContent = hashtagsText; imagePromptOutputDiv.textContent = imagePromptText;
+             outputSectionBlog.classList.remove('hidden'); currentBlogContent = blogText;
+             // Enable copy buttons based on content
+             copyBlogButton.disabled = !currentBlogContent;
+             copyHashtagsButton.disabled = !hashtagsText || hashtagsText === "No hashtags generated.";
+             copyImagePromptButton.disabled = !imagePromptText || imagePromptText === "No image prompt generated.";
+             generateImageButton.disabled = !imagePromptText || imagePromptText === "No image prompt generated.";
+        }
+        function showErrorBlog(message) { errorTextSpanBlog.textContent = message; errorMessageDivBlog.classList.remove('hidden'); }
+        function hideErrorBlog() { errorMessageDivBlog.classList.add('hidden'); }
+        function setLoadingStateImage(isLoading) { loadingIndicatorImage.classList.toggle('hidden', !isLoading); generateImageButton.disabled = isLoading; imageOutputContainer.classList.toggle('hidden', isLoading); imagePlaceholderContainer.classList.toggle('hidden', isLoading); }
+        function resetImageSection() { hideErrorImage(); currentImageDataBase64 = ""; generatedImage.src = '#'; imageOutputContainer.classList.add('hidden'); imagePlaceholderContainer.classList.remove('hidden'); downloadImageButton.disabled = true; loadingIndicatorImage.classList.add('hidden'); }
+        function showErrorImage(message) { errorTextSpanImage.textContent = message; errorMessageDivImage.classList.remove('hidden'); }
+        function hideErrorImage() { errorMessageDivImage.classList.add('hidden'); }
+        // Removed Save helper functions
+        function base64ToBlob(base64, contentType = '', sliceSize = 512) { /* ... (unchanged) ... */ try { const byteCharacters = atob(base64); const byteArrays = []; for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) { const slice = byteCharacters.slice(offset, offset + sliceSize); const byteNumbers = new Array(slice.length); for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i); byteArrays.push(new Uint8Array(byteNumbers)); } return new Blob(byteArrays, {type: contentType}); } catch (e) { console.error("base64ToBlob Error:", e); return null; } }
+        async function createApiError(response, apiName) { let errorData = null; try { errorData = await response.json(); } catch (e) {} const errorMsg = errorData?.error?.message || errorData?.message || response.statusText || `HTTP error ${response.status}`; return new Error(`${apiName} request failed: ${errorMsg}`); }
+
+        // --- Initial UI State ---
+        resetImageSection();
+        // Removed resetSaveSection()
+
+    </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

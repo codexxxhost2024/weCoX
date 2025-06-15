@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Video Browser</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; --background-light: #f0f2f5; --background-dark: #ffffff;
+      --text-dark: #333; --text-medium: #555; --text-light: #777; --accent-color: #4A90E2;
+      --spacing-unit: 15px; --border-radius: 8px; --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --error-color: #d93025; /* Added error color */
+    }
+    /* --- Base Styles --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif; background-color: var(--background-light);
+      color: var(--text-dark); min-height: 100vh;
+      max-width: 420px; margin: 0 auto; overflow-x: hidden; position: relative;
+    }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--border-radius); transition: background-color 0.3s, transform 0.1s; }
+    button:active { transform: translateY(1px); }
+    button:disabled { background-color: #ccc; cursor: not-allowed; } /* Disabled button style */
+    input, select { font-family: inherit; padding: 10px; border: 1px solid #ccc; border-radius: var(--border-radius); width: 100%; font-size: 0.95rem; margin-bottom: var(--spacing-unit); } /* Added select */
+    label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-medium); }
+    /* --- Utility Classes --- */
+     .primary-button { background-color: var(--primary-color); color: #FFFFFF; padding: 12px var(--spacing-unit); font-size: 1rem; font-weight: 600; text-align: center; width: 100%; }
+    .primary-button:hover:not(:disabled) { background-color: #192F4A; } /* Only hover if not disabled */
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+    /* --- Header --- */
+    .header { background-color: var(--background-dark); padding: 0 var(--spacing-unit); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: 56px; }
+    .header-left { display: flex; align-items: center; }
+    .back-button { color: var(--text-medium); padding: 10px; margin-left: -10px; cursor: pointer; display: flex; align-items: center; }
+    .header-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin-left: 8px; }
+    .header-icons-right { display: flex; align-items: center; gap: var(--spacing-unit); }
+    .header-icon { position: relative; cursor: pointer; color: var(--text-medium); display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: -8px; }
+    .header-icon .material-symbols-outlined { font-size: 24px; }
+    /* --- Main Content Area --- */
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: var(--spacing-unit); }
+    .tool-card { background-color: var(--background-dark); border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: var(--spacing-unit); }
+    .placeholder-text { color: var(--text-light); font-style: italic; text-align: center; padding: 10px 0; line-height: 1.5; min-height: 40px; /* Give it some space */ }
+
+    /* --- Video Grid Styles --- */
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Adjust minmax width as needed */ gap: 15px; margin-top: var(--spacing-unit); }
+    .video-item { background-color: #f9f9f9; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); display: flex; flex-direction: column; }
+    /* If you want a consistent 16:9 aspect ratio */
+    .video-responsive { position: relative; width: 100%; padding-top: 56.25%; /* 16:9 Aspect Ratio (h/w * 100) */ }
+    .video-responsive iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; } /* Added border: none here */
+    .video-item .video-responsive { margin-bottom: 0px; /* No gap between video and video title */ }
+    .video-item .video-details { padding: 10px; display: flex; flex-direction: column; gap: 8px; } /* Container for title and button */
+    .video-item .video-title {
+        font-size: 0.9rem; font-weight: 500; color: var(--text-dark); text-align: left;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        margin-bottom: 0; /* Removed margin-bottom as it's now handled by gap */
+    }
+     .video-item .watch-button {
+        display: inline-block; /* Use inline-block or block for button */
+        background-color: #cc0000; /* YouTube Red */
+        color: #FFFFFF;
+        padding: 8px 15px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none; /* Remove underline for anchor button */
+        text-align: center;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+        width: auto; /* Button width based on content */
+        align-self: flex-start; /* Align button to the start */
+     }
+     .video-item .watch-button:hover {
+        background-color: #b30000;
+     }
+      .video-item .watch-button .material-symbols-outlined {
+          font-size: 18px; /* Smaller icon */
+          margin-right: 5px; /* Space between icon and text */
+          vertical-align: text-bottom; /* Align icon better */
+      }
+
+
+    /* --- Loading Indicator --- */
+    #pageLoading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s; opacity: 0; visibility: hidden; }
+    #pageLoading.visible { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+    #pageLoading .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* --- Filter Container --- */
+    .filter-container {
+        display: flex;
+        flex-direction: column; /* Stack filters vertically */
+        gap: var(--spacing-unit); /* Space between filter rows */
+        margin-bottom: var(--spacing-unit);
+    }
+    .filter-row {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-unit);
+    }
+    .filter-row label {
+        margin-bottom: 0;
+        width: auto; /* Labels take only required width */
+        flex-shrink: 0; /* Prevent labels from shrinking */
+    }
+     .filter-row select {
+        margin-bottom: 0;
+        flex-grow: 1; /* Select elements grow to fill space */
+        max-width: none; /* Remove max-width constraint */
+     }
+
+
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <span class="material-symbols-outlined back-button" id="backButton">arrow_back_ios</span>
+      <span class="header-title">Video Browser</span>
+    </div>
+    <div class="header-icons-right">
+      <div id="signOutIcon" class="header-icon">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="tool-card">
+        <label for="searchInput">Search YouTube Videos:</label>
+        <input type="search" id="searchInput" placeholder="e.g., tutorial, music video, news">
+
+        <!-- Filters -->
+        <div class="filter-container">
+            <div class="filter-row">
+                <label for="licenseFilter">License:</label>
+                <select id="licenseFilter">
+                    <option value="any">Any License</option>
+                    <option value="creativeCommon">Creative Commons (Reusable)</option>
+                </select>
+            </div>
+
+             <div class="filter-row">
+                <label for="durationFilter">Duration:</label>
+                <select id="durationFilter">
+                    <option value="any">Any Duration</option>
+                    <option value="short">Short (< 4 mins)</option>
+                    <option value="medium">Medium (4-20 mins)</option>
+                    <option value="long">Long (> 20 mins)</option>
+                </select>
+            </div>
+
+             <div class="filter-row">
+                <label for="definitionFilter">Quality:</label>
+                <select id="definitionFilter">
+                    <option value="any">Any Quality</option>
+                    <option value="standard">Standard Definition (SD)</option>
+                    <option value="high">High Definition (HD)</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="searchButton" class="primary-button">Search</button>
+    </div>
+
+    <div class="tool-card">
+         <p class="placeholder-text" id="statusText">
+             Enter a search term and use filters to find videos from YouTube.
+         </p>
+         <div class="video-grid" id="videoResults">
+             <!-- Videos will be loaded here -->
+         </div>
+    </div>
+  </main>
+
+  <script>
+    // Firebase Configuration (Same as tools.html)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Masked original key
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    // Initialize Firebase App
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+
+    // --- YouTube Data API Key ---
+    // WARNING: EXPOSING YOUR API KEY CLIENT-SIDE IS INSECURE!
+    // This is for demonstration only. For a production app, use a backend proxy.
+    const youtubeApiKey = 'AIzaSyBVqdGkOQA_VlhEMooh3vYxblOgFOEgkEc'; // <-- Your provided key
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const backButton = document.getElementById('backButton');
+    const searchInput = document.getElementById('searchInput');
+    const licenseFilter = document.getElementById('licenseFilter');
+    const durationFilter = document.getElementById('durationFilter');
+    const definitionFilter = document.getElementById('definitionFilter');
+    const searchButton = document.getElementById('searchButton');
+    const statusText = document.getElementById('statusText');
+    const videoResults = document.getElementById('videoResults');
+
+    // --- Loading Indicator Functions ---
+    const showLoading = (text = 'Searching...') => {
+        pageLoadingText.textContent = text;
+        pageLoadingElement.classList.add('visible');
+        searchButton.disabled = true;
+        searchInput.disabled = true;
+        licenseFilter.disabled = true;
+        durationFilter.disabled = true;
+        definitionFilter.disabled = true;
+    };
+    const hideLoading = () => {
+        pageLoadingElement.classList.remove('visible');
+        searchButton.disabled = false;
+        searchInput.disabled = false;
+        licenseFilter.disabled = false;
+        durationFilter.disabled = false;
+        definitionFilter.disabled = false;
+    };
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+        if (!user) {
+            console.log("User is signed out. Redirecting...");
+            window.location.href = 'signin.html';
+        } else {
+            console.log("User is signed in:", user.uid);
+            // User is signed in, ready to search
+        }
+    });
+
+    // --- Sign Out Logic ---
+    if (signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                    showLoading('Signing out...');
+                    await auth.signOut();
+                    // The onAuthStateChanged listener will handle the redirect
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out: " + error.message);
+                    hideLoading(); // Hide loading on error
+                }
+                // No need for hideLoading() on success, as the redirect will happen
+            }
+        });
+    }
+
+    // --- Back Button Navigation ---
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            window.location.href = 'tools.html';
+        });
+    }
+
+    // --- YouTube Video Search Logic ---
+    const performSearch = async () => {
+        const searchTerm = searchInput.value.trim();
+        const selectedLicense = licenseFilter.value;
+        const selectedDuration = durationFilter.value;
+        const selectedDefinition = definitionFilter.value;
+
+        if (!searchTerm) {
+            statusText.textContent = "Please enter a search term.";
+            statusText.style.color = 'var(--text-medium)';
+            videoResults.innerHTML = '';
+            return;
+        }
+
+        if (youtubeApiKey === 'YOUR_YOUTUBE_API_KEY' || !youtubeApiKey) {
+             statusText.textContent = 'YouTube API key is missing or incorrect. Please provide a valid key.';
+             statusText.style.color = 'var(--error-color)';
+             videoResults.innerHTML = '';
+             return;
+        }
+
+        const maxResults = 50;
+
+        let filterDescription = `(License: ${selectedLicense === 'creativeCommon' ? 'Creative Commons' : 'Any'}`;
+        if (selectedDuration !== 'any') filterDescription += `, Duration: ${selectedDuration}`;
+        if (selectedDefinition !== 'any') filterDescription += `, Quality: ${selectedDefinition.toUpperCase()}`;
+        filterDescription += `)`;
+
+
+        showLoading(`Searching YouTube for "${searchTerm}" ${filterDescription}...`);
+        statusText.textContent = `Searching for "${searchTerm}" ${filterDescription}...`;
+        statusText.style.color = 'var(--text-medium)';
+        videoResults.innerHTML = ''; // Clear previous results
+
+        let apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=${maxResults}&key=${youtubeApiKey}`;
+
+        // Add filters if not 'any'
+        if (selectedLicense !== 'any') { apiUrl += `&videoLicense=${selectedLicense}`; }
+        if (selectedDuration !== 'any') { apiUrl += `&videoDuration=${selectedDuration}`; }
+        if (selectedDefinition !== 'any') { apiUrl += `&videoDefinition=${selectedDefinition}`; }
+
+
+        try {
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                 let errorMsg = `Error: ${response.status} ${response.statusText}`;
+                 try {
+                     const errorData = await response.json();
+                      if (errorData && errorData.error && errorData.error.message) {
+                         errorMsg = `API Error: ${errorData.error.message}`;
+                         if (errorData.error.errors && errorData.error.errors.length > 0) {
+                             errorMsg += ` (${errorData.error.errors[0].reason})`;
+                         }
+                      }
+                 } catch(e) { /* Ignore if response body isn't JSON */ }
+                 console.error("YouTube API Error Response:", response);
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+
+            if (data.items && data.items.length > 0) {
+                const videos = data.items.filter(item => item.id.kind === 'youtube#video');
+
+                if (videos.length > 0) {
+                     statusText.textContent = `Found ${data.pageInfo.totalResults} potential results. Displaying ${videos.length} videos for "${searchTerm}" ${filterDescription}.`;
+                     statusText.style.color = 'var(--text-light)';
+
+                     videos.forEach(video => {
+                         const videoId = video.id.videoId;
+                         const videoTitle = video.snippet.title;
+                         const watchUrl = `https://www.youtube.com/watch?v=${videoId}`; // Construct the watch page URL
+
+                         const videoItem = document.createElement('div');
+                         videoItem.classList.add('video-item');
+
+                         const responsiveContainer = document.createElement('div');
+                         responsiveContainer.classList.add('video-responsive');
+
+                         const iframe = document.createElement('iframe');
+                         iframe.src = `https://www.youtube.com/embed/${videoId}`;
+                         iframe.setAttribute('frameborder', '0');
+                         iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+                         iframe.setAttribute('allowfullscreen', '');
+                         iframe.setAttribute('title', videoTitle);
+
+                         responsiveContainer.appendChild(iframe);
+                         videoItem.appendChild(responsiveContainer);
+
+                         // Container for title and watch button
+                         const detailsContainer = document.createElement('div');
+                         detailsContainer.classList.add('video-details');
+
+                         const titleElement = document.createElement('div');
+                         titleElement.classList.add('video-title');
+                         titleElement.textContent = videoTitle;
+
+                         // Watch on YouTube Button (as an anchor tag styled like a button)
+                         const watchButton = document.createElement('a');
+                         watchButton.classList.add('watch-button');
+                         watchButton.href = watchUrl;
+                         watchButton.target = '_blank'; // Open in a new tab
+                         watchButton.rel = 'noopener noreferrer'; // Security best practice
+                         watchButton.innerHTML = '<span class="material-symbols-outlined">play_circle</span>Watch on YouTube';
+
+
+                         detailsContainer.appendChild(titleElement);
+                         detailsContainer.appendChild(watchButton); // Add the button below the title
+
+                         videoItem.appendChild(detailsContainer); // Add the details container to the video item
+
+
+                         videoResults.appendChild(videoItem);
+                     });
+                } else {
+                     statusText.textContent = `No video results found on YouTube for "${searchTerm}" ${filterDescription}. Try a different term or filter.`;
+                     statusText.style.color = 'var(--text-light)';
+                }
+
+
+            } else {
+                statusText.textContent = `No results found on YouTube for "${searchTerm}" ${filterDescription}. Try a different term or filter.`;
+                statusText.style.color = 'var(--text-light)';
+            }
+
+        } catch (error) {
+            console.error("Error fetching from YouTube API:", error);
+            statusText.textContent = `Failed to fetch videos. ${error.message}. Check API key, network, or daily quota.`;
+            statusText.style.color = 'var(--error-color)';
+        } finally {
+            hideLoading();
+        }
+    };
+
+    // --- Event Listeners for Search ---
+    searchButton.addEventListener('click', performSearch);
+
+    searchInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            performSearch();
+        }
+    });
+
+    // Trigger search when filters change
+    licenseFilter.addEventListener('change', performSearch);
+    durationFilter.addEventListener('change', performSearch);
+    definitionFilter.addEventListener('change', performSearch);
+
+
+    // --- Prevent multi-touch zoom (Existing code) ---
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) { const now = Date.now(); if (now - lastTouchEnd <= 300) event.preventDefault(); lastTouchEnd = now; }, { passive: false });
+
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

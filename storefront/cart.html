@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- Theme Color Variable --- */
+        :root {
+            --primary-color: #1a2f3d;
+            --primary-color-darker: #12212b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Helvetica, Arial, sans-serif;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+            touch-action: pan-y;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 100%;
+            padding-top: 70px; /* Space for fixed header */
+            padding-bottom: 20px;
+        }
+
+        /* Header Styles (Consistent with main page) */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 100;
+            height: 65px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .back-btn { /* Can link back to products page */
+            background: none;
+            border: none;
+            margin-right: 15px;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 0;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px; /* Increased clickable area */
+            height: 50px; /* Increased clickable area */
+        }
+
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .back-btn:hover {
+            opacity: 0.8;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212b36;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-icon {
+             position: relative;
+             font-size: 22px;
+             color: #333;
+             cursor: pointer;
+             text-decoration: none;
+        }
+        .header-icon .fa-shopping-cart {
+            color: var(--primary-color); /* Keep cart icon styled */
+        }
+        /* --- Cart Specific Styles --- */
+        .cart-container {
+            padding: 15px;
+        }
+
+        .cart-items-list {
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: flex-start; /* Align items to the top */
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+        }
+
+        .cart-item-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-right: 15px;
+            flex-shrink: 0;
+            background-color: #eee; /* Placeholder bg */
+        }
+
+        .cart-item-details {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-item-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            line-height: 1.3;
+            /* Allow wrapping */
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Limit to 2 lines */
+            -webkit-box-orient: vertical;
+        }
+
+        .cart-item-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px; /* Add some space above actions */
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden; /* Clip button edges */
+        }
+
+        .quantity-btn {
+            background-color: #f1f3f4;
+            border: none;
+            color: #555;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            user-select: none; /* Prevent text selection */
+        }
+         .quantity-btn:hover:not(:disabled) {
+            background-color: #e0e0e0;
+         }
+         .quantity-btn:disabled { /* Style for disabled buttons */
+             opacity: 0.5;
+             cursor: not-allowed;
+             background-color: #f1f3f4; /* Keep background same when disabled */
+         }
+
+        .item-quantity {
+            font-size: 14px;
+            font-weight: 500;
+            padding: 0 10px;
+            height: 30px;
+            line-height: 30px; /* Vertically center */
+            min-width: 30px; /* Ensure space for number */
+            text-align: center;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            user-select: none; /* Prevent text selection */
+        }
+
+        .remove-item-btn {
+            background: none;
+            border: none;
+            color: #ff5252;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px; /* Easier to tap */
+            margin-left: 15px; /* Space from quantity */
+            transition: color 0.2s;
+        }
+        .remove-item-btn:hover {
+            color: #d50000;
+        }
+
+        .cart-summary {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-top: 20px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .summary-row.total {
+            font-weight: bold;
+            font-size: 18px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            margin-top: 10px;
+        }
+        .summary-label {
+             color: #555;
+        }
+        .summary-value {
+             font-weight: 600;
+        }
+        .summary-value.total-value {
+            color: var(--primary-color);
+        }
+
+
+        .checkout-button {
+            display: block;
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+        .checkout-button:hover:not(:disabled) {
+            background-color: var(--primary-color-darker);
+        }
+        .checkout-button:disabled {
+             background-color: #ccc;
+             cursor: not-allowed;
+        }
+
+        /* Loading State */
+        .loading { display: flex; justify-content: center; align-items: center; height: 200px; width: 100%; }
+        .loading-spinner { border: 4px solid rgba(0, 0, 0, 0.1); border-radius: 50%; border-top: 4px solid var(--primary-color); width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Error State */
+        .error-message { text-align: center; padding: 40px 20px; color: #ff5252; font-weight: bold; background-color: #fff; border-radius: 8px; margin: 15px; box-shadow: 0 1px 5px rgba(0,0,0,0.08); }
+
+        /* Empty State */
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; min-height: 200px; background-color: #fff; border-radius: 8px; margin: 15px; box-shadow: 0 1px 5px rgba(0,0,0,0.08); }
+        .empty-state i { font-size: 50px; color: #ccc; margin-bottom: 15px; }
+        .empty-state h3 { font-size: 18px; color: #333; margin-bottom: 10px; }
+        .empty-state p { font-size: 14px; color: #666; margin-bottom: 20px; }
+        .empty-state a { color: var(--primary-color); text-decoration: none; font-weight: 600;}
+        .empty-state a:hover { text-decoration: underline;}
+
+    </style>
+    <script>
+        // Firebase configuration (Your config here)
+        const firebaseConfig = {
+          apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+          authDomain: "daisy-n7g20a.firebaseapp.com",
+          databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+          projectId: "daisy-n7g20a",
+          storageBucket: "daisy-n7g20a.appspot.com",
+          messagingSenderId: "225362605902",
+          appId: "1:225362605902:web:d6672119cd68e7ffc3d01f"
+        };
+
+        // Prevent zoom scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) { event.preventDefault(); } }, { passive: false });
+            document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) { event.preventDefault(); } }, { passive: false });
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) { const now = Date.now(); if (now - lastTouchEnd <= 300) { event.preventDefault(); } lastTouchEnd = now; }, { passive: false });
+            initializeFirebaseAndApp();
+        });
+    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <a href="index.html" class="back-btn"> <!-- UPDATE href if your main product page is different -->
+                <i class="fas fa-arrow-left" style="font-size: 20px;"></i>
+            </a>
+            <div class="header-title">Shopping Cart</div>
+        </div>
+        <div class="header-right">
+            <div class="header-icon">
+                 <i class="fas fa-shopping-cart"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="cart-container">
+            <!-- Loading Indicator -->
+            <div class="loading" id="loadingIndicator" style="display: none;">
+                <div class="loading-spinner"></div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage" style="display: none;"></div>
+
+            <!-- Cart Items List -->
+            <div class="cart-items-list" id="cartItemsList">
+                <!-- Cart items will be rendered here by JavaScript -->
+            </div>
+
+            <!-- Empty Cart State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>Your Cart is Empty</h3>
+                <p>Looks like you haven't added anything to your cart yet.</p>
+                <a href="index.html">Start Shopping</a> <!-- UPDATE href if needed -->
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="cart-summary" id="cartSummary" style="display: none;">
+                <div class="summary-row">
+                    <span class="summary-label">Subtotal</span>
+                    <span class="summary-value" id="cartSubtotal">₱0.00</span>
+                </div>
+                <!-- Add more rows for discounts, shipping, etc. if needed -->
+                <div class="summary-row total">
+                    <span class="summary-label">Total</span>
+                    <span class="summary-value total-value" id="cartTotal">₱0.00</span>
+                </div>
+                <button class="checkout-button" id="checkoutButton" disabled>Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Initialization and Cart Logic ---
+        let auth, db, cartItemsCollectionRef;
+        let currentCartItems = []; // Store fetched cart items with IDs
+        let currentUserId = null; // Store current user ID
+
+        // Elements
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const emptyState = document.getElementById('emptyState');
+        const cartItemsList = document.getElementById('cartItemsList');
+        const cartSummary = document.getElementById('cartSummary');
+        const cartSubtotalElem = document.getElementById('cartSubtotal');
+        const cartTotalElem = document.getElementById('cartTotal');
+        const checkoutButton = document.getElementById('checkoutButton');
+
+        function initializeFirebaseAndApp() {
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                } else {
+                     firebase.app();
+                }
+                auth = firebase.auth();
+                db = firebase.firestore();
+                cartItemsCollectionRef = db.collection("cartItems");
+                console.log("Firebase initialized for Cart.");
+
+            } catch (error) {
+                console.error("CRITICAL: Firebase initialization failed:", error);
+                showError("Application setup failed. Cannot load cart.");
+                return;
+            }
+
+            // --- Handle Authentication State ---
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    console.log("Cart Page: User is signed in. UID:", user.uid);
+                    currentUserId = user.uid; // Store user ID
+                    fetchCartItems(user.uid); // Fetch cart items
+                } else {
+                    console.log("Cart Page: No user signed in.");
+                    currentUserId = null;
+                    showEmptyState("Please sign in to view your cart.", "Your cart items are saved to your account.");
+                    hideLoading();
+                    cartItemsList.innerHTML = '';
+                    cartSummary.style.display = 'none';
+                }
+            });
+        }
+
+        // --- Fetch Cart Items from Firestore ---
+        async function fetchCartItems(userId) {
+            if (!userId || !cartItemsCollectionRef) {
+                showError("Cannot fetch cart items. Missing user or database connection.");
+                return;
+            }
+
+            console.log(`Fetching cart items for user: ${userId}`);
+            showLoading();
+            cartItemsList.innerHTML = '';
+            cartSummary.style.display = 'none';
+            emptyState.style.display = 'none';
+            errorMessage.style.display = 'none';
+            currentCartItems = []; // Reset local cache
+
+            try {
+                const snapshot = await cartItemsCollectionRef.where("userId", "==", userId).get();
+
+                if (snapshot.empty) {
+                    console.log("No cart items found for this user.");
+                    showEmptyState();
+                } else {
+                    snapshot.forEach(doc => {
+                        currentCartItems.push({ id: doc.id, ...doc.data() }); // Store doc ID
+                    });
+                    console.log(`Fetched ${currentCartItems.length} cart items.`);
+                    renderCartItems(currentCartItems);
+                    calculateAndDisplayTotal(currentCartItems);
+                }
+            } catch (error) {
+                console.error("Error fetching cart items:", error);
+                if (error.code === 'permission-denied') {
+                     showError("Permission denied. Could not load your cart.");
+                } else {
+                    showError(`Failed to load cart: ${error.message}. Please try again later.`);
+                }
+                currentCartItems = []; // Clear items on error
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- Render Cart Items ---
+        function renderCartItems(items) {
+            cartItemsList.innerHTML = ''; // Clear previous content
+
+            if (!items || items.length === 0) {
+                if (loadingIndicator.style.display === 'none' && errorMessage.style.display === 'none') {
+                    showEmptyState();
+                }
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            items.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'cart-item';
+                itemElement.dataset.itemId = item.id; // Store Firestore doc ID on the element
+
+                const imageSrc = item.productImage || 'assets/images/placeholder.svg';
+                const title = item.productTitle || 'Product Unavailable';
+                const price = item.productPrice ?? 0;
+                const quantity = item.quantity || 1; // Default to 1
+
+                itemElement.innerHTML = `
+                    <img src="${imageSrc}" alt="${title}" class="cart-item-image" onerror="this.onerror=null; this.src='assets/images/placeholder.svg';">
+                    <div class="cart-item-details">
+                        <div class="cart-item-title">${title}</div>
+                        <div class="cart-item-price">${formatPrice(price)}</div>
+                        <div class="cart-item-actions">
+                            <div class="quantity-control">
+                                <button class="quantity-btn decrease-qty" data-item-id="${item.id}" ${quantity <= 1 ? 'disabled' : ''}>-</button>
+                                <span class="item-quantity" data-item-id="${item.id}">${quantity}</span>
+                                <button class="quantity-btn increase-qty" data-item-id="${item.id}">+</button>
+                            </div>
+                            <button class="remove-item-btn" data-item-id="${item.id}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                fragment.appendChild(itemElement);
+            });
+
+            cartItemsList.appendChild(fragment);
+            emptyState.style.display = 'none';
+            cartItemsList.style.display = 'block';
+            cartSummary.style.display = 'block';
+            checkoutButton.disabled = items.length === 0;
+
+            // Add event listeners AFTER rendering items
+            addCartActionListeners();
+        }
+
+         // --- Add Listeners for Cart Actions ---
+         function addCartActionListeners() {
+             cartItemsList.querySelectorAll('.decrease-qty').forEach(btn => {
+                 btn.removeEventListener('click', handleQuantityChange); // Prevent duplicates
+                 btn.addEventListener('click', handleQuantityChange);
+             });
+             cartItemsList.querySelectorAll('.increase-qty').forEach(btn => {
+                 btn.removeEventListener('click', handleQuantityChange); // Prevent duplicates
+                 btn.addEventListener('click', handleQuantityChange);
+             });
+             cartItemsList.querySelectorAll('.remove-item-btn').forEach(btn => {
+                 btn.removeEventListener('click', handleRemoveItem); // Prevent duplicates
+                 btn.addEventListener('click', handleRemoveItem);
+             });
+         }
+
+        // --- Handle Quantity Change ---
+        async function handleQuantityChange(event) {
+            const button = event.currentTarget;
+            const itemId = button.dataset.itemId;
+            const isIncreasing = button.classList.contains('increase-qty');
+            const itemContainer = button.closest('.cart-item');
+            const quantitySpan = itemContainer.querySelector(`.item-quantity[data-item-id="${itemId}"]`);
+            const decreaseBtn = itemContainer.querySelector(`.decrease-qty[data-item-id="${itemId}"]`);
+
+            if (!itemId || !quantitySpan || !cartItemsCollectionRef) return;
+
+            let currentQuantity = parseInt(quantitySpan.textContent);
+            let newQuantity = isIncreasing ? currentQuantity + 1 : currentQuantity - 1;
+
+            if (newQuantity < 1) {
+                console.log("Quantity cannot be less than 1.");
+                return;
+            }
+
+            button.disabled = true;
+            if (decreaseBtn) decreaseBtn.disabled = true;
+
+            console.log(`Updating Firestore item ${itemId} quantity to ${newQuantity}`);
+            try {
+                await cartItemsCollectionRef.doc(itemId).update({ quantity: newQuantity });
+                console.log(`Item ${itemId} quantity updated successfully.`);
+
+                const itemIndex = currentCartItems.findIndex(item => item.id === itemId);
+                if (itemIndex > -1) {
+                    currentCartItems[itemIndex].quantity = newQuantity;
+                }
+                quantitySpan.textContent = newQuantity;
+                if (decreaseBtn) decreaseBtn.disabled = (newQuantity <= 1);
+                calculateAndDisplayTotal(currentCartItems);
+                button.disabled = false;
+                if (decreaseBtn && newQuantity > 1) decreaseBtn.disabled = false;
+
+            } catch (error) {
+                console.error(`Error updating quantity for item ${itemId}:`, error);
+                showError(`Failed to update quantity: ${error.message}`);
+                 button.disabled = false;
+                 if (decreaseBtn) decreaseBtn.disabled = (currentQuantity <= 1);
+            }
+        }
+
+        // --- Handle Item Removal ---
+        async function handleRemoveItem(event) {
+             const button = event.currentTarget;
+             const itemId = button.dataset.itemId;
+             const itemContainer = button.closest('.cart-item');
+             const itemTitle = itemContainer?.querySelector('.cart-item-title')?.textContent || 'this item';
+
+             if (!itemId || !cartItemsCollectionRef) return;
+
+             if (confirm(`Are you sure you want to remove "${itemTitle}" from your cart?`)) {
+                 console.log(`Removing item ${itemId} from Firestore`);
+                 button.disabled = true;
+
+                 try {
+                    await cartItemsCollectionRef.doc(itemId).delete();
+                    console.log(`Item ${itemId} removed successfully.`);
+
+                    itemContainer.remove();
+                    currentCartItems = currentCartItems.filter(item => item.id !== itemId);
+                    calculateAndDisplayTotal(currentCartItems);
+                    if (currentCartItems.length === 0) {
+                        showEmptyState();
+                    }
+
+                 } catch (error) {
+                     console.error(`Error removing item ${itemId}:`, error);
+                     showError(`Failed to remove item: ${error.message}`);
+                     button.disabled = false;
+                 }
+             } else {
+                console.log("Item removal cancelled.");
+             }
+        }
+
+
+        // --- Calculate and Display Total ---
+        function calculateAndDisplayTotal(items) {
+            if (!items || items.length === 0) {
+                cartSubtotalElem.textContent = formatPrice(0);
+                cartTotalElem.textContent = formatPrice(0);
+                cartSummary.style.display = 'none';
+                checkoutButton.disabled = true;
+                 if (loadingIndicator.style.display === 'none' && errorMessage.style.display === 'none') {
+                     showEmptyState();
+                 }
+                return;
+            }
+
+            const subtotal = items.reduce((sum, item) => {
+                const price = parseFloat(item.productPrice ?? 0);
+                const quantity = parseInt(item.quantity || 1);
+                if (isNaN(price) || isNaN(quantity)) {
+                    console.warn(`Invalid price or quantity for item ID ${item.id}. Skipping in total.`);
+                    return sum;
+                }
+                return sum + (price * quantity);
+            }, 0);
+
+            const total = subtotal;
+
+            cartSubtotalElem.textContent = formatPrice(subtotal);
+            cartTotalElem.textContent = formatPrice(total);
+            cartSummary.style.display = 'block';
+            checkoutButton.disabled = false;
+            emptyState.style.display = 'none';
+            cartItemsList.style.display = 'block';
+        }
+
+        // --- Helper Functions ---
+        function formatPrice(price) {
+             if (price === null || price === undefined) return '₱0.00';
+             const number = parseFloat(price);
+             if (isNaN(number)) return '₱0.00';
+             return `₱${number.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        function showLoading() {
+            loadingIndicator.style.display = 'flex';
+            errorMessage.style.display = 'none';
+            emptyState.style.display = 'none';
+            cartItemsList.style.display = 'none';
+            cartSummary.style.display = 'none';
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        function showError(message = "An error occurred.") {
+             hideLoading();
+             errorMessage.textContent = message;
+             errorMessage.style.display = 'block';
+             emptyState.style.display = 'none';
+             cartItemsList.innerHTML = '';
+             cartItemsList.style.display = 'none';
+             cartSummary.style.display = 'none';
+             checkoutButton.disabled = true;
+             console.error("Cart Error Displayed:", message);
+        }
+
+        function showEmptyState(title = "Your Cart is Empty", message = "Looks like you haven't added anything yet.") {
+             hideLoading();
+             emptyState.querySelector('h3').textContent = title;
+             emptyState.querySelector('p').textContent = message;
+             emptyState.style.display = 'flex';
+             errorMessage.style.display = 'none';
+             cartItemsList.innerHTML = '';
+             cartItemsList.style.display = 'none';
+             cartSummary.style.display = 'none';
+             checkoutButton.disabled = true;
+        }
+
+        // --- Checkout Logic ---
+        checkoutButton.addEventListener('click', () => {
+            if (currentCartItems.length > 0 && !checkoutButton.disabled) {
+                console.log("Proceeding to checkout...");
+                try {
+                    // 1. Prepare data for checkout ("generate order" for the next step)
+                    const subtotal = currentCartItems.reduce((sum, item) => {
+                        const price = parseFloat(item.productPrice ?? 0);
+                        const quantity = parseInt(item.quantity || 1);
+                        return sum + (price * quantity);
+                    }, 0);
+                    const total = subtotal; // Add shipping/taxes if applicable later
+
+                    const itemsForCheckout = currentCartItems.map(item => ({
+                        productId: item.productId, // Assuming you have productId stored
+                        productTitle: item.productTitle,
+                        productPrice: item.productPrice,
+                        quantity: item.quantity,
+                        productImage: item.productImage
+                    }));
+
+                    // 2. Store data in sessionStorage to pass to checkout.html
+                    sessionStorage.setItem('checkoutCartItems', JSON.stringify(itemsForCheckout));
+                    sessionStorage.setItem('checkoutCartTotal', total.toFixed(2));
+
+                    console.log("Cart data prepared and saved to sessionStorage.");
+                    console.log("Total:", total.toFixed(2));
+                    console.log("Items:", itemsForCheckout);
+
+                    // 3. Redirect to checkout page
+                    window.location.href = 'checkout.html'; // UPDATED REDIRECT URL
+
+                } catch (error) {
+                     console.error("Error preparing data for checkout:", error);
+                     showError("Could not proceed to checkout. Please try again.");
+                }
+
+            } else {
+                console.log("Checkout button clicked, but cart is empty or button is disabled.");
+                // Optionally, provide user feedback if they somehow click a disabled button
+                // or if cart is empty (though button should be disabled).
+                // alert("Your cart is empty or an error occurred preventing checkout.");
+            }
+        });
+
+    </script>
+</body>
+</html>

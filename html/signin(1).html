@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+  <title>Sign In - WeConnect</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Modern Flat Design */
+    :root {
+      --primary: #1F3A5C;
+      --primary-light: #4A90E2;
+      --secondary: #f8f9fa;
+      --text: #2c3e50;
+      --text-light: #7f8c9a;
+      --border: #e0e6ed;
+      --success: #4CAF50;
+      --error: #E74C3C;
+      --white: #ffffff;
+      --shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    body {
+      background-color: var(--secondary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: var(--text);
+    }
+    
+    .container {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    
+    .logo {
+      margin-bottom: 24px;
+    }
+    
+    .logo img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+    }
+    
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+    
+    .subtitle {
+      color: var(--text-light);
+      margin-bottom: 24px;
+      font-size: 15px;
+    }
+    
+    .input-container {
+      margin-bottom: 16px;
+      position: relative;
+    }
+    
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: var(--white);
+      margin-top: 8px;
+    }
+    
+    .btn-primary:hover {
+      background: #162a40;
+    }
+    
+    .btn-google {
+      background: var(--white);
+      color: var(--text);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .btn-google:hover {
+      background: #f1f3f5;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: var(--text-light);
+      font-size: 13px;
+    }
+    
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    
+    .divider::before {
+      margin-right: 12px;
+    }
+    
+    .divider::after {
+      margin-left: 12px;
+    }
+    
+    .links {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    
+    .links a {
+      color: var(--primary-light);
+      text-decoration: none;
+    }
+    
+    .links a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Modern Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    
+    .modal.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .modal-content {
+      background: var(--white);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 340px;
+      padding: 24px;
+      text-align: center;
+      transform: translateY(20px);
+      transition: transform 0.3s;
+    }
+    
+    .modal.active .modal-content {
+      transform: translateY(0);
+    }
+    
+    .modal-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    
+    .success .modal-icon {
+      background: rgba(76, 175, 80, 0.1);
+      color: var(--success);
+    }
+    
+    .error .modal-icon {
+      background: rgba(231, 76, 60, 0.1);
+      color: var(--error);
+    }
+    
+    .modal-icon i {
+      font-size: 28px;
+    }
+    
+    .modal h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    
+    .modal p {
+      color: var(--text-light);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    
+    .progress-bar {
+      height: 4px;
+      background: #e0e6ed;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    
+    .progress {
+      height: 100%;
+      background: var(--success);
+      width: 0%;
+      transition: width 0.3s;
+    }
+    
+    /* Loading Spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(31, 58, 92, 0.2);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Comment Log Style Notification */
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(120%);
+      transition: transform 0.3s;
+      z-index: 1001;
+    }
+    
+    .notification.active {
+      transform: translateX(0);
+    }
+    
+    .notification-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .notification-success .notification-icon {
+      background: var(--success);
+      color: white;
+    }
+    
+    .notification-error .notification-icon {
+      background: var(--error);
+      color: white;
+    }
+    
+    .notification-message {
+      font-size: 14px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 480px) {
+      .container {
+        padding: 30px 20px;
+      }
+      
+      .modal-content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo">
+    </div>
+    
+    <h1>Welcome Back</h1>
+    <p class="subtitle">Sign in to access your account</p>
+    
+    <form id="signinForm">
+      <div class="input-container">
+        <input type="email" id="email" placeholder="Email Address" required>
+      </div>
+      
+      <div class="input-container">
+        <input type="password" id="password" placeholder="Password" required>
+      </div>
+      
+      <button type="submit" class="btn-primary">
+        <span id="submitText">Sign In</span>
+        <span id="submitSpinner" class="spinner" style="display: none;"></span>
+      </button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <button id="googleSignIn" class="btn-google">
+      <i class="fab fa-google"></i> Continue with Google
+    </button>
+
+    <div class="links">
+      <a href="forgot-password.html">Forgot password?</a>
+      <p style="margin-top: 12px;">Don't have an account? <a href="signup.html">Sign up</a></p>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal" id="successModal">
+    <div class="modal-content success">
+      <div class="modal-icon">
+        <i class="fas fa-check"></i>
+      </div>
+      <h2>Welcome Back!</h2>
+      <p>You're being redirected to your dashboard</p>
+      <div class="progress-bar">
+        <div class="progress" id="redirectProgress"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Modal -->
+  <div class="modal" id="errorModal">
+    <div class="modal-content error">
+      <div class="modal-icon">
+        <i class="fas fa-exclamation"></i>
+      </div>
+      <h2 id="errorTitle">Sign In Failed</h2>
+      <p id="errorMessage">An unknown error occurred</p>
+      <button class="btn-primary" style="margin-top: 16px;" onclick="document.getElementById('errorModal').classList.remove('active')">
+        Try Again
+      </button>
+    </div>
+  </div>
+
+  <!-- Comment Log Style Notification -->
+  <div class="notification" id="notification">
+    <div class="notification-icon">
+      <i class="fas fa-check"></i>
+    </div>
+    <div class="notification-message" id="notificationMessage"></div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+      authDomain: "daisy-n7g20a.firebaseapp.com",
+      databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+      projectId: "daisy-n7g20a",
+      storageBucket: "daisy-n7g20a.appspot.com",
+      messagingSenderId: "225362605902",
+      appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    
+    // Google Auth Provider
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    
+    // DOM Elements
+    const signinForm = document.getElementById('signinForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const submitText = document.getElementById('submitText');
+    const submitSpinner = document.getElementById('submitSpinner');
+    const googleSignInBtn = document.getElementById('googleSignIn');
+    const successModal = document.getElementById('successModal');
+    const errorModal = document.getElementById('errorModal');
+    const errorTitle = document.getElementById('errorTitle');
+    const errorMessage = document.getElementById('errorMessage');
+    const redirectProgress = document.getElementById('redirectProgress');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notificationMessage');
+    
+    // Demo credentials (remove in production)
+    emailInput.value = "user@example.com";
+    passwordInput.value = "password123";
+    
+    // Show notification
+    function showNotification(message, type = 'success') {
+      notification.className = `notification notification-${type}`;
+      notification.querySelector('.notification-icon i').className = 
+        type === 'success' ? 'fas fa-check' : 'fas fa-exclamation';
+      notificationMessage.textContent = message;
+      notification.classList.add('active');
+      
+      setTimeout(() => {
+        notification.classList.remove('active');
+      }, 3000);
+    }
+    
+    // Form submission handler
+    signinForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      
+      // Basic validation
+      if (!email || !password) {
+        showNotification('Please enter both email and password', 'error');
+        return;
+      }
+      
+      // Show loading state
+      submitText.style.display = 'none';
+      submitSpinner.style.display = 'inline-block';
+      
+      try {
+        // Firebase email/password authentication
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Show success modal
+        successModal.classList.add('active');
+        
+        // Animate progress bar
+        let width = 0;
+        const interval = setInterval(() => {
+          width += 1;
+          redirectProgress.style.width = `${width}%`;
+          
+          if (width >= 100) {
+            clearInterval(interval);
+            window.location.href = 'home.html';
+          }
+        }, 30);
+        
+      } catch (error) {
+        // Handle errors
+        let title = "Sign In Failed";
+        let message = "An unknown error occurred. Please try again.";
+        
+        switch (error.code) {
+          case "auth/user-not-found":
+          case "auth/wrong-password":
+            message = "Invalid email or password";
+            break;
+          case "auth/invalid-email":
+            message = "Please enter a valid email address";
+            break;
+          case "auth/user-disabled":
+            message = "This account has been disabled";
+            break;
+          case "auth/too-many-requests":
+            message = "Too many attempts. Try again later";
+            break;
+          case "auth/network-request-failed":
+            message = "Network error. Check your connection";
+            break;
+          default:
+            message = error.message;
+        }
+        
+        errorTitle.textContent = title;
+        errorMessage.textContent = message;
+        errorModal.classList.add('active');
+        
+        // Show notification
+        showNotification(message, 'error');
+      } finally {
+        // Reset loading state
+        submitText.style.display = 'inline';
+        submitSpinner.style.display = 'none';
+      }
+    });
+    
+    // Google Sign-In handler
+    googleSignInBtn.addEventListener('click', async function() {
+      try {
+        submitText.style.display = 'none';
+        submitSpinner.style.display = 'inline-block';
+        googleSignInBtn.disabled = true;
+        
+        const result = await auth.signInWithPopup(googleProvider);
+        const user = result.user;
+        
+        // Show success modal
+        successModal.classList.add('active');
+        
+        // Animate progress bar
+        let width = 0;
+        const interval = setInterval(() => {
+          width += 1;
+          redirectProgress.style.width = `${width}%`;
+          
+          if (width >= 100) {
+            clearInterval(interval);
+            window.location.href = 'home.html';
+          }
+        }, 30);
+        
+      } catch (error) {
+        // Handle errors
+        let message = "Google sign-in failed. Please try again.";
+        
+        if (error.code === "auth/popup-closed-by-user") {
+          message = "Sign-in window was closed";
+        } else if (error.code === "auth/cancelled-popup-request") {
+          message = "Sign-in cancelled";
+        }
+        
+        errorTitle.textContent = "Google Sign-In Failed";
+        errorMessage.textContent = message;
+        errorModal.classList.add('active');
+        
+        // Show notification
+        showNotification(message, 'error');
+      } finally {
+        submitText.style.display = 'inline';
+        submitSpinner.style.display = 'none';
+        googleSignInBtn.disabled = false;
+      }
+    });
+    
+    // Check auth state on load
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        // User is signed in
+        console.log("User already signed in:", user.uid);
+        // Uncomment to auto-redirect if already signed in
+        // window.location.href = 'home.html';
+      }
+    });
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

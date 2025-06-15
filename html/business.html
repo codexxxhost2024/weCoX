@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Affiliate Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #1F3A5C;
+      --background-light: #f0f2f5;
+      --background-card: #ffffff;
+      --text-dark: #2c3e50;
+      --text-medium: #555e69;
+      --text-light: #7f8c9a;
+      --accent-color: #4A90E2;
+      --success-color: #4CAF50;
+      --error-color: #E74C3C;
+      --spacing-unit: 16px;
+      --border-radius: 10px;
+      --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --box-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.1);
+      --header-height: 60px;
+      /* --bottom-nav-height: 60px; /* REMOVED */
+      --transition-main: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-top: var(--header-height);
+      padding-bottom: var(--spacing-unit); /* Adjusted: No bottom nav */
+      max-width: 420px;
+      margin: 0 auto;
+      overflow-x: hidden;
+      position: relative;
+    }
+    a { color: var(--accent-color); text-decoration: none; transition: color var(--transition-main); }
+    a:hover { color: var(--primary-color); }
+    button {
+        font-family: inherit; cursor: pointer; border: none;
+        border-radius: var(--border-radius);
+        transition: background-color var(--transition-main), transform 0.1s ease-out, box-shadow var(--transition-main);
+        outline: none;
+    }
+    button:active { transform: scale(0.97); }
+
+    .primary-button {
+      background-color: var(--primary-color); color: #FFFFFF; padding: 12px var(--spacing-unit);
+      font-size: 0.95rem; font-weight: 600; text-align: center; box-shadow: var(--box-shadow);
+    }
+    .primary-button:hover { background-color: #192F4A; box-shadow: var(--box-shadow-hover); }
+
+    .secondary-button {
+      background-color: transparent; color: var(--primary-color); border: 1.5px solid var(--primary-color);
+      padding: 10px calc(var(--spacing-unit) * 0.8); font-size: 0.85rem; font-weight: 500; text-align: center;
+    }
+    .secondary-button:hover { background-color: rgba(31, 58, 92, 0.05); }
+    .secondary-button .material-symbols-outlined { vertical-align: -5px; margin-right: 4px; font-size: 1.1em;}
+
+
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+
+    .header {
+      background-color: var(--background-card); color: var(--text-dark); padding: 0 var(--spacing-unit);
+      display: flex; align-items: center; justify-content: space-between;
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 420px; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.06); height: var(--header-height);
+    }
+    .header-icon-button {
+        background: none; color: var(--text-medium); padding: 10px; display:flex; align-items:center;
+        border-radius: 50%; margin-left: -10px; /* Offset padding to align icon visually */
+    }
+    .header-icon-button:hover { color: var(--primary-color); background-color: rgba(31, 58, 92, 0.07); }
+    .header-icon-button .material-symbols-outlined { font-size: 26px; }
+
+    .header-title-container { display: flex; align-items: center; flex-grow: 1; justify-content: center; padding-right: 36px; /* Space for potential right icon, or adjust if no right icon */ }
+    .header-logo-img { width: 32px; height: 32px; object-fit: contain; }
+    .header-title-text { font-size: 1.15rem; font-weight: 700; margin-left: 10px; color: var(--primary-color); }
+
+    .header-icons-right { display: flex; align-items: center; } /* This is for multiple icons on right */
+    .header-icons-right .header-icon { /* Style for individual icon if wrapped in this div */
+      background: none; color: var(--text-medium); padding: 10px; display:flex; align-items:center;
+      border-radius: 50%; cursor: pointer;
+    }
+    .header-icons-right .header-icon:hover { color: var(--primary-color); background-color: rgba(31, 58, 92, 0.07); }
+    .header-icons-right .header-icon .material-symbols-outlined { font-size: 26px; }
+
+
+    #pageLoading {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(240, 242, 245, 0.95); display: flex; flex-direction: column;
+        justify-content: center; align-items: center; z-index: 1001;
+        opacity: 1; visibility: visible;
+        transition: opacity 0.4s var(--transition-main), visibility 0s linear 0s;
+    }
+    #pageLoading.hidden { opacity: 0; visibility: hidden; transition: opacity 0.4s var(--transition-main), visibility 0s linear 0.4s; }
+    #pageLoading .loading-text { font-size: 1rem; font-weight: 500; color: var(--text-dark); margin-top: 5px; }
+    #pageLoading .spinner {
+         border: 4px solid #e0e6ed; border-top: 4px solid var(--primary-color);
+         border-radius: 50%; width: 36px; height: 36px;
+         animation: spin 0.8s linear infinite; margin-bottom: var(--spacing-unit);
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: calc(var(--spacing-unit) * 1.5); }
+
+    .section-title {
+        font-size: 1.3rem; font-weight: 700; margin-bottom: var(--spacing-unit); color: var(--text-dark);
+        padding-bottom: calc(var(--spacing-unit) * 0.6); border-bottom: 1.5px solid #e0e6ed;
+    }
+    .affiliate-list-container {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInSlideUp 0.5s var(--transition-main) forwards;
+    }
+    @keyframes fadeInSlideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .affiliate-item {
+        background-color: var(--background-card);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-unit);
+        box-shadow: var(--box-shadow);
+        margin-bottom: calc(var(--spacing-unit) * 1.25);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-unit);
+        transition: transform var(--transition-main), box-shadow var(--transition-main);
+    }
+    .affiliate-item:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--box-shadow-hover);
+    }
+
+    .affiliate-item-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-unit);
+        padding-bottom: calc(var(--spacing-unit) * 0.75);
+        border-bottom: 1px solid #edf2f7;
+    }
+    .affiliate-logo-wrapper {
+        width: 52px;
+        height: 52px;
+        border-radius: 8px;
+        background-color: #f7fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        flex-shrink: 0;
+        padding: 5px;
+    }
+    .affiliate-logo {
+        width: 100%;
+        height: 100%;
+        max-width: 40px;
+        max-height: 40px;
+        object-fit: contain;
+    }
+    .affiliate-name-and-commission { flex-grow: 1; }
+    .affiliate-name { font-size: 1.1rem; font-weight: 600; color: var(--text-dark); margin-bottom: 5px; }
+    .affiliate-commission { font-size: 0.9rem; font-weight: 500; color: var(--success-color); display: flex; align-items: center; }
+    .affiliate-commission .material-symbols-outlined { font-size: 1.2em; margin-right: 6px; vertical-align: -3px; }
+
+    .affiliate-description {
+        font-size: 0.9rem;
+        color: var(--text-medium);
+        line-height: 1.5;
+        margin-top: calc(var(--spacing-unit) * 0.25);
+    }
+    .affiliate-link-area {
+        display: flex;
+        align-items: stretch;
+        gap: calc(var(--spacing-unit) * 0.6);
+        background-color: #f8f9fa;
+        padding: calc(var(--spacing-unit) * 0.75);
+        border-radius: 8px;
+        border: 1px solid #e0e6ed;
+        margin-top: calc(var(--spacing-unit) * 0.5);
+    }
+    .affiliate-link-text {
+        flex-grow: 1;
+        font-size: 0.85rem;
+        color: var(--text-medium);
+        word-break: break-all;
+        padding: 10px;
+        background-color: var(--background-card);
+        border-radius: 6px;
+        border: 1px solid #d1d9e6;
+        line-height: 1.4;
+        max-height: 48px;
+        overflow-y: auto;
+        font-family: 'Courier New', Courier, monospace;
+    }
+     .copy-link-button {
+        flex-shrink: 0;
+        min-width: 90px;
+        padding: 0 12px;
+        font-size: 0.85rem;
+        height: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .copy-link-button .material-symbols-outlined {
+        margin-right: 6px;
+        font-size: 1.1em;
+        vertical-align: -3px;
+    }
+
+    #userNotAuthenticatedMessage, #loadingAffiliatesMessage, #noAffiliatesMessage {
+        text-align: center;
+        padding: calc(var(--spacing-unit) * 1.5);
+        color: var(--text-medium);
+        font-size: 0.95rem;
+        background-color: var(--background-card);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin: var(--spacing-unit) 0;
+    }
+    #noAffiliatesMessage { display: none; }
+
+    /* --- BOTTOM NAVIGATION BAR CSS REMOVED --- */
+    /* Ensure any rules like .bottom-nav, .nav-item, .center-button-nav are deleted or commented out */
+
+  </style>
+</head>
+<body>
+
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading Affiliate Hub...</p>
+  </div>
+
+  <header class="header">
+    <button class="header-icon-button" id="backButton" title="Go Back">
+        <span class="material-symbols-outlined">arrow_back_ios_new</span>
+    </button>
+    <div class="header-title-container">
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+      <span class="header-title-text">Affiliate Hub</span>
+    </div>
+    <div class="header-icons-right"> <!-- Kept for sign-out, adjust if other icons needed -->
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="affiliate-list-container" id="affiliateListContainer" style="display: none;">
+      <h2 class="section-title">Your Affiliate Programs</h2>
+      <div id="affiliateList">
+        <!-- Affiliate items will be loaded here -->
+      </div>
+      <p id="noAffiliatesMessage">No affiliate programs found for you at this time.</p>
+    </div>
+    <p id="loadingAffiliatesMessage" style="display: block;">Generating your affiliate opportunities...</p>
+    <p id="userNotAuthenticatedMessage" style="display: none;">Please sign in to view your affiliate links.</p>
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR HTML REMOVED -->
+
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Ensure this is your actual key
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+    const db = firebase.firestore(); // Assuming you are using Firestore
+
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const affiliateListContainer = document.getElementById('affiliateListContainer');
+    const affiliateListDiv = document.getElementById('affiliateList');
+    const loadingAffiliatesMessage = document.getElementById('loadingAffiliatesMessage');
+    const userNotAuthenticatedMessage = document.getElementById('userNotAuthenticatedMessage');
+    const noAffiliatesMessage = document.getElementById('noAffiliatesMessage');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const backButton = document.getElementById('backButton');
+
+    const MAIN_URL_PREFIX = "weconnect$";
+    let USER_UNIQUE_ID = null;
+
+    const affiliateBaseData = [
+      { name: "Amazon Associates", baseAffiliateUrl: "https://www.amazon.com/?tag=", imageUrl: "https://logo.clearbit.com/amazon.com", description: "Promote millions of products from the world's largest online retailer. Ideal for diverse niches.", originalCommissionPercentage: 8 },
+      { name: "eBay Partner Network", baseAffiliateUrl: "https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=1&pub=", imageUrl: "https://logo.clearbit.com/ebay.com", description: "Tap into a global marketplace. Great for unique, used, or collectible items.", originalCommissionPercentage: 6 },
+      { name: "Shopify Partners", baseAffiliateUrl: "https://shopify.com/?ref=", imageUrl: "https://logo.clearbit.com/shopify.com", description: "Refer new merchants to the leading e-commerce platform and earn recurring revenue.", originalCommissionPercentage: 20 },
+      { name: "ClickBank", baseAffiliateUrl: "https://hop.clickbank.net/?affiliate=", imageUrl: "https://logo.clearbit.com/clickbank.com", description: "Access a vast marketplace of digital products with high commission potential.", originalCommissionPercentage: 50 },
+      { name: "CJ Affiliate", baseAffiliateUrl: "https://www.anrdoezrs.net/click-YOUR_CJ_ID-YOUR_PID?sid=", imageUrl: "https://logo.clearbit.com/cj.com", description: "Connect with thousands of well-known brands through this established network. (Update with your CJ IDs)", originalCommissionPercentage: 8 },
+      { name: "ShareASale", baseAffiliateUrl: "https://shareasale.com/r.cfm?b=BANNER_ID&u=YOUR_ID&m=MERCHANT_ID&urllink=&afftrack=", imageUrl: "https://logo.clearbit.com/shareasale.com", description: "A popular network known for its wide variety of merchants and reliable payments. (Update IDs)", originalCommissionPercentage: 7 },
+      { name: "Impact.com", baseAffiliateUrl: "https://go.impactradius.com/aff_c?offer_id=OFFER_ID&aff_id=YOUR_AFF_ID&source=", imageUrl: "https://logo.clearbit.com/impact.com", description: "Modern platform for managing brand partnerships and affiliate programs directly. (Update IDs)", originalCommissionPercentage: 10 },
+      { name: "Rakuten Advertising", baseAffiliateUrl: "https://click.linksynergy.com/fs-bin/click?id=YOUR_LINKSHARE_ID&offerid=OFFER_ID.10000027&subid=0&type=4&LSNSUBSITE=", imageUrl: "https://logo.clearbit.com/rakuten.com", description: "Partner with top retail brands and earn commissions on sales you drive. (Update IDs)", originalCommissionPercentage: 7 },
+      { name: "Canva Pro Affiliates", baseAffiliateUrl: "https://partner.canva.com/c/YOUR_CANVA_ID/", imageUrl: "https://logo.clearbit.com/canva.com", description: "Promote Canva Pro subscriptions and earn for each new paying customer. (Update ID)", originalCommissionPercentage: 25 },
+      { name: "Semrush Affiliate Program", baseAffiliateUrl: "https://semrush.sjv.io/c/YOUR_SEMRUSH_ID?pts=", imageUrl: "https://logo.clearbit.com/semrush.com", description: "Refer users to a leading online visibility and SEO toolkit. High-ticket potential. (Update ID)", originalCommissionPercentage: 40 },
+      { name: "NordVPN Affiliates", baseAffiliateUrl: "https://go.nordvpn.net/aff_c?offer_id=OFFER_ID&aff_id=YOUR_AFF_ID&url_id=", imageUrl: "https://logo.clearbit.com/nordvpn.com", description: "Promote a top-tier VPN service and earn substantial commissions on new subscriptions. (Update IDs)", originalCommissionPercentage: 40 },
+      { name: "Coursera Affiliate Program", baseAffiliateUrl: "https://www.dpbolvw.net/click-YOUR_CJ_ID-YOUR_PID?url=", imageUrl: "https://logo.clearbit.com/coursera.org", description: "Share courses from world-class universities and companies, earning on enrollments. (Often via CJ, update IDs)", originalCommissionPercentage: 15 },
+      { name: "Bluehost Web Hosting", baseAffiliateUrl: "https://www.bluehost.com/track/", imageUrl: "https://logo.clearbit.com/bluehost.com", description: "Recommend reliable web hosting, perfect for new website creators. Generous flat-rate commissions.", originalCommissionPercentage: 65 },
+      { name: "Elementor Website Builder", baseAffiliateUrl: "https://elementor.com/aff/?ref=", imageUrl: "https://logo.clearbit.com/elementor.com", description: "Partner with the leading WordPress page builder and earn for every Pro sale.", originalCommissionPercentage: 50 },
+      { name: "Teachable Course Platform", baseAffiliateUrl: "https://teachable.sjv.io/c/YOUR_ID?pts=", imageUrl: "https://logo.clearbit.com/teachable.com", description: "Empower creators to sell online courses and earn recurring commissions. (Update ID)", originalCommissionPercentage: 30 },
+    ];
+
+    let dynamicallyGeneratedAffiliates = [];
+
+    function buildUserAffiliateLink(baseAffiliateUrl, userId) {
+        const commonParams = ["tag=", "ref=", "affiliate=", "pub=", "u=", "aff_id=", "sid="];
+        let link = baseAffiliateUrl;
+        let paramFound = false;
+        for (const param of commonParams) {
+            if (link.endsWith(param)) {
+                link += `${MAIN_URL_PREFIX}${userId}`;
+                paramFound = true;
+                break;
+            }
+        }
+        if (!paramFound) { // Fallback if no common param ending is found
+            if (link.includes("?")) {
+                link += `&subid1=${MAIN_URL_PREFIX}${userId}`; // Using subid1 as a common tracking param
+            } else {
+                link += `?subid1=${MAIN_URL_PREFIX}${userId}`;
+            }
+        }
+        // For URLs that require specific placeholders like {YOUR_ID}, they need to be replaced.
+        // This function doesn't handle those dynamic replacements from the base URL string yet.
+        // You would need to pre-configure those baseAffiliateUrl strings in affiliateBaseData
+        // to either already include your specific IDs or have a clear placeholder for just the user's tracking part.
+        // For this demo, the USER_UNIQUE_ID is appended as shown.
+        return link;
+    }
+
+
+    function initializeAndRenderAffiliateLinks(userId) {
+      USER_UNIQUE_ID = userId;
+      dynamicallyGeneratedAffiliates = affiliateBaseData.map(company => ({
+        ...company,
+        link: buildUserAffiliateLink(company.baseAffiliateUrl, USER_UNIQUE_ID),
+        userCommissionPercentage: company.originalCommissionPercentage * 0.5
+      }));
+
+      affiliateListDiv.innerHTML = '';
+      if (dynamicallyGeneratedAffiliates.length === 0) {
+        noAffiliatesMessage.style.display = 'block';
+      } else {
+        noAffiliatesMessage.style.display = 'none';
+        dynamicallyGeneratedAffiliates.forEach(affiliate => {
+          const itemDiv = document.createElement('div');
+          itemDiv.classList.add('affiliate-item');
+
+          itemDiv.innerHTML = `
+            <div class="affiliate-item-header">
+              <div class="affiliate-logo-wrapper">
+                <img src="${affiliate.imageUrl}" alt="${affiliate.name} Logo" class="affiliate-logo"
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/40x40.png?text=${encodeURIComponent(affiliate.name.substring(0,2).toUpperCase())}';">
+              </div>
+              <div class="affiliate-name-and-commission">
+                <div class="affiliate-name">${affiliate.name}</div>
+                <div class="affiliate-commission">
+                  <span class="material-symbols-outlined">payments</span>
+                  Earn up to ${affiliate.userCommissionPercentage.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+            <p class="affiliate-description">${affiliate.description}</p>
+            <div class="affiliate-link-area">
+              <span class="affiliate-link-text">${affiliate.link}</span>
+              <button class="secondary-button copy-link-button">
+                <span class="material-symbols-outlined">content_copy</span> Copy
+              </button>
+            </div>
+          `;
+
+          const copyButton = itemDiv.querySelector('.copy-link-button');
+          copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(affiliate.link)
+              .then(() => {
+                const originalHTML = copyButton.innerHTML;
+                copyButton.innerHTML = `<span class="material-symbols-outlined">check_circle</span> Copied!`;
+                copyButton.style.backgroundColor = 'var(--success-color)';
+                copyButton.style.color = 'white';
+                copyButton.style.borderColor = 'var(--success-color)';
+                setTimeout(() => {
+                    copyButton.innerHTML = originalHTML;
+                    copyButton.style.backgroundColor = '';
+                    copyButton.style.color = '';
+                    copyButton.style.borderColor = '';
+                }, 2500);
+              })
+              .catch(err => {
+                console.error('Failed to copy link: ', err);
+                alert('Failed to copy link automatically. Please copy it manually.');
+              });
+          });
+          affiliateListDiv.appendChild(itemDiv);
+        });
+      }
+      loadingAffiliatesMessage.style.display = 'none';
+      affiliateListContainer.style.display = 'block';
+      pageLoadingElement.classList.add('hidden');
+    }
+
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        userNotAuthenticatedMessage.style.display = 'none';
+        loadingAffiliatesMessage.style.display = 'block';
+        noAffiliatesMessage.style.display = 'none';
+        affiliateListContainer.style.display = 'none';
+        pageLoadingText.textContent = 'Generating Your Affiliate Opportunities...';
+        pageLoadingElement.classList.remove('hidden');
+
+        setTimeout(() => {
+             initializeAndRenderAffiliateLinks(user.uid);
+        }, 500);
+
+      } else {
+        USER_UNIQUE_ID = null;
+        dynamicallyGeneratedAffiliates = [];
+        affiliateListContainer.style.display = 'none';
+        loadingAffiliatesMessage.style.display = 'none';
+        noAffiliatesMessage.style.display = 'none';
+        userNotAuthenticatedMessage.style.display = 'block';
+        pageLoadingElement.classList.add('hidden');
+      }
+    });
+
+    if(signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                     pageLoadingElement.classList.remove('hidden');
+                     pageLoadingText.textContent = 'Signing out...';
+                    await auth.signOut();
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out. Please try again.");
+                    pageLoadingElement.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+             pageLoadingElement.classList.remove('hidden');
+             pageLoadingText.textContent = 'Loading...';
+             window.location.href = 'home.html'; // Navigate to home.html as per general app flow
+        });
+    }
+
+    // REMOVED setupNavigation() function and its call from DOMContentLoaded
+    // as bottom nav is removed.
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            if (pageLoadingElement && !pageLoadingElement.classList.contains('hidden') && auth.currentUser === null) {
+                // This logic might still be useful for general loading state management
+                // if auth.onAuthStateChanged is slow for some reason.
+            }
+        }, 2500);
+    });
+  </script>
+
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

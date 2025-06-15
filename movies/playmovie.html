@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="referrer" content="origin"
+<title></title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Prevent scrollbars on body/html */
+    background-color: #000; /* Black background for the page */
+    color: white; /* Default text color for any messages */
+    font-family: Arial, sans-serif; /* Basic font */
+  }
+  .video-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Full width of parent (initially body/html) */
+    height: 100%; /* Full height of parent (initially body/html) */
+    background-color: #000; /* Black background for the container */
+    overflow: hidden; /* Ensure no overflow from iframe styling */
+  }
+  iframe {
+    border: none; /* No border around the iframe */
+    /* Default state: responsive aspect ratio fill within container */
+    /* These values ensure a 16:9 aspect ratio that fits the container */
+    width: 100vw; /* Start with full viewport width */
+    height: calc(100vw * 9 / 16); /* Calculate height for 16:9 based on 100vw */
+
+    max-width: 100%; /* Don't exceed container width (for when height is constraint) */
+    max-height: 100vh; /* Start with full viewport height as max */
+  }
+
+  /* Adjust iframe if height becomes the limiting factor for 16:9 */
+  @media (min-aspect-ratio: 16/9) {
+    iframe {
+      width: calc(100vh * 16 / 9); /* Calculate width for 16:9 based on 100vh */
+      height: 100vh;
+    }
+  }
+
+
+  /* Styles for when the video-container is in full-screen mode */
+  .video-container:-webkit-full-screen { /* Safari, Chrome */
+    width: 100%;
+    height: 100%;
+  }
+  .video-container:-moz-full-screen { /* Firefox */
+    width: 100%;
+    height: 100%;
+  }
+  .video-container:-ms-fullscreen { /* IE/Edge */
+    width: 100%;
+    height: 100%;
+  }
+  .video-container:fullscreen { /* Standard */
+    width: 100%;
+    height: 100%;
+  }
+
+  /* iframe takes full dimensions of its parent when parent is fullscreen */
+  .video-container:-webkit-full-screen iframe,
+  .video-container:-moz-full-screen iframe,
+  .video-container:-ms-fullscreen iframe,
+  .video-container:fullscreen iframe {
+    width: 100%;
+    height: 100%;
+    /* Override aspect ratio calculations if they interfere with true fullscreen fill */
+    max-width: none;
+    max-height: none;
+  }
+
+  .error-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+    font-size: 18px;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div id="videoContainer" class="video-container">
+  <iframe id="movieFrame" src="" referrerpolicy="origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen crossorigin="anonymous"></iframe> 
+</div>
+
+<script>
+  window.onload = function() {
+    const videoContainer = document.getElementById('videoContainer');
+    const iframe = document.getElementById('movieFrame');
+    let streamURL = localStorage.getItem("streamURL");
+
+    if (streamURL && streamURL.trim() !== "") {
+      // Modify URL for autoplay if it's a known type (e.g., YouTube)
+      // This is a basic check; more robust parsing might be needed for various URL formats.
+      if ((streamURL.includes("youtube.com/embed/") || streamURL.includes("youtu.be/")) && !streamURL.includes("autoplay=1")) {
+        streamURL += (streamURL.includes("?") ? "&" : "?") + "autoplay=1&mute=1"; // Autoplay often requires mute initially
+         if (!streamURL.includes("fs=1")) { // Ensure YouTube player fullscreen button is enabled
+            streamURL += "&fs=1";
+        }
+      }
+      // For Vimeo example: add autoplay=1&muted=1
+      // if (streamURL.includes("player.vimeo.com/video/") && !streamURL.includes("autoplay=1")) {
+      //   streamURL += (streamURL.includes("?") ? "&" : "?") + "autoplay=1&muted=1";
+      // }
+
+      iframe.src = streamURL;
+
+      const attemptFullscreenExperience = () => {
+        // Attempt to go fullscreen
+        if (videoContainer.requestFullscreen) {
+          videoContainer.requestFullscreen().catch(err => {
+            console.warn(`Fullscreen request failed: ${err.message} (${err.name}). User interaction may be required.`);
+          });
+        } else if (videoContainer.webkitRequestFullscreen) { /* Safari, Chrome */
+          videoContainer.webkitRequestFullscreen().catch(err => {
+            console.warn(`Fullscreen request failed (webkit): ${err.message} (${err.name}).`);
+          });
+        } else if (videoContainer.mozRequestFullScreen) { /* Firefox */
+          videoContainer.mozRequestFullScreen().catch(err => {
+            console.warn(`Fullscreen request failed (moz): ${err.message} (${err.name}).`);
+          });
+        } else if (videoContainer.msRequestFullscreen) { /* IE/Edge */
+          videoContainer.msRequestFullscreen().catch(err => {
+            console.warn(`Fullscreen request failed (ms): ${err.message} (${err.name}).`);
+          });
+        }
+
+        // Attempt to lock screen orientation to landscape
+        if (screen.orientation && typeof screen.orientation.lock === 'function') {
+          screen.orientation.lock('landscape').catch(err => {
+            console.warn(`Screen orientation lock failed: ${err.message} (${err.name}). This often requires fullscreen and user permission.`);
+          });
+        } else if (typeof screen.lockOrientation === 'function') { // Older standard
+            screen.lockOrientation('landscape').catch(err => {  console.warn(`Screen orientation lock failed (older): ${err.message} (${err.name}).`); });
+        } else if (typeof screen.mozLockOrientation === 'function') { // Firefox
+            screen.mozLockOrientation('landscape').catch(err => {  console.warn(`Screen orientation lock failed (moz): ${err.message} (${err.name}).`); });
+        } else if (typeof screen.msLockOrientation === 'function') { // IE/Edge
+            screen.msLockOrientation('landscape').catch(err => {  console.warn(`Screen orientation lock failed (ms): ${err.message} (${err.name}).`); });
+        }
+      };
+
+      // Try to initiate fullscreen and landscape when the iframe content has started loading.
+      iframe.onload = () => {
+        console.log("Iframe content loaded, attempting fullscreen experience.");
+        attemptFullscreenExperience();
+      };
+      
+
+    } else {
+      videoContainer.innerHTML = '<div class="error-message"><p>Stream URL not found or is invalid. Please go back and select a movie to play.</p></div>';
+      console.error("Stream URL not found in localStorage or is empty.");
+    }
+
+    // Optional: Listen to fullscreen changes to log or adjust UI
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        console.log('Exited full-screen mode.');
+      } else {
+        console.log('Entered full-screen mode.');
+      }
+    });
+    document.addEventListener('webkitfullscreenchange', () => { /* Safari, Chrome */
+        if (!document.webkitFullscreenElement) console.log('Exited full-screen mode (webkit).');
+        else console.log('Entered full-screen mode (webkit).');
+    });
+     document.addEventListener('mozfullscreenchange', () => { /* Firefox */
+        if (!document.mozFullScreenElement) console.log('Exited full-screen mode (moz).');
+        else console.log('Entered full-screen mode (moz).');
+    });
+    document.addEventListener('MSFullscreenChange', () => { /* IE/Edge */
+        if (!document.msFullscreenElement) console.log('Exited full-screen mode (ms).');
+        else console.log('Entered full-screen mode (ms).');
+    });
+
+  };
+</script>
+
+</body>
+</html>

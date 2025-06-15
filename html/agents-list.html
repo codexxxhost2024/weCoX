@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect • Agent List</title> <!-- MODIFIED Title to match WeConnect Theme -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1F3A5C"> <!-- MODIFIED WeConnect Theme Color -->
+
+  <!-- MODIFIED: Inter Font (WeConnect Theme) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> <!-- Updated Font Awesome -->
+
+  <!-- MODIFIED: Firebase SDK v9 (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script> <!-- MODIFIED for Firestore -->
+
+
+  <style>
+    :root {
+      /* --- MODIFIED: WeConnect Theme Variables --- */
+      --primary-color: #1F3A5C;
+      --primary-color-darker: #142840;
+      --primary-color-light-bg: rgba(31, 58, 92, 0.08);
+      --accent-color: #4A90E2;
+      --accent-color-darker: #357ABD;
+
+      --background-main: #f0f2f5;
+      --background-card: #ffffff;
+      --background-card-subtle: #f8f9fa;
+
+      --text-dark: #333333;
+      --text-medium: #555555;
+      --text-light: #777777;
+      --text-on-primary: #FFFFFF; /* Text on primary color buttons */
+
+      --border-color: #DEE2E6;
+      --border-radius: 8px;
+      --border-radius-large: 12px;
+      --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      --transition-speed: 0.3s;
+      --header-height: 60px; /* WeConnect standard header height */
+      --spacing-unit: 16px; /* WeConnect standard spacing */
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; }
+    body {
+        font-family: 'Inter', sans-serif; /* MODIFIED: WeConnect Font */
+        background-color: var(--background-main); /* MODIFIED: WeConnect BG */
+        color: var(--text-dark); /* MODIFIED: WeConnect Text */
+        min-height: 100vh;
+        padding-top: var(--header-height);
+        padding-bottom: var(--spacing-unit);
+        max-width: 430px; /* WeConnect typical max-width for mobile view */
+        margin: 0 auto;
+        overflow-x: hidden;
+        position: relative;
+        opacity: 1;
+        transition: opacity var(--transition-speed);
+    }
+    body.fade-out { opacity: 0; }
+
+    a { color: var(--accent-color); text-decoration: none; } /* MODIFIED */
+    a:hover { color: var(--accent-color-darker); text-decoration: underline; } /* MODIFIED */
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--border-radius); transition: background-color var(--transition-speed), transform 0.1s, box-shadow var(--transition-speed); }
+    button:active { transform: translateY(1px) scale(0.98); }
+    .material-symbols-outlined, .fas, .fa { vertical-align: middle; } /* Added .fa for Font Awesome 6 */
+
+    .header {
+        background-color: var(--background-card); /* MODIFIED: WeConnect Card BG */
+        color: var(--text-dark); /* MODIFIED */
+        padding: 0 var(--spacing-unit);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 430px; /* Match body max-width */
+        margin: 0 auto;
+        z-index: 100;
+        border-bottom: 1px solid var(--border-color); /* MODIFIED */
+        height: var(--header-height);
+        box-shadow: var(--box-shadow); /* MODIFIED */
+    }
+    .header-logo-text {
+        font-size: 1.2rem; /* MODIFIED: WeConnect Title Size */
+        font-weight: 700;
+        color: var(--primary-color); /* MODIFIED */
+        font-family: 'Inter', sans-serif; /* MODIFIED */
+        /* Removed text-shadow */
+        margin-left: 10px; /* Space after logo */
+    }
+    .header-btn {
+        background: none;
+        border: none;
+        color: var(--text-medium); /* MODIFIED */
+        font-size: 22px; /* Keep consistent icon size */
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px; height: 40px; /* Slightly larger tap target */
+        transition: background-color var(--transition-speed), color var(--transition-speed);
+    }
+    .header-btn:hover {
+        background-color: var(--primary-color-light-bg); /* MODIFIED */
+        color: var(--primary-color); /* MODIFIED */
+    }
+    .header-btn .material-symbols-outlined,
+    .header-btn .fas, .header-btn .fa { /* Added .fa */
+        font-size: 24px;
+    }
+
+    .header-brand-link { /* For the logo and title */
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+    }
+    .header-weconnect-logo { /* MODIFIED */
+        height: 32px; /* WeConnect standard logo size */
+        width: auto;
+        display: block;
+    }
+
+    .main-content { padding: var(--spacing-unit); display: flex; flex-direction: column; gap: var(--spacing-unit); }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-unit);
+      margin-bottom: var(--spacing-unit);
+    }
+    .controls input[type="text"] {
+      flex: 1;
+      padding: 10px 12px;
+      background: var(--background-card); /* MODIFIED */
+      border: 1px solid var(--border-color); /* MODIFIED */
+      color: var(--text-dark); /* MODIFIED */
+      border-radius: var(--border-radius);
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif; /* MODIFIED */
+    }
+    .controls input[type="text"]::placeholder {
+        color: var(--text-light); /* MODIFIED */
+        opacity: 1;
+    }
+     .controls input[type="text"]:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 0.2rem var(--primary-color-light-bg);
+     }
+    .view-toggle { display: flex; gap: calc(var(--spacing-unit) * 0.5); }
+    .view-toggle .header-btn { /* Re-use header-btn style */
+        font-size: 24px;
+    }
+    .view-toggle .header-btn.active {
+      color: var(--primary-color); /* MODIFIED */
+      background-color: var(--primary-color-light-bg); /* MODIFIED */
+      /* Removed box-shadow for cleaner WC look */
+    }
+
+    .agent-list-grid {
+        display: grid;
+        gap: var(--spacing-unit);
+        padding-bottom: var(--spacing-unit);
+    }
+
+    .agent-card-item {
+        background: var(--background-card); /* MODIFIED */
+        border: 1px solid var(--border-color); /* MODIFIED */
+        border-radius: var(--border-radius-large);
+        padding: var(--spacing-unit); /* MODIFIED */
+        box-shadow: var(--box-shadow); /* MODIFIED */
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+    .agent-card-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* MODIFIED */
+        border-color: var(--accent-color); /* MODIFIED */
+    }
+    .agent-image-container {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        background-color: var(--background-main); /* MODIFIED */
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        margin-bottom: var(--spacing-unit); /* MODIFIED */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color); /* Light border for image container */
+    }
+    .agent-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .agent-info {
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing-unit) * 0.25); /* MODIFIED */
+        flex-grow: 1;
+    }
+    .agent-name {
+        font-family: 'Inter', sans-serif; /* MODIFIED */
+        font-size: 1rem; /* MODIFIED */
+        font-weight: 600; /* MODIFIED */
+        color: var(--text-dark); /* MODIFIED */
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-height: calc(1rem * 1.3 * 1); /* Adjusted for potential one line */
+    }
+    .agent-subtitle {
+        font-size: 0.85rem; /* MODIFIED */
+        color: var(--text-medium); /* MODIFIED */
+        line-height: 1.4;
+        opacity: 1; /* MODIFIED */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        height: calc(0.85rem * 1.4 * 2);
+        margin-top: 2px;
+        margin-bottom: calc(var(--spacing-unit) * 0.5); /* MODIFIED */
+    }
+    .agent-action-button {
+        background-color: var(--primary-color); /* MODIFIED */
+        color: var(--text-on-primary); /* MODIFIED */
+        border: none; /* MODIFIED */
+        font-weight: 500;
+        padding: 8px 12px; /* MODIFIED */
+        border-radius: var(--border-radius); /* MODIFIED */
+        font-size: 0.9rem; /* MODIFIED */
+        font-family: 'Inter', sans-serif; /* MODIFIED */
+        text-align: center;
+        margin-top: auto;
+        transition: background-color var(--transition-speed), transform 0.1s;
+    }
+    .agent-action-button:hover {
+        background-color: var(--primary-color-darker); /* MODIFIED */
+        /* Removed box-shadow and border change for cleaner WC look */
+        color: var(--text-on-primary);
+    }
+
+    .agent-list-grid.list-view {
+        grid-template-columns: 1fr;
+    }
+    .agent-list-grid.list-view .agent-card-item {
+        flex-direction: row;
+        align-items: center;
+        padding: calc(var(--spacing-unit) * 0.75); /* Slightly less padding for list items */
+    }
+    .agent-list-grid.list-view .agent-image-container {
+        width: 60px; /* MODIFIED */
+        height: 60px; /* MODIFIED */
+        margin-bottom: 0;
+        margin-right: var(--spacing-unit);
+        flex-shrink: 0;
+    }
+    .agent-list-grid.list-view .agent-info {
+        text-align: left;
+        gap: 2px;
+    }
+     .agent-list-grid.list-view .agent-name {
+        -webkit-line-clamp: 1;
+        min-height: auto;
+        font-size: 0.95rem; /* Slightly smaller in list view */
+    }
+    .agent-list-grid.list-view .agent-subtitle {
+        height: auto;
+        -webkit-line-clamp: 1;
+        font-size: 0.8rem; /* Slightly smaller in list view */
+        margin-bottom: 0;
+    }
+    .agent-list-grid.list-view .agent-action-button {
+        margin-left: auto;
+        margin-top: 0;
+        flex-shrink: 0;
+        padding: 6px 10px; /* MODIFIED */
+        font-size: 0.8rem; /* MODIFIED */
+    }
+
+
+    #pageLoading {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(255, 255, 255, 0.9); /* MODIFIED: WeConnect Loading BG */
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+    #pageLoading.hidden { opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    #pageLoading .loading-text {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--text-dark); /* MODIFIED */
+        font-family: 'Inter', sans-serif; /* MODIFIED */
+    }
+    #pageLoading .spinner {
+        border: 4px solid var(--primary-color-light-bg); /* MODIFIED */
+        border-top: 4px solid var(--primary-color); /* MODIFIED */
+        border-radius: 50%; width: 30px; height: 30px;
+        animation: spin 1s linear infinite; margin-bottom: 15px;
+        /* Removed box-shadow for cleaner WC look */
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text" id="loadingStatusText">Loading Agents...</p>
+  </div>
+
+  <header class="header">
+    <a href="home.html" id="weconnectLogoLink" class="header-brand-link" title="Home"> <!-- MODIFIED -->
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-weconnect-logo"> <!-- MODIFIED -->
+      <span class="header-logo-text">Agents</span> <!-- MODIFIED Title -->
+    </a>
+    <button id="manageAgentsBtn" class="header-btn" title="Manage My Agents"><i class="fas fa-user-plus"></i></button> <!-- Changed icon -->
+  </header>
+
+  <main class="main-content">
+    <div class="controls">
+      <input type="text" id="filterAgentInput" placeholder="Search agents by name…">
+      <div class="view-toggle">
+        <button id="listViewBtn" class="header-btn" title="List View">
+          <span class="material-symbols-outlined">view_list</span>
+        </button>
+        <button id="gridViewBtn" class="header-btn active" title="Grid View">
+          <span class="material-symbols-outlined">view_module</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="agent-list-grid" id="agentListContainer">
+        <p id="agentLoadingError" style="display:none; color: var(--bs-danger); text-align:center;">Could not load agent data.</p> <!-- MODIFIED to use BS danger -->
+    </div>
+  </main>
+
+  <script>
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+{
+const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com", // This is not used by Firestore, but often kept for other services
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+         };
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+    const db = firebase.firestore(); // MODIFIED: Initialize Firestore
+
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const loadingStatusText = document.getElementById('loadingStatusText');
+
+    const weconnectLogoLink = document.getElementById('weconnectLogoLink');
+    const manageAgentsBtn = document.getElementById('manageAgentsBtn');
+    const filterAgentInput = document.getElementById('filterAgentInput');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const gridViewBtn = document.getElementById('gridViewBtn');
+    const agentListContainer = document.getElementById('agentListContainer');
+    const agentLoadingError = document.getElementById('agentLoadingError');
+
+    let allFetchedAgents = {};
+    let displayableAgents = {};
+    let currentUserUID = null;
+
+    function triggerHapticFeedback(type = 'medium') {
+        if (window.navigator.vibrate) {
+            let duration = 50; // WeConnect subtle haptic
+            if (type === 'light') duration = 20;
+            else if (type === 'strong') duration = 70;
+            else if (type === 'selection') duration = 10; // Standard selection click
+            window.navigator.vibrate(duration);
+        }
+    }
+
+    function navigateSmooth(url) {
+      document.body.classList.add('fade-out');
+      setTimeout(() => { window.location.href = url; }, 250); // Faster WeConnect transition
+    }
+
+    function renderAgents(sortedAgentsArray) {
+        if (!agentListContainer) {
+            console.error("Agent list container not found!");
+            if(agentLoadingError) agentLoadingError.style.display = 'block';
+            return;
+        }
+        agentListContainer.innerHTML = '';
+        if(agentLoadingError) agentLoadingError.style.display = 'none';
+
+        if (!sortedAgentsArray || sortedAgentsArray.length === 0) {
+            agentListContainer.innerHTML = `<p style="color: var(--text-light); text-align:center; grid-column: 1 / -1; padding: 20px;">No agents found matching your criteria.</p>`;
+            return;
+        }
+
+        sortedAgentsArray.forEach(agent => {
+            // Visibility and status checks remain the same for functionality
+            if (agent.status !== 'active' && agent.creatorUid !== currentUserUID) return;
+            if (agent.status === 'hidden' && agent.creatorUid !== currentUserUID) return;
+            if (agent.status === 'draft' && agent.creatorUid !== currentUserUID) return;
+
+            const card = document.createElement('div');
+            card.classList.add('agent-card-item');
+            card.dataset.agentId = agent.id; // agent.id should be the Firestore document ID
+
+            const defaultLogo = 'https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect_placeholder.png?alt=media&token=EXAMPLE_TOKEN';
+            const logoUrl = agent.logoUrl || defaultLogo;
+            const agentName = agent.name || 'Unnamed Agent';
+            const agentSubtitle = agent.subtitle || 'No description available.';
+
+            let buttonText = "View Profile";
+            if (agent.leaseInfo && agent.leaseInfo.isForLease && agent.leaseInfo.price > 0) {
+                buttonText = `Rent (${agent.leaseInfo.price} Credits)`;
+            }
+
+            card.innerHTML = `
+                <div class="agent-image-container">
+                    <img src="${logoUrl}" alt="${agentName}" class="agent-image" loading="lazy" onerror="this.src='${defaultLogo}'; this.onerror=null;">
+                </div>
+                <div class="agent-info">
+                    <div class="agent-name" title="${agentName}">${agentName}</div>
+                    <div class="agent-subtitle" title="${agentSubtitle}">${agentSubtitle}</div>
+                    <button class="agent-action-button" data-agent-id="${agent.id}">${buttonText}</button>
+                </div>
+            `;
+
+            const actionButton = card.querySelector('.agent-action-button');
+
+            card.addEventListener('click', (e) => {
+                if (e.target === actionButton || actionButton.contains(e.target)) return;
+                triggerHapticFeedback('light');
+                navigateSmooth(`agent-profile.html?agentId=${agent.id}`);
+            });
+
+            actionButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                triggerHapticFeedback('light');
+                navigateSmooth(`agent-profile.html?agentId=${agent.id}`);
+            });
+
+            agentListContainer.appendChild(card);
+        });
+    }
+
+    function prepareDisplayableAgents() {
+        displayableAgents = {};
+        if (!currentUserUID && Object.values(allFetchedAgents).every(agent => agent.visibility !== 'public')) {
+            filterAndSortAgents();
+            return;
+        }
+
+        for (const id in allFetchedAgents) {
+            const agent = allFetchedAgents[id];
+            // Ensure agent has an 'id' property if it's not the key itself, for consistency later
+            // Though current structure from Firestore fetch should provide it correctly.
+            if (agent.visibility === 'public' || (currentUserUID && agent.creatorUid === currentUserUID)) {
+                if (agent.status === 'active' || (currentUserUID && agent.creatorUid === currentUserUID)) {
+                    if(agent.status !== 'hidden' || (currentUserUID && agent.creatorUid === currentUserUID) ){
+                         if(agent.status !== 'draft' || (currentUserUID && agent.creatorUid === currentUserUID) ){
+                            displayableAgents[id] = agent;
+                        }
+                    }
+                }
+            }
+        }
+        filterAndSortAgents();
+    }
+
+    function filterAndSortAgents() {
+        const filterText = filterAgentInput.value.toLowerCase();
+
+        let agentsArray = Object.entries(displayableAgents).map(([id, data]) => ({
+            id: id, // This 'id' is the Firestore document ID (key from displayableAgents)
+            ...data
+        }));
+
+        if (filterText) {
+            agentsArray = agentsArray.filter(agent =>
+                agent.name && agent.name.toLowerCase().includes(filterText)
+            );
+        }
+        // Sort by creation date, newest first. Assumes 'createdAt' is a numeric timestamp.
+        // If 'createdAt' is a Firestore Timestamp object, convert to millis: (b.createdAt.toMillis() || 0) - (a.createdAt.toMillis() || 0)
+        agentsArray.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        renderAgents(agentsArray);
+    }
+
+    function setViewMode(mode) {
+        if (mode === 'list') {
+            agentListContainer.classList.add('list-view');
+            agentListContainer.style.gridTemplateColumns = '1fr';
+            listViewBtn.classList.add('active');
+            gridViewBtn.classList.remove('active');
+        } else {
+            agentListContainer.classList.remove('list-view');
+            agentListContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(150px, 1fr))';
+            gridViewBtn.classList.add('active');
+            listViewBtn.classList.remove('active');
+        }
+    }
+    setViewMode('grid');
+
+    if (weconnectLogoLink) {
+        weconnectLogoLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            triggerHapticFeedback('light');
+            navigateSmooth('home.html');
+        });
+    }
+
+    if (manageAgentsBtn) {
+        manageAgentsBtn.addEventListener('click', () => {
+            triggerHapticFeedback('light');
+            if (currentUserUID) {
+                navigateSmooth('agent-management.html');
+            } else {
+                alert("Please sign in to manage agents.");
+                navigateSmooth('signin.html');
+            }
+        });
+    }
+    if (filterAgentInput) {
+        filterAgentInput.addEventListener('input', filterAndSortAgents);
+    }
+    if (listViewBtn) {
+        listViewBtn.addEventListener('click', () => {
+            triggerHapticFeedback('selection');
+            setViewMode('list');
+        });
+    }
+    if (gridViewBtn) {
+        gridViewBtn.addEventListener('click', () => {
+            triggerHapticFeedback('selection');
+            setViewMode('grid');
+        });
+    }
+
+    auth.onAuthStateChanged((user) => {
+        if (pageLoadingElement) pageLoadingElement.classList.remove('hidden');
+        loadingStatusText.textContent = 'Fetching Agent Data...';
+
+        currentUserUID = user ? user.uid : null;
+
+        // MODIFIED: Fetch data from Firestore collection "we-agents"
+        db.collection('we-agents').onSnapshot((querySnapshot) => {
+            allFetchedAgents = {}; // Reset before populating
+            querySnapshot.forEach((doc) => {
+                // Store agent data using document ID as key
+                // The spread `...doc.data()` ensures all fields from Firestore are included.
+                // The `id: doc.id` is explicitly added if not already part of `doc.data()` or to ensure it.
+                // However, the `filterAndSortAgents` function already creates an `id` property from the object key.
+                // So, `allFetchedAgents[doc.id] = doc.data();` is sufficient here.
+                allFetchedAgents[doc.id] = doc.data();
+            });
+            prepareDisplayableAgents();
+            setTimeout(() => { if(pageLoadingElement) pageLoadingElement.classList.add('hidden'); }, 250);
+        }, (error) => {
+            console.error("Error fetching agent data from Firestore:", error);
+            if(agentLoadingError) agentLoadingError.textContent = `Error: ${error.message}`;
+            if(agentLoadingError) agentLoadingError.style.display = 'block';
+            if(pageLoadingElement) pageLoadingElement.classList.add('hidden');
+        });
+    });
+
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (pageLoadingElement && !pageLoadingElement.classList.contains('hidden') && auth.currentUser === undefined) {
+             loadingStatusText.textContent = 'Authentication check taking longer...';
+          } else if (pageLoadingElement && !pageLoadingElement.classList.contains('hidden')) {
+            loadingStatusText.textContent = 'Finalizing agent list...';
+          }
+        }, 5000);
+    });
+}
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

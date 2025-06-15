@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Product Details - WeConnect Store</title>
+    <meta name="theme-color" content="#1F3A5C">
+    <!-- Material Symbols Outlined -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400..700,0..1,-50..200" />
+    <!-- Inter Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+
+    <style>
+        :root {
+            --primary-color: #1F3A5C;
+            --primary-color-darker: #142840;
+            --primary-color-light-bg: rgba(31, 58, 92, 0.08);
+            --accent-color: #4A90E2;
+            --background-main: #f7f8fa;
+            --background-card: #ffffff;
+            --text-dark: #1a202c;
+            --text-medium: #4a5568;
+            --text-light: #718096;
+            --text-on-primary: #FFFFFF;
+            --border-color: #e2e8f0;
+            --danger-color: #e53e3e;
+            --success-color: #38a169;
+            --heart-color: #e53e3e;
+
+            --border-radius-md: 10px;
+            --header-height: 64px;
+            --spacing-unit: 16px;
+            --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+            --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --transition-fast: 0.2s ease-out;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--background-main); color: var(--text-medium); line-height: 1.6; padding-top: var(--header-height); }
+        .container-fluid { max-width: 768px; margin: 0 auto; padding: var(--spacing-unit); }
+        .material-symbols-outlined { vertical-align: middle; line-height: 1; font-size: 24px; }
+
+        .header-wrapper {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background-color: var(--background-card); height: var(--header-height);
+            display: flex; align-items: center; border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-subtle);
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 768px; margin: 0 auto; padding: 0 var(--spacing-unit); }
+        .header-left, .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .header-center { flex-grow: 1; text-align: center; overflow: hidden; }
+        .header-title {
+            font-size: 1.1rem; font-weight: 600; color: var(--primary-color);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .icon-button {
+            background: none; border: none; padding: 10px; cursor: pointer; color: var(--text-medium);
+            display: flex; align-items: center; justify-content: center; border-radius: 50%;
+            transition: background-color var(--transition-fast), color var(--transition-fast);
+        }
+        .icon-button:hover { background-color: var(--primary-color-light-bg); color: var(--primary-color); }
+        .icon-button .material-symbols-outlined { font-size: 26px; }
+        .notification-badge {
+            position: absolute; top: 5px; right: 5px; background-color: var(--danger-color);
+            color: white; border-radius: 50%; width: 18px; height: 18px;
+            font-size: 10px; line-height: 18px; text-align: center; font-weight: bold;
+            border: 1.5px solid var(--background-card);
+        }
+        .notification-badge.hidden { display: none; }
+        #cartButton { position: relative; }
+
+
+        #pageLoading, .product-detail-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 1001;
+        }
+        #pageLoading.hidden, .product-detail-loader.hidden { display: none; }
+        #pageLoading .loading-text, .product-detail-loader .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+        #pageLoading .spinner, .product-detail-loader .spinner {
+             border: 4px solid #e0e6ed; border-top: 4px solid var(--primary-color);
+             border-radius: 50%; width: 36px; height: 36px;
+             animation: spin 0.8s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .product-detail-content { display: none; }
+        .product-gallery { margin-bottom: calc(var(--spacing-unit) * 1.5); }
+        .main-image-container {
+            width: 100%; aspect-ratio: 1/1; background-color: var(--background-card);
+            border-radius: var(--border-radius-md); overflow: hidden;
+            margin-bottom: var(--spacing-unit); box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-color);
+        }
+        .main-image-container img { width: 100%; height: 100%; object-fit: cover; }
+        .thumbnail-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .thumbnail-gallery img {
+            width: 60px; height: 60px; object-fit: cover; border-radius: var(--border-radius-md);
+            border: 2px solid transparent; cursor: pointer; transition: border-color var(--transition-fast), transform 0.1s;
+        }
+        .thumbnail-gallery img.active, .thumbnail-gallery img:hover { border-color: var(--primary-color); }
+        .thumbnail-gallery img:active { transform: scale(0.95); }
+
+        .product-info-card {
+            background-color: var(--background-card); padding: var(--spacing-unit);
+            border-radius: var(--border-radius-md); box-shadow: var(--shadow-card); margin-bottom: var(--spacing-unit);
+        }
+        .product-vendor-name {
+            font-size: 0.85rem; font-weight: 500; color: var(--text-light);
+            margin-bottom: 6px; display: flex; align-items: center;
+        }
+        .product-vendor-name .material-symbols-outlined { font-size: 18px; margin-right: 6px; }
+        .product-main-title {
+            font-size: 1.5rem; font-weight: 700; color: var(--text-dark);
+            margin-bottom: 8px; line-height: 1.3;
+        }
+        .product-main-price {
+            font-size: 1.75rem; font-weight: 800; color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        .product-main-price .compare-at {
+            font-size: 1rem; color: var(--text-light); text-decoration: line-through;
+            margin-left: 10px; font-weight: 500;
+        }
+
+        .product-actions { display: flex; gap: var(--spacing-unit); margin-bottom: calc(var(--spacing-unit) * 1.5); }
+        .quantity-selector { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); }
+        .quantity-btn {
+            background-color: transparent; border: none; color: var(--primary-color);
+            font-size: 1.5rem; padding: 8px 12px; cursor: pointer;
+        }
+        #quantityInput {
+            width: 40px; text-align: center; border: none; font-size: 1rem;
+            font-weight: 600; color: var(--text-dark); outline: none;
+            border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);
+            padding: 8px 0; appearance: textfield; -moz-appearance: textfield;
+        }
+        #quantityInput::-webkit-outer-spin-button,
+        #quantityInput::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        .add-to-cart-main-btn {
+            flex-grow: 1; background-color: var(--primary-color); color: var(--text-on-primary);
+            border: none; border-radius: var(--border-radius-md); padding: 12px;
+            font-size: 1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background-color var(--transition-fast);
+        }
+        .add-to-cart-main-btn:hover { background-color: var(--primary-color-darker); }
+        .add-to-cart-main-btn:disabled { background-color: var(--text-light); cursor: not-allowed;}
+        .add-to-cart-main-btn .material-symbols-outlined.spin { animation: spin 0.8s linear infinite; }
+
+        .favorite-main-btn {
+            background-color: var(--background-card); border: 1px solid var(--border-color);
+            color: var(--text-medium); border-radius: var(--border-radius-md); padding: 12px;
+            transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+        }
+        .favorite-main-btn:hover { background-color: var(--primary-color-light-bg); }
+        .favorite-main-btn.favorited { border-color: var(--heart-color); color: var(--heart-color); }
+        .favorite-main-btn.favorited .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+
+        .product-section { margin-bottom: calc(var(--spacing-unit) * 1.5); }
+        .product-section-title {
+            font-size: 1.1rem; font-weight: 600; color: var(--text-dark);
+            margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);
+        }
+        .product-description-text { line-height: 1.7; color: var(--text-medium); white-space: pre-wrap; }
+        .product-tags-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .product-tag-item {
+            background-color: var(--primary-color-light-bg); color: var(--primary-color);
+            padding: 4px 10px; border-radius: var(--border-radius-md); font-size: 0.8rem; font-weight: 500;
+        }
+        .payment-options-list, .shipping-options-list { list-style: none; padding-left: 0; }
+        .payment-options-list li, .shipping-options-list li {
+            display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem;
+        }
+        .payment-options-list .material-symbols-outlined,
+        .shipping-options-list .material-symbols-outlined {
+            margin-right: 10px; color: var(--primary-color); font-size: 22px;
+        }
+        .shipping-flat-rate-amount { font-weight: 600; margin-left: 5px; }
+
+        .contact-seller-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background-color: var(--accent-color); color: white;
+            padding: 10px 15px; border-radius: var(--border-radius-md); text-decoration: none;
+            font-weight: 500; transition: background-color var(--transition-fast); margin-top:10px;
+        }
+        .contact-seller-btn:hover { background-color: var(--primary-color); }
+
+        .feedback-state { text-align: center; padding: 40px var(--spacing-unit); color: var(--text-medium); }
+        .feedback-state .material-symbols-outlined { font-size: 48px; color: var(--text-light); margin-bottom: var(--spacing-unit); }
+        .feedback-state h3 { font-size: 1.2rem; color: var(--text-dark); margin-bottom: 8px; }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <div id="pageLoading">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading Product...</p>
+    </div>
+
+    <div class="header-wrapper">
+        <header class="header">
+            <div class="header-left">
+                <button class="icon-button" id="backButton" title="Back to Marketplace">
+                    <span class="material-symbols-outlined">arrow_back_ios_new</span>
+                </button>
+            </div>
+            <div class="header-center">
+                <h1 class="header-title" id="headerProductTitle">Product Details</h1>
+            </div>
+            <div class="header-right">
+                <button class="icon-button" id="shareButton" title="Share Product">
+                    <span class="material-symbols-outlined">share</span>
+                </button>
+                 <a href="cart.html" class="icon-button" title="My Cart" id="cartButton">
+                    <span class="material-symbols-outlined">shopping_bag</span>
+                    <span id="cartBadge" class="notification-badge hidden"></span>
+                </a>
+            </div>
+        </header>
+    </div>
+
+    <main class="container-fluid" id="productDetailContainer" style="display:none;">
+        <div class="product-detail-loader" id="productContentLoader">
+            <div class="spinner"></div>
+            <p class="loading-text">Fetching Details...</p>
+        </div>
+
+        <div class="product-detail-content" id="productDetailContent">
+            <section class="product-gallery">
+                <div class="main-image-container">
+                    <img src="https://via.placeholder.com/600x600.png?text=Loading..." alt="Main product image" id="mainProductImage">
+                </div>
+                <div class="thumbnail-gallery" id="thumbnailGallery"></div>
+            </section>
+
+            <div class="product-info-card">
+                <p class="product-vendor-name" id="productVendorName"><span class="material-symbols-outlined">store</span> Sold by Loading...</p>
+                <h1 class="product-main-title" id="productMainTitle">Loading Product Title...</h1>
+                <p class="product-main-price" id="productMainPrice">Loading Price...<span class="compare-at" id="productCompareAtPrice" style="display:none;"></span></p>
+                <div class="product-actions">
+                    <div class="quantity-selector">
+                        <button class="quantity-btn" id="decreaseQuantity" aria-label="Decrease quantity">-</button>
+                        <input type="number" id="quantityInput" value="1" min="1" max="99" aria-label="Quantity">
+                        <button class="quantity-btn" id="increaseQuantity" aria-label="Increase quantity">+</button>
+                    </div>
+                    <button class="favorite-main-btn" id="favoriteMainButton" title="Favorite this product" aria-label="Favorite this product">
+                        <span class="material-symbols-outlined">favorite</span>
+                    </button>
+                </div>
+                 <button class="add-to-cart-main-btn" id="addToCartMainButton">
+                    <span class="material-symbols-outlined">add_shopping_cart</span> Add to Cart
+                </button>
+            </div>
+
+            <div class="product-info-card product-section">
+                <h2 class="product-section-title">Description</h2>
+                <p class="product-description-text" id="productDescriptionText">Loading description...</p>
+            </div>
+            <div class="product-info-card product-section" id="tagsSection" style="display:none;">
+                <h2 class="product-section-title">Tags</h2>
+                <div class="product-tags-list" id="productTagsList"></div>
+            </div>
+            <div class="product-info-card product-section" id="paymentOptionsSection" style="display:none;">
+                <h2 class="product-section-title">Payment Options Accepted</h2>
+                <ul class="payment-options-list" id="paymentOptionsList"></ul>
+            </div>
+            <div class="product-info-card product-section" id="shippingInfoSection" style="display:none;">
+                <h2 class="product-section-title">Shipping Information</h2>
+                <ul class="shipping-options-list" id="shippingInfoList"></ul>
+                <p id="shippingPolicyText" style="font-size: 0.9rem; color: var(--text-medium); margin-top: 10px; white-space: pre-wrap;"></p>
+            </div>
+            <div class="product-info-card product-section">
+                <h2 class="product-section-title">Seller Information</h2>
+                 <p id="sellerInfoText">Sold by <strong id="sellerNameInfo">Loading...</strong></p>
+                 <a href="#" id="contactSellerButton" class="contact-seller-btn">
+                    <span class="material-symbols-outlined">chat</span> Contact Seller
+                </a>
+            </div>
+        </div>
+        <div class="feedback-state" id="productNotFoundMessage" style="display:none;">
+            <span class="material-symbols-outlined">error_outline</span>
+            <h3>Product Not Found</h3>
+            <p>The product you are looking for does not exist or may have been removed.</p>
+        </div>
+         <div style="height: 40px;"></div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com", // Included for completeness
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f",
+            measurementId: "G-KNZFYCREVM" // Included for completeness
+        };
+
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const productsCollectionRef = db.collection('weshop_products');
+        const cartItemsCollectionRef = db.collection("cartItems");
+        const favoritesCollectionRef = db.collection("userFavorites");
+
+        const pageLoadingElement = document.getElementById('pageLoading');
+        const productContentLoader = document.getElementById('productContentLoader');
+        const productDetailContainer = document.getElementById('productDetailContainer');
+        const productDetailContent = document.getElementById('productDetailContent');
+        const mainProductImage = document.getElementById('mainProductImage');
+        const thumbnailGallery = document.getElementById('thumbnailGallery');
+        const headerProductTitle = document.getElementById('headerProductTitle');
+        const productVendorName = document.getElementById('productVendorName');
+        const productMainTitle = document.getElementById('productMainTitle');
+        const productMainPrice = document.getElementById('productMainPrice');
+        const productCompareAtPrice = document.getElementById('productCompareAtPrice');
+        const quantityInput = document.getElementById('quantityInput');
+        const decreaseQuantityBtn = document.getElementById('decreaseQuantity');
+        const increaseQuantityBtn = document.getElementById('increaseQuantity');
+        const addToCartMainButton = document.getElementById('addToCartMainButton');
+        const favoriteMainButton = document.getElementById('favoriteMainButton');
+        const productDescriptionText = document.getElementById('productDescriptionText');
+        const tagsSection = document.getElementById('tagsSection');
+        const productTagsList = document.getElementById('productTagsList');
+        const paymentOptionsSection = document.getElementById('paymentOptionsSection');
+        const paymentOptionsList = document.getElementById('paymentOptionsList');
+        const shippingInfoSection = document.getElementById('shippingInfoSection');
+        const shippingInfoList = document.getElementById('shippingInfoList');
+        const shippingPolicyText = document.getElementById('shippingPolicyText');
+        const sellerNameInfo = document.getElementById('sellerNameInfo');
+        const contactSellerButton = document.getElementById('contactSellerButton');
+        const productNotFoundMessage = document.getElementById('productNotFoundMessage');
+        const backButton = document.getElementById('backButton');
+        const shareButton = document.getElementById('shareButton');
+        const cartBadge = document.getElementById('cartBadge');
+
+        let currentProductData = null;
+        let currentUser = null;
+        let unsubscribeCartListener = null;
+        let currentProductId = null;
+
+        function showMainLoader(text = "Loading...") { pageLoadingElement.classList.remove('hidden'); pageLoadingElement.querySelector('.loading-text').textContent = text; }
+        function hideMainLoader() { pageLoadingElement.classList.add('hidden'); }
+        function showContentLoader() { productContentLoader.classList.remove('hidden'); productDetailContent.style.display = 'none'; }
+        function hideContentLoader() { productContentLoader.classList.add('hidden'); productDetailContent.style.display = 'block'; }
+
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            if (user) {
+                initializeCartListener(user.uid);
+                if (currentProductId) checkIfFavorite(user.uid, currentProductId);
+            } else {
+                if (unsubscribeCartListener) unsubscribeCartListener();
+                updateCartBadge(0);
+                if(favoriteMainButton) favoriteMainButton.classList.remove('favorited');
+            }
+        });
+
+        function initializeCartListener(userId) {
+             if (unsubscribeCartListener) unsubscribeCartListener();
+             const cartItemsRef = cartItemsCollectionRef.where("userId", "==", userId);
+             unsubscribeCartListener = cartItemsRef.onSnapshot(snapshot => {
+                 updateCartBadge(snapshot.docs.length);
+             }, error => {
+                 console.error("Error listening to cart updates:", error);
+                 updateCartBadge(0);
+             });
+         }
+
+        function updateCartBadge(count) {
+            if (cartBadge) {
+                if (count > 0) {
+                    cartBadge.textContent = count > 9 ? '9+' : count.toString();
+                    cartBadge.classList.remove('hidden');
+                } else {
+                    cartBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showMainLoader();
+            productDetailContainer.style.display = 'block';
+            showContentLoader();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            currentProductId = urlParams.get('id');
+
+            if (currentProductId) {
+                fetchProductDetails(currentProductId);
+            } else {
+                displayProductNotFound();
+            }
+            setupEventListeners();
+            hideMainLoader();
+        });
+
+        async function fetchProductDetails(productId) {
+            try {
+                const doc = await productsCollectionRef.doc(productId).get();
+                if (doc.exists && doc.data().Status === 'active') {
+                    currentProductData = { id: doc.id, ...doc.data() };
+                    displayProductDetails(currentProductData);
+                    if (currentUser) checkIfFavorite(currentUser.uid, productId);
+                    hideContentLoader();
+                } else {
+                    displayProductNotFound("This product is currently unavailable or does not exist.");
+                }
+            } catch (error) {
+                console.error("Error fetching product details for ID " + productId + ": ", error);
+                displayProductNotFound("Error loading product details.");
+            }
+        }
+
+        function displayProductDetails(product) {
+            headerProductTitle.textContent = product.Title || "Product Details";
+            document.title = `${product.Title || "Product"} - WeConnect Store`;
+
+            mainProductImage.src = product.ImageSrc || (Array.isArray(product.imageUrls) && product.imageUrls[0]) || 'https://via.placeholder.com/600x600.png?text=No+Image';
+            mainProductImage.alt = product.Title || "Product Image";
+            mainProductImage.onerror = () => { mainProductImage.src = 'https://via.placeholder.com/600x600.png?text=Image+Error'; };
+
+            thumbnailGallery.innerHTML = '';
+            const imagesToShow = Array.isArray(product.imageUrls) && product.imageUrls.length > 0 ? product.imageUrls.filter(url => url) : (product.ImageSrc ? [product.ImageSrc] : []);
+
+            if (imagesToShow.length > 0) {
+                imagesToShow.forEach((imgUrl, index) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = imgUrl;
+                    thumb.alt = `Thumbnail ${index + 1}`;
+                    thumb.onerror = () => { thumb.src = 'https://via.placeholder.com/60x60.png?text=Err'; };
+                    if (index === 0 && imgUrl === mainProductImage.src) { // Check if it's the currently displayed main image
+                        thumb.classList.add('active');
+                    }
+                    thumb.addEventListener('click', () => {
+                        mainProductImage.src = imgUrl;
+                        thumbnailGallery.querySelectorAll('img').forEach(t => t.classList.remove('active'));
+                        thumb.classList.add('active');
+                    });
+                    thumbnailGallery.appendChild(thumb);
+                });
+                 if (thumbnailGallery.children.length > 0 && !thumbnailGallery.querySelector('img.active')) {
+                     thumbnailGallery.children[0].classList.add('active');
+                }
+            } else {
+                 mainProductImage.src = 'https://via.placeholder.com/600x600.png?text=No+Images+Available';
+                 thumbnailGallery.innerHTML = '<p style="font-size:0.8rem; color:var(--text-light)">No additional images.</p>';
+            }
+
+
+            productVendorName.innerHTML = `<span class="material-symbols-outlined">store</span> Sold by <strong>${product.Vendor || product.SellerName || 'N/A'}</strong>`;
+            productMainTitle.textContent = product.Title || 'N/A';
+            productMainPrice.innerHTML = `₱${parseFloat(product.Price || 0).toFixed(2)}`;
+            if (product.CompareAtPrice && parseFloat(product.CompareAtPrice) > parseFloat(product.Price)) {
+                productCompareAtPrice.textContent = `₱${parseFloat(product.CompareAtPrice).toFixed(2)}`;
+                productCompareAtPrice.style.display = 'inline';
+            } else {
+                productCompareAtPrice.style.display = 'none';
+            }
+
+            productDescriptionText.textContent = product.Description || 'No description available.';
+
+            if (product.Tags && Array.isArray(product.Tags) && product.Tags.length > 0) {
+                productTagsList.innerHTML = '';
+                product.Tags.forEach(tag => {
+                    if (!tag) return;
+                    const tagEl = document.createElement('span');
+                    tagEl.className = 'product-tag-item';
+                    tagEl.textContent = tag;
+                    productTagsList.appendChild(tagEl);
+                });
+                tagsSection.style.display = productTagsList.children.length > 0 ? 'block' : 'none';
+            } else {
+                tagsSection.style.display = 'none';
+            }
+
+            if (product.PaymentOptions && Array.isArray(product.PaymentOptions) && product.PaymentOptions.length > 0) {
+                paymentOptionsList.innerHTML = '';
+                product.PaymentOptions.forEach(option => {
+                    const li = document.createElement('li');
+                    let icon = 'credit_card';
+                    const optLower = option.toLowerCase();
+                    if (optLower.includes('cod')) icon = 'local_shipping';
+                    else if (optLower.includes('gcash')) icon = 'qr_code_2';
+                    else if (optLower.includes('maya')) icon = 'account_balance_wallet';
+                    else if (optLower.includes('bank')) icon = 'account_balance';
+                    li.innerHTML = `<span class="material-symbols-outlined">${icon}</span> ${option}`;
+                    paymentOptionsList.appendChild(li);
+                });
+                paymentOptionsSection.style.display = 'block';
+            } else {
+                paymentOptionsSection.style.display = 'none';
+            }
+
+            if (product.ShippingInfo) {
+                shippingInfoList.innerHTML = '';
+                let shippingText = '';
+                const si = product.ShippingInfo;
+                let icon = 'local_shipping';
+
+                if (si.type === 'free') { shippingText = 'Free Shipping'; icon = 'local_shipping';}
+                else if (si.type === 'flat') {
+                    shippingText = `Flat Rate: <strong class="shipping-flat-rate-amount">₱${parseFloat(si.flatRateAmount || 0).toFixed(2)}</strong>`;
+                    icon = 'payments';
+                }
+                else if (si.type === 'buyer_pays') { shippingText = 'Buyer Pays Actual Cost (Arrange with Seller)'; icon = 'swap_horiz';}
+                else if (si.type === 'pickup') { shippingText = 'Local Pickup Only'; icon = 'storefront';}
+
+                if(shippingText) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="material-symbols-outlined">${icon}</span> ${shippingText}`;
+                    shippingInfoList.appendChild(li);
+                }
+                shippingPolicyText.textContent = si.policy || '';
+                shippingInfoSection.style.display = 'block';
+            } else {
+                shippingInfoSection.style.display = 'none';
+            }
+
+            sellerNameInfo.textContent = product.Vendor || product.SellerName || 'Our Trusted Partner';
+            contactSellerButton.onclick = () => {
+                if(!currentUser) { alert("Please sign in to contact the seller."); return; }
+                alert(`Contacting ${product.Vendor || product.SellerName}. (Chat feature to be implemented)`);
+            };
+        }
+
+        function displayProductNotFound(message = "Product not found or is no longer available.") {
+            hideMainLoader(); hideContentLoader();
+            productDetailContainer.style.display = 'block';
+            productDetailContent.style.display = 'none';
+            productNotFoundMessage.querySelector('h3').textContent = message.includes("Error") ? "Error" : "Product Not Found";
+            productNotFoundMessage.querySelector('p').textContent = message;
+            productNotFoundMessage.style.display = 'flex';
+            headerProductTitle.textContent = "Product Not Found";
+        }
+
+        async function checkIfFavorite(userId, productId) {
+            if(!userId || !productId) return;
+            const favoriteDocRef = favoritesCollectionRef.doc(`${userId}_${productId}`);
+            try {
+                const doc = await favoriteDocRef.get();
+                if (doc.exists) {
+                    favoriteMainButton.classList.add('favorited');
+                } else {
+                    favoriteMainButton.classList.remove('favorited');
+                }
+            } catch (error) { console.error("Error checking favorite status:", error); }
+        }
+
+        function setupEventListeners() {
+            backButton.addEventListener('click', () => { window.location.href = 'marketplace.html'; });
+
+            shareButton.addEventListener('click', () => {
+                if (navigator.share && currentProductData) {
+                    navigator.share({
+                        title: currentProductData.Title,
+                        text: `Check out this product on WeConnect Store: ${currentProductData.Title}`,
+                        url: window.location.href,
+                    })
+                    .then(() => console.log('Product shared successfully'))
+                    .catch((error) => console.log('Error sharing product', error));
+                } else {
+                    try {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert('Link copied to clipboard!');
+                    } catch (err) {
+                        alert('Share functionality not available or product not loaded. Link: ' + window.location.href);
+                    }
+                }
+            });
+
+            decreaseQuantityBtn.addEventListener('click', () => {
+                let currentVal = parseInt(quantityInput.value);
+                if (currentVal > 1) quantityInput.value = currentVal - 1;
+            });
+            increaseQuantityBtn.addEventListener('click', () => {
+                let currentVal = parseInt(quantityInput.value);
+                if (currentVal < 99) quantityInput.value = currentVal + 1;
+            });
+
+            addToCartMainButton.addEventListener('click', async () => {
+                if (!currentUser) { alert("Please sign in to add items to your cart."); return; }
+                if (!currentProductData) { alert("Product data not loaded."); return; }
+
+                addToCartMainButton.disabled = true;
+                addToCartMainButton.innerHTML = `<span class="material-symbols-outlined spin">autorenew</span> Adding...`;
+                const quantity = parseInt(quantityInput.value);
+
+                const cartItem = {
+                    userId: currentUser.uid,
+                    productId: currentProductData.id,
+                    productTitle: currentProductData.Title,
+                    productPrice: parseFloat(currentProductData.Price),
+                    productImage: currentProductData.ImageSrc || (Array.isArray(currentProductData.imageUrls) && currentProductData.imageUrls[0]),
+                    quantity: quantity,
+                    addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    vendorId: currentProductData.SellerId, // Seller's UID
+                    vendorName: currentProductData.Vendor || currentProductData.SellerName // Seller's Store Name
+                };
+
+                try {
+                    const querySnapshot = await cartItemsCollectionRef
+                        .where('userId', '==', currentUser.uid)
+                        .where('productId', '==', currentProductData.id)
+                        .limit(1).get();
+
+                    if (!querySnapshot.empty) {
+                        const docRef = querySnapshot.docs[0].ref;
+                        const existingData = querySnapshot.docs[0].data();
+                        const existingQuantity = existingData.quantity || 0;
+                        await docRef.update({ quantity: existingQuantity + quantity, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    } else {
+                        await cartItemsCollectionRef.add(cartItem);
+                    }
+                    addToCartMainButton.innerHTML = `<span class="material-symbols-outlined">check_circle</span> Added!`;
+                    setTimeout(() => {
+                        addToCartMainButton.disabled = false;
+                        addToCartMainButton.innerHTML = `<span class="material-symbols-outlined">add_shopping_cart</span> Add to Cart`;
+                    }, 2000);
+                } catch (error) {
+                    console.error("Error adding to cart: ", error);
+                    alert("Failed to add item to cart. Please try again.");
+                    addToCartMainButton.disabled = false;
+                    addToCartMainButton.innerHTML = `<span class="material-symbols-outlined">add_shopping_cart</span> Add to Cart`;
+                }
+            });
+
+            favoriteMainButton.addEventListener('click', async () => {
+                if (!currentUser || !currentProductData) {
+                    alert("Please sign in to favorite products.");
+                    return;
+                }
+                const favoriteDocId = `${currentUser.uid}_${currentProductData.id}`;
+                const favoriteDocRef = favoritesCollectionRef.doc(favoriteDocId);
+                const isCurrentlyFavorited = favoriteMainButton.classList.contains('favorited');
+
+                try {
+                    if (isCurrentlyFavorited) {
+                        await favoriteDocRef.delete();
+                        favoriteMainButton.classList.remove('favorited');
+                    } else {
+                        await favoriteDocRef.set({
+                            userId: currentUser.uid,
+                            productId: currentProductData.id,
+                            productTitle: currentProductData.Title,
+                            productImage: currentProductData.ImageSrc || (Array.isArray(currentProductData.imageUrls) && currentProductData.imageUrls[0]),
+                            favoritedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        favoriteMainButton.classList.add('favorited');
+                    }
+                } catch (error) {
+                    console.error("Error updating favorite status:", error);
+                    alert("Could not update favorite status.");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

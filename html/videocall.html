@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WeConnect - Video Call</title>
+  <!-- Disable Zoom -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <!-- Inter Font -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <!-- Material Symbols Outlined -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --primary-color: #1f3a5c;
+      --secondary-color: #4a90e2;
+      --background-light: #f0f2f5;
+      --background-dark: #ffffff;
+      --text-dark: #2c3e50;
+      --text-medium: #555;
+      --text-light: #777;
+      --border-radius: 10px;
+      --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      --header-height: 60px;
+      --bottom-nav-height: 65px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html,
+    body {
+      overscroll-behavior-y: contain;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: "Inter", sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-top: var(--header-height);
+      padding-bottom: calc(var(--bottom-nav-height) + 16px);
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+    }
+    a {
+      color: var(--secondary-color);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, transform 0.1s;
+      background: none;
+      padding: 8px;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      vertical-align: middle;
+    }
+
+    /* Header */
+    .header {
+      background-color: var(--background-dark);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: var(--header-height);
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    .header-back {
+      color: var(--text-medium);
+      font-size: 1.8rem;
+      cursor: pointer;
+    }
+    .header-back:hover {
+      color: var(--text-dark);
+    }
+
+    /* Main Call Container */
+    .call-container {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+      background-color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    /* Remote Video occupies full background */
+    #remoteVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background-color: #000;
+    }
+    /* Local Video is a small overlay */
+    #localVideo {
+      position: absolute;
+      bottom: 100px;
+      right: 16px;
+      width: 120px;
+      height: 160px;
+      border: 2px solid var(--background-dark);
+      border-radius: var(--border-radius);
+      object-fit: cover;
+      background-color: #333;
+      box-shadow: var(--box-shadow);
+    }
+
+    /* Controls Container */
+    .call-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 50px;
+      padding: 8px 12px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      box-shadow: var(--box-shadow);
+    }
+    .control-button {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: var(--background-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-medium);
+      font-size: 24px;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .control-button:hover {
+      background-color: #f0f0f0;
+      color: var(--primary-color);
+    }
+    .control-button.end-call {
+      background-color: #e74c3c;
+      color: #fff;
+    }
+    .control-button.end-call:hover {
+      background-color: #c0392b;
+    }
+
+    /* Loading Spinner */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .loading-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--secondary-color);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Bottom Navigation Placeholder (hidden during call) */
+    .bottom-nav {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <span class="material-symbols-outlined header-back" id="backButton">arrow_back_ios_new</span>
+    <div class="header-title" id="callWithName">Connecting...</div>
+    <div style="width: 24px"></div>
+  </header>
+
+  <!-- Video Call Area -->
+  <div class="call-container">
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay muted playsinline></video>
+
+    <!-- Call Controls -->
+    <div class="call-controls">
+      <button class="control-button" id="toggleCamera" title="Toggle Camera">
+        <span class="material-symbols-outlined">videocam</span>
+      </button>
+      <button class="control-button" id="toggleMic" title="Toggle Microphone">
+        <span class="material-symbols-outlined">mic</span>
+      </button>
+      <button class="control-button end-call" id="endCall" title="End Call">
+        <span class="material-symbols-outlined">call_end</span>
+      </button>
+      <button class="control-button" id="switchCamera" title="Switch Camera">
+        <span class="material-symbols-outlined">flip_camera_android</span>
+      </button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+      <div class="loading-spinner"></div>
+    </div>
+  </div>
+
+  <!-- Placeholder Bottom Nav (hidden) -->
+  <div class="bottom-nav">
+    <!-- Navigation items would go here if needed -->
+  </div>
+
+  <script>
+    // Grab UI elements
+    const backButton = document.getElementById('backButton');
+    const callWithName = document.getElementById('callWithName');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const localVideo = document.getElementById('localVideo');
+    const toggleCameraBtn = document.getElementById('toggleCamera');
+    const toggleMicBtn = document.getElementById('toggleMic');
+    const endCallBtn = document.getElementById('endCall');
+    const switchCameraBtn = document.getElementById('switchCamera');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // Placeholder variables for media streams
+    let localStream = null;
+    let videoEnabled = true;
+    let audioEnabled = true;
+    let usingFrontCamera = true;
+
+    // Simulate retrieving the call target’s name from query param
+    const params = new URLSearchParams(window.location.search);
+    const callWith = params.get('with') || 'Unknown User';
+    callWithName.textContent = `Calling ${callWith}`;
+
+    // Show loading overlay initially
+    function showLoading() {
+      loadingOverlay.classList.add('active');
+    }
+    function hideLoading() {
+      loadingOverlay.classList.remove('active');
+    }
+
+    // Request media devices and display local video preview
+    async function startLocalStream() {
+      showLoading();
+      try {
+        const constraints = {
+          video: { facingMode: usingFrontCamera ? 'user' : 'environment' },
+          audio: true
+        };
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        localVideo.srcObject = localStream;
+        // In real integration, send this stream to peer connection
+        // and get remote stream from peer, then assign to remoteVideo.srcObject
+        hideLoading();
+      } catch (err) {
+        console.error('Error accessing media devices:', err);
+        alert('Could not access camera/microphone. Permission denied or no device available.');
+        hideLoading();
+      }
+    }
+
+    // Toggle camera on/off
+    toggleCameraBtn.addEventListener('click', () => {
+      if (!localStream) return;
+      videoEnabled = !videoEnabled;
+      localStream.getVideoTracks().forEach(track => track.enabled = videoEnabled);
+      toggleCameraBtn.querySelector('.material-symbols-outlined').textContent = videoEnabled ? 'videocam' : 'videocam_off';
+    });
+
+    // Toggle microphone on/off
+    toggleMicBtn.addEventListener('click', () => {
+      if (!localStream) return;
+      audioEnabled = !audioEnabled;
+      localStream.getAudioTracks().forEach(track => track.enabled = audioEnabled);
+      toggleMicBtn.querySelector('.material-symbols-outlined').textContent = audioEnabled ? 'mic' : 'mic_off';
+    });
+
+    // Switch camera (front <-> back)
+    switchCameraBtn.addEventListener('click', async () => {
+      if (!localStream) return;
+      usingFrontCamera = !usingFrontCamera;
+      // Stop existing video tracks
+      localStream.getVideoTracks().forEach(track => track.stop());
+      // Restart with new facingMode
+      const newConstraints = {
+        video: { facingMode: usingFrontCamera ? 'user' : 'environment' },
+        audio: true
+      };
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia(newConstraints);
+        // Replace tracks in peer connection if integrated
+        localStream = newStream;
+        localVideo.srcObject = newStream;
+      } catch (err) {
+        console.error('Error switching camera:', err);
+        alert('Could not switch camera.');
+      }
+    });
+
+    // End call logic (simply redirect back to home or messages)
+    endCallBtn.addEventListener('click', () => {
+      if (confirm('End call?')) {
+        // In real integration, close peer connection, stop streams
+        if (localStream) {
+          localStream.getTracks().forEach(track => track.stop());
+        }
+        window.location.href = 'messages.html';
+      }
+    });
+
+    // Back button returns to previous page
+    backButton.addEventListener('click', () => {
+      window.history.back();
+    });
+
+    // Start local preview on load
+    window.addEventListener('load', () => {
+      startLocalStream();
+    });
+
+    // Prevent multi-touch zoom / double-tap zoom
+    document.addEventListener(
+      'touchstart',
+      (e) => {
+        if (e.touches.length > 1) e.preventDefault();
+      },
+      { passive: false }
+    );
+    let lastTouchEnd = 0;
+    document.addEventListener(
+      'touchend',
+      (e) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) e.preventDefault();
+        lastTouchEnd = now;
+      },
+      { passive: false }
+    );
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

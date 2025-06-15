@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WeConnect - AI Topic Ideas</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+  <style>/* Shared Styles */:root{--primary-color:#1F3A5C;--background-light:#f0f2f5;--background-dark:#ffffff;--text-dark:#333;--text-medium:#555;--text-light:#777;--accent-color:#4A90E2;--spacing-unit:15px;--border-radius:8px;--box-shadow:0 1px 3px rgba(0,0,0,0.08)}*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{font-family:'Inter',sans-serif;background-color:var(--background-light);color:var(--text-dark);min-height:100vh;max-width:420px;margin:0 auto;overflow-x:hidden;position:relative;padding-top:56px}a{color:var(--primary-color);text-decoration:none}button,input,textarea{font-family:inherit}button{cursor:pointer;border:none;border-radius:var(--border-radius);transition:background-color .3s,transform .1s}button:active{transform:translateY(1px)}.primary-button{background-color:var(--primary-color);color:#FFFFFF;padding:10px var(--spacing-unit);font-size:.95rem;font-weight:600;text-align:center}.primary-button:hover{background-color:#192F4A}.primary-button:disabled{background-color:#ccc;cursor:not-allowed}.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}.sticky-header{background-color:var(--background-dark);padding:0 var(--spacing-unit);display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;max-width:420px;margin:0 auto;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.1);height:56px;border-bottom:1px solid #eee}.back-icon{color:var(--text-medium);display:flex;align-items:center;justify-content:center;padding:10px;margin-left:-10px;text-decoration:none}.back-icon .material-symbols-outlined{font-size:24px}.header-title{font-size:1.1rem;font-weight:600;color:var(--text-dark);text-align:center;flex-grow:1}.header-spacer{width:44px;flex-shrink:0}.main-content{padding:var(--spacing-unit);display:flex;flex-direction:column;gap:var(--spacing-unit)}
+    /* Tool Specific UI */
+    .tool-container {background-color:var(--background-dark);border-radius:var(--border-radius);padding:var(--spacing-unit);box-shadow:var(--box-shadow);display:flex;flex-direction:column;gap:var(--spacing-unit)}
+    .tool-container h3 {font-size:1.1rem;color:var(--primary-color);margin-bottom:5px}
+    .tool-container p {font-size:.9rem;color:var(--text-medium);line-height:1.5;margin-bottom: var(--spacing-unit);}
+    .tool-container label {font-weight:500;margin-bottom:5px;display:block;font-size:.9rem}
+    .tool-container input[type=text], .tool-container textarea {width:100%;padding:10px;border:1px solid #ccc;border-radius:var(--border-radius);font-size:.95rem;background-color:#fff;} /* Enable input */
+    .tool-container textarea {min-height:80px;resize:vertical}
+    .results-area {min-height:150px;background-color:#f8f8f8;border:1px solid #ddd;border-radius:var(--border-radius);padding:var(--spacing-unit);color:var(--text-dark);font-size: 0.9rem; white-space: pre-wrap; /* Preserve line breaks */}
+    .loading-indicator, .error-message {text-align:center;padding:10px;display:none} /* Hidden by default */
+    .loading-indicator {color:var(--text-medium)}
+    .error-message {color:red;font-weight:500}
+    .tool-container .info-text{font-size:.8rem;color:var(--text-light);margin-top:5px;text-align: center;}
+    @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}} /* Add spin animation */
+    .loading-indicator .material-symbols-outlined {vertical-align: bottom; font-size: 1.2em; animation: spin 1s linear infinite;} /* Style spinner */
+  </style>
+</head>
+<body>
+  <header class="sticky-header"><a href="tools.html" class="back-icon" aria-label="Back to Tools"><span class="material-symbols-outlined">arrow_back_ios</span></a><h2 class="header-title">AI Topic Ideas</h2><div class="header-spacer"></div></header>
+  <main class="main-content">
+    <div class="tool-container">
+      <h3>AI Topic Ideas</h3><p>Get creative content topic suggestions powered by AI based on keywords or your niche.</p>
+      <form id="topic-form">
+          <label for="topic-keywords">Enter Keywords or Niche:</label>
+          <input type="text" id="topic-keywords" placeholder="e.g., 'vlogging tips', 'mobile photography'" required> <!-- Removed disabled -->
+          <div class="results-area" id="results-display">Enter keywords above and click Generate.</div>
+          <div class="loading-indicator" id="loading">Generating ideas... <span class="material-symbols-outlined">progress_activity</span></div>
+          <div class="error-message" id="error"></div>
+          <button type="submit" class="primary-button" id="generate-button" style="margin-top: var(--spacing-unit);">Generate Ideas</button> <!-- Removed disabled -->
+      </form>
+      <p class="info-text">AI suggestions provide inspiration, refine them for your audience.</p>
+    </div>
+  </main>
+  <script>
+    const topicForm = document.getElementById('topic-form');
+    const keywordInput = document.getElementById('topic-keywords');
+    const resultsDisplay = document.getElementById('results-display');
+    const loadingIndicator = document.getElementById('loading');
+    const errorDisplay = document.getElementById('error');
+    const generateButton = document.getElementById('generate-button');
+
+    // --- WARNING: Hardcoded API Key (INSECURE - For Dev Only) ---
+    const GEMINI_API_KEY = "AIzaSyB54Z7H75gOKpEvmEBH1bw_tdBwxwoAmps"; // Your actual key
+    // --- END WARNING ---
+
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    topicForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const keywords = keywordInput.value.trim();
+        if (!keywords) {
+            errorDisplay.textContent = 'Please enter keywords or a niche.';
+            errorDisplay.style.display = 'block';
+            resultsDisplay.style.display = 'none';
+            return;
+        }
+
+        // UI Updates
+        generateButton.disabled = true; generateButton.textContent = 'Generating...';
+        loadingIndicator.style.display = 'block'; resultsDisplay.style.display = 'none';
+        resultsDisplay.textContent = ''; errorDisplay.style.display = 'none';
+
+        const prompt = `Generate 5 engaging content topic ideas (like blog post titles or video ideas) based on these keywords/niche: "${keywords}". List them numbered.`;
+
+        const requestBody = {
+            contents: [{ parts: [{"text": prompt}] }],
+            // Optional: Add generationConfig here if needed
+        };
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: { message: 'Unknown API error' }}));
+                console.error("API Error Response:", errorData);
+                throw new Error(`API Error: ${response.status} - ${errorData?.error?.message || response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            // Extract text (adjust path based on actual Gemini API response structure)
+             let generatedText = "Error: Could not extract text from response.";
+             if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+                 generatedText = data.candidates[0].content.parts[0].text;
+             } else {
+                 console.warn("Unexpected API response structure:", data);
+             }
+
+            resultsDisplay.textContent = generatedText;
+            resultsDisplay.style.display = 'block';
+
+        } catch (error) {
+            console.error('Error generating topic ideas:', error);
+            errorDisplay.textContent = `Failed to generate ideas: ${error.message}`;
+            errorDisplay.style.display = 'block';
+            resultsDisplay.style.display = 'none';
+        } finally {
+            loadingIndicator.style.display = 'none';
+            generateButton.disabled = false;
+            generateButton.textContent = 'Generate Ideas';
+        }
+    });
+
+    /* Zoom Prevention */ document.addEventListener('touchstart',function(e){if(e.touches.length>1)e.preventDefault()},{passive:!1});document.addEventListener('touchmove',function(e){if(e.touches.length>1)e.preventDefault()},{passive:!1});let l=0;document.addEventListener('touchend',function(e){const t=Date.now();if(t-l<=300)e.preventDefault();l=t},{passive:!1});
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>

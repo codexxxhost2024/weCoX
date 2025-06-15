@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WeConnect - Academy</title>
+    <meta name="theme-color" content="#1F3A5C">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <header class="sticky-header">
+            <a href="home.html" class="header-link-button" id="backButton" title="Back">
+                <span class="material-symbols-outlined">arrow_back_ios_new</span>
+            </a>
+            <span class="header-title">Academy</span>
+             <a href="course-upload.html" class="header-link-button" title="Upload Course">
+                <span class="material-symbols-outlined">add_circle</span> <!-- Filled add icon -->
+            </a>
+        </header>
+
+        <div class="search-bar">
+             <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" id="searchInput" placeholder="Search courses...">
+            </div>
+        </div>
+
+        <div class="featured-course" id="featuredCourse">
+            <video id="featuredVideoPlayer" src="assets/academy/intro.mp4" autoplay loop muted playsinline poster="placeholder-featured.jpg">
+                Your browser does not support the video tag.
+            </video>
+            <div class="video-overlay">
+                <button class="play-pause-button" id="featuredPlayPauseBtn">
+                    <span class="material-symbols-outlined">play_arrow</span>
+                </button>
+                <div class="info">
+                    <h3 id="featuredCourseTitle">Introduction to WeConnect</h3>
+                    <span class="tag" id="featuredCourseTag">Free</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Recently Added Courses</div>
+        <div class="courses-grid" id="coursesGrid">
+            <p id="loadingMessage">Loading courses...</p>
+            <!-- Course cards will be loaded here -->
+        </div>
+    </div>
+
+    <div class="video-modal" id="videoModal">
+        <div class="video-modal-header">
+            <span class="video-modal-title" id="videoModalTitle">Course Video</span>
+            <button class="video-modal-close" id="videoModalCloseBtn" aria-label="Close video player">×</button>
+        </div>
+        <video id="courseVideoPlayer" controls autoplay controlsList="nodownload"></video>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdZM_2Dgibm-S9pftZBUqOdGVup9oNhmU",
+            authDomain: "ai-connect-2nbpnn.firebaseapp.com",
+            databaseURL: "https://ai-connect-2nbpnn-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ai-connect-2nbpnn",
+            storageBucket: "ai-connect-2nbpnn.appspot.com",
+            messagingSenderId: "704482029158",
+            appId: "1:704482029158:web:2da7baab059274e0e447a7"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const database = firebase.database();
+        const coursesGrid = document.getElementById('coursesGrid');
+        const searchInput = document.getElementById('searchInput');
+
+        // Featured Video Elements
+        const featuredCourseContainer = document.getElementById('featuredCourse');
+        const featuredVideoPlayer = document.getElementById('featuredVideoPlayer');
+        const featuredPlayPauseBtn = document.getElementById('featuredPlayPauseBtn');
+        const featuredPlayPauseIcon = featuredPlayPauseBtn.querySelector('.material-symbols-outlined');
+        const featuredCourseTitleElem = document.getElementById('featuredCourseTitle');
+        const featuredCourseTagElem = document.getElementById('featuredCourseTag');
+
+
+        const videoModal = document.getElementById('videoModal');
+        const videoModalTitle = document.getElementById('videoModalTitle');
+        const courseVideoPlayer = document.getElementById('courseVideoPlayer');
+        const videoModalCloseBtn = document.getElementById('videoModalCloseBtn');
+
+        let allCoursesData = {};
+
+        // --- Featured Video Player Logic ---
+        function updateFeaturedPlayPauseIcon() {
+            if (featuredVideoPlayer.paused || featuredVideoPlayer.ended) {
+                featuredPlayPauseIcon.textContent = 'play_arrow';
+            } else {
+                featuredPlayPauseIcon.textContent = 'pause';
+            }
+        }
+
+        featuredPlayPauseBtn.addEventListener('click', () => {
+            if (featuredVideoPlayer.paused || featuredVideoPlayer.ended) {
+                featuredVideoPlayer.play();
+            } else {
+                featuredVideoPlayer.pause();
+            }
+        });
+        // Hide play button initially if autoplay works, show if it doesn't or gets paused by browser
+        featuredVideoPlayer.addEventListener('play', () => {
+            updateFeaturedPlayPauseIcon();
+            featuredPlayPauseBtn.style.opacity = '0'; // Hide when playing
+        });
+        featuredVideoPlayer.addEventListener('pause', () => {
+            updateFeaturedPlayPauseIcon();
+            featuredPlayPauseBtn.style.opacity = '1'; // Show when paused
+        });
+        featuredVideoPlayer.addEventListener('ended', updateFeaturedPlayPauseIcon);
+
+        // Show play button if autoplay is prevented or on hover
+        featuredCourseContainer.addEventListener('mouseenter', () => {
+             if (featuredVideoPlayer.paused) featuredPlayPauseBtn.style.opacity = '1';
+        });
+        featuredCourseContainer.addEventListener('mouseleave', () => {
+            if (!featuredVideoPlayer.paused) featuredPlayPauseBtn.style.opacity = '0';
+        });
+
+        // Attempt to play, then update icon. Some browsers block autoplay if not muted.
+        featuredVideoPlayer.play().then(() => {
+            updateFeaturedPlayPauseIcon();
+            featuredPlayPauseBtn.style.opacity = '0';
+        }).catch(error => {
+            console.warn("Autoplay prevented for featured video:", error);
+            updateFeaturedPlayPauseIcon(); // Ensure icon is 'play'
+            featuredPlayPauseBtn.style.opacity = '1'; // Show button if autoplay fails
+        });
+        // Set initial poster for the video
+        featuredVideoPlayer.poster = "placeholder-featured.jpg"; // Replace with an actual poster image URL if you have one
+
+        // --- Course Card and Modal Logic ---
+        function createCourseCard(courseData) {
+            const card = document.createElement('div');
+            card.className = 'course-card';
+            card.dataset.videoUrl = courseData.video_url;
+            card.dataset.videoTitle = courseData.title;
+
+            const img = document.createElement('img');
+            img.src = courseData.image_thumbnail || 'https://via.placeholder.com/300x180.png?text=No+Image';
+            img.alt = courseData.title || 'Course Image';
+            img.loading = "lazy"; // Lazy load images
+            img.onerror = function() {
+                this.onerror = null;
+                this.src = 'https://via.placeholder.com/300x180.png?text=Image+Error';
+            };
+
+            const content = document.createElement('div');
+            content.className = 'content';
+
+            const titleElem = document.createElement('h4');
+            titleElem.className = 'title';
+            titleElem.textContent = courseData.title || 'Untitled Course';
+
+            const author = document.createElement('p');
+            author.className = 'author';
+            author.textContent = courseData.author || 'Unknown Author';
+
+            content.appendChild(titleElem);
+            content.appendChild(author);
+            card.appendChild(img);
+            card.appendChild(content);
+
+            card.addEventListener('click', function() {
+                openVideoModal(this.dataset.videoUrl, this.dataset.videoTitle);
+            });
+            return card;
+        }
+
+        // No need for createFeaturedCourse JS function if HTML is static for featured video
+        // However, if the featured video details come from Firebase, you'd adapt it:
+        function updateStaticFeaturedInfo(courseData) {
+            if (courseData) {
+                // If you want to dynamically set the src for the featured video:
+                // featuredVideoPlayer.src = courseData.video_url || 'assets/academy/intro.mp4';
+                // featuredVideoPlayer.poster = courseData.image_thumbnail || 'placeholder-featured.jpg';
+                featuredCourseTitleElem.textContent = courseData.title || "Introduction to WeConnect";
+                featuredCourseTagElem.textContent = courseData.tag || "Free"; // Assuming a 'tag' field in your data
+            } else {
+                // Default static content is already in HTML
+            }
+        }
+
+
+        function openVideoModal(videoUrl, title) {
+            if (!videoUrl) {
+                alert("Video not available for this course.");
+                return;
+            }
+            videoModalTitle.textContent = title || "Course Video";
+            courseVideoPlayer.src = videoUrl;
+            videoModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeVideoModal() {
+            videoModal.classList.remove('active');
+            courseVideoPlayer.pause();
+            courseVideoPlayer.currentTime = 0; // Reset video
+            courseVideoPlayer.src = "";
+            document.body.style.overflow = '';
+        }
+
+        videoModalCloseBtn.addEventListener('click', closeVideoModal);
+        videoModal.addEventListener('click', function(event) {
+            if (event.target === videoModal) {
+                closeVideoModal();
+            }
+        });
+
+        function renderCourses(coursesToRender, isInitialLoad = false) {
+            coursesGrid.innerHTML = '';
+            let courseCount = 0;
+            let firstActiveCourseForFeatured = null;
+
+            if (coursesToRender && Object.keys(coursesToRender).length > 0) {
+                const courseIds = Object.keys(coursesToRender).reverse();
+
+                for (const courseId of courseIds) {
+                    const course = coursesToRender[courseId];
+                    if (course && course.active !== false) {
+                        if (isInitialLoad && !firstActiveCourseForFeatured) {
+                            firstActiveCourseForFeatured = course; // Capture the first active for featured section
+                        }
+                        const courseCardElement = createCourseCard(course);
+                        coursesGrid.appendChild(courseCardElement);
+                        courseCount++;
+                    }
+                }
+            }
+
+            // Update the static featured course elements if it's the initial load and we found a course
+            // This is only if you want the first course from DB to also populate the featured banner text.
+            // Otherwise, the HTML static text for featured banner remains.
+            if (isInitialLoad) {
+                updateStaticFeaturedInfo(firstActiveCourseForFeatured);
+            }
+
+
+            const existingNoCoursesMsg = document.getElementById('noCoursesMessage');
+            if (existingNoCoursesMsg) existingNoCoursesMsg.remove();
+            const existingLoadingMsg = document.getElementById('loadingMessage');
+            if (existingLoadingMsg) existingLoadingMsg.remove();
+            const existingFailedMsg = document.getElementById('failedMessage');
+            if(existingFailedMsg) existingFailedMsg.remove();
+
+            if (courseCount === 0) {
+                const noCoursesMsg = document.createElement('p');
+                noCoursesMsg.id = 'noCoursesMessage';
+                noCoursesMsg.textContent = searchInput.value.trim() ? 'No courses found matching your search.' : 'No courses available at the moment.';
+                coursesGrid.appendChild(noCoursesMsg);
+            }
+        }
+
+        const coursesRef = database.ref('course');
+        coursesRef.on('value', (snapshot) => {
+            allCoursesData = snapshot.val() || {};
+            renderCourses(allCoursesData, true); // Pass true for initial load
+        }, (error) => {
+            console.error("Error fetching courses: ", error);
+            coursesGrid.innerHTML = '';
+            const existingLoadingMsg = document.getElementById('loadingMessage');
+            if (existingLoadingMsg) existingLoadingMsg.remove();
+
+            if (!document.getElementById('failedMessage')) {
+                 const errorMsg = document.createElement('p');
+                 errorMsg.id = 'failedMessage';
+                 errorMsg.textContent = 'Failed to load courses. Please try again later.';
+                 coursesGrid.appendChild(errorMsg);
+            }
+            // Clear featured course text on error
+            updateStaticFeaturedInfo(null); // This will revert to HTML static or clear if you adapt it
+        });
+
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            if (!searchTerm) {
+                renderCourses(allCoursesData, false); // Render all if search is cleared, not initial load
+                return;
+            }
+            const filteredCourses = {};
+            for (const courseId in allCoursesData) {
+                const course = allCoursesData[courseId];
+                if (course && course.active !== false) {
+                    const title = (course.title || '').toLowerCase();
+                    const author = (course.author || '').toLowerCase();
+                    const description = (course.description || '').toLowerCase();
+                    if (title.includes(searchTerm) || author.includes(searchTerm) || description.includes(searchTerm)) {
+                        filteredCourses[courseId] = course;
+                    }
+                }
+            }
+            renderCourses(filteredCourses, false); // Not initial load for search filtering
+        });
+
+         document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+         let lastTouchEnd = 0;
+         document.addEventListener('touchend', function(event) {
+           const now = Date.now();
+           if (now - lastTouchEnd <= 300) event.preventDefault();
+           lastTouchEnd = now;
+         }, { passive: false });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>WECONNECT - Create Account</title>
+  <!-- Firebase SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <!-- End Firebase SDK Scripts -->
+  <style>
+    /* --- Flattened CSS Styling --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { height: 100%; }
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
+      min-height: 100vh; display: flex; justify-content: center; align-items: center;
+      padding: 30px 20px;
+    }
+    .container {
+      width: 100%; max-width: 400px; text-align: center;
+      background-color: transparent; padding: 0; box-shadow: none; border-radius: 0;
+    }
+    .logo img { width: 225px; height: auto; margin-bottom: 30px; }
+    h1 { font-size: 1.8rem; font-weight: 600; color: #333; margin-bottom: 10px; }
+    p.subtitle { font-size: 1rem; color: #555; margin-bottom: 35px; line-height: 1.5; }
+    form { display: flex; flex-direction: column; gap: 18px; margin-bottom: 25px; }
+    .input-container input {
+      width: 100%; padding: 14px; border: 1px solid #dce1e6; border-radius: 8px;
+      font-size: 1rem; color: #333; background-color: #fff; font-family: inherit;
+      transition: border-color 0.2s ease-in-out;
+    }
+    .input-container input::placeholder { color: #888; }
+    .input-container input:focus { outline: none; border-color: #1F3A5C; box-shadow: none; }
+    button[type="submit"] {
+      width: 100%; background-color: #1F3A5C; color: #FFFFFF; padding: 14px;
+      border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
+      transition: background-color 0.3s, transform 0.1s ease; font-family: inherit;
+    }
+    button[type="submit"]:hover { background-color: #192F4A; }
+    button[type="submit"]:active { transform: scale(0.98); }
+    button[type="submit"]:disabled { background-color: #cccccc; cursor: not-allowed; }
+    .links { margin-top: 25px; font-size: 0.9rem; color: #555; }
+    .links a { color: #1F3A5C; text-decoration: none; font-weight: 500; }
+    .links a:hover { text-decoration: underline; }
+
+    /* Loading Modal Styles */
+    .loading-modal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6);
+      display: flex; justify-content: center; align-items: center; z-index: 1050; opacity: 0; visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+    .loading-modal.visible { opacity: 1; visibility: visible; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    .loading-content { background-color: white; padding: 30px 40px; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    .loading-content p { margin-top: 15px; color: #333; font-size: 1rem; font-weight: 500; }
+    .spinner { border: 5px solid #f3f3f3; border-top: 5px solid #1F3A5C; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Install Modal Styles (Optional) */
+    .install-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .install-banner { background-color: white; border-radius: 10px; padding: 0; display: flex; justify-content: center; align-items: center; max-width: 300px; margin: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+    .install-banner img { max-width: 100%; height: auto; display: block; border-radius: 10px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="assets/images/logo.png" alt="WECONNECT Logo">
+    </div>
+    <h1>Create Account</h1>
+    <p class="subtitle">Join the WECONNECT community!</p>
+    <form id="signupForm">
+      <div class="input-container">
+        <input type="text" id="sponsorAccountNumber" placeholder="Sponsor Account Phone (Optional)">
+      </div>
+      <div class="input-container">
+        <input type="text" id="fullName" placeholder="Full Name" required>
+      </div>
+      <div class="input-container">
+        <input type="email" id="email" placeholder="Email Address" required>
+      </div>
+      <div class="input-container">
+        <input type="text" id="phone" placeholder="Phone Number" required>
+      </div>
+      <div class="input-container">
+        <input type="password" id="password" placeholder="Password" required>
+      </div>
+      <div class="input-container">
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+      </div>
+      <button type="submit">Sign Up</button>
+    </form>
+    <div class="links">
+      Already have an account? <a href="signin.html">Sign In</a>
+    </div>
+  </div>
+
+  <!-- Loading Modal -->
+  <div id="loadingModal" class="loading-modal hidden">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p>Creating your account...</p>
+    </div>
+  </div>
+
+  <!-- Install App Modal (Optional) -->
+  <div id="installModal" class="install-modal hidden">
+    <div class="install-banner" onclick="simulateInstall()"> <!-- Optional trigger -->
+      <img src="/assets/images/logo/install.png" alt="Install Banner"> <!-- Placeholder -->
+    </div>
+  </div>
+
+  <script>
+    // --- Firebase Configuration Object (Updated) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+    // --- End Firebase Configuration ---
+
+    // --- Initialize Firebase ---
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    // --- End Firebase Initialization ---
+
+    // Constants
+    const DEFAULT_SPONSOR_ACCOUNT = 'WECON';
+    const DEFAULT_SPONSOR_USER_ID = 'WECONNECT_ADMIN';
+    const APP_NAME = 'weconnect';
+
+    // DOM References
+    const signupForm = document.getElementById('signupForm');
+    const loadingModal = document.getElementById('loadingModal');
+    const signupButton = signupForm.querySelector('button[type="submit"]');
+
+    // --- Helper Functions (getCookie, setCookie, getParameterByName) ---
+    function getCookie(name) {const value = `; ${document.cookie}`;const parts = value.split(`; ${name}=`);if (parts.length === 2) return parts.pop().split(';').shift();}
+    function setCookie(name, value, days) {const date = new Date();date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));const expires = "expires=" + date.toUTCString();document.cookie = name + "=" + value + ";" + expires + ";path=/";}
+    function getParameterByName(name, url) {if (!url) url = window.location.href;name = name.replace(/[\[\]]/g, '\\$&');const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),results = regex.exec(url);if (!results) return null;if (!results[2]) return '';return decodeURIComponent(results[2].replace(/\+/g, ' '));}
+    // --- End Helper Functions ---
+
+    // --- Referral Code Logic ---
+    const sponsorPhoneField = document.getElementById('sponsorAccountNumber');
+    const refCode = getParameterByName('ref');
+    if (refCode) {sponsorPhoneField.value = refCode;setCookie('referralCode', refCode, 30);} else {const referralCodeCookie = getCookie('referralCode');if (referralCodeCookie) {sponsorPhoneField.value = referralCodeCookie;}}
+    // --- End Referral Code Logic ---
+
+    // --- Function to generate a unique Member ID (MBR-XXXXX) ---
+    async function generateUniqueMemberId() {
+        let memberId;
+        let isUnique = false;
+        const maxAttempts = 10;
+        let attempts = 0;
+
+        console.log("Attempting to generate unique Member ID...");
+
+        do {
+            if (attempts >= maxAttempts) {
+                console.error("Failed to generate a unique Member ID after multiple attempts.");
+                throw new Error("Failed to generate a unique Member ID after multiple attempts.");
+            }
+            const randomNumber = Math.floor(Math.random() * 100000);
+            const paddedNumber = randomNumber.toString().padStart(5, '0');
+            memberId = `MBR-${paddedNumber}`;
+            console.log(`Attempt ${attempts + 1}: Checking ID ${memberId}`);
+            try {
+                const querySnapshot = await db.collection('users')
+                                         .where('memberId', '==', memberId)
+                                         .limit(1)
+                                         .get();
+                isUnique = querySnapshot.empty;
+                if (!isUnique) {
+                    console.log(`ID ${memberId} already exists. Retrying...`);
+                }
+            } catch (error) {
+                console.error("Error checking Member ID uniqueness:", error);
+                throw new Error("Failed to verify Member ID uniqueness due to a database error.");
+            }
+            attempts++;
+        } while (!isUnique);
+
+        console.log("Generated unique Member ID:", memberId);
+        return memberId;
+    }
+    // --- End Member ID Generation Function ---
+
+
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      signupButton.disabled = true;
+      loadingModal.classList.remove('hidden');
+      loadingModal.classList.add('visible');
+
+      const sponsorAccountNumberInput = document.getElementById('sponsorAccountNumber').value.trim();
+      const fullName = document.getElementById('fullName').value;
+      const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const deviceAgent = navigator.userAgent;
+      const defaultUserType = 'user';
+
+      const finishLoading = (enableButton = true) => {
+          loadingModal.classList.remove('visible');
+          setTimeout(() => {
+              loadingModal.classList.add('hidden');
+              if (enableButton) { signupButton.disabled = false; }
+          }, 300);
+      };
+
+      if (!fullName || !email || !phone || !password || !confirmPassword) { alert('Please fill in all required fields.'); finishLoading(); return; }
+      if (password !== confirmPassword) { alert('Passwords do not match.'); finishLoading(); return; }
+      if (password.length < 6) { alert('Password must be at least 6 characters long.'); finishLoading(); return; }
+
+      let sponsorAccountNumber = DEFAULT_SPONSOR_ACCOUNT;
+      let sponsorUserId = DEFAULT_SPONSOR_USER_ID;
+      let newMemberId = null;
+
+      try {
+        const phoneQuery = await db.collection('users').where('phoneNumber', '==', phone).get();
+        if (!phoneQuery.empty) { throw new Error('Phone number already registered.'); }
+        const emailQuery = await db.collection('users').where('email', '==', email).get();
+        if (!emailQuery.empty) { throw new Error('Email address already registered.'); }
+
+        if (sponsorAccountNumberInput) {
+          const sponsorQuery = await db.collection('users').where('phoneNumber', '==', sponsorAccountNumberInput).get();
+          if (sponsorQuery.empty) { throw new Error('Sponsor account not found.'); }
+          const sponsorDoc = sponsorQuery.docs[0];
+          sponsorUserId = sponsorDoc.id;
+          sponsorAccountNumber = sponsorAccountNumberInput;
+          console.log(`Sponsor found: ID=${sponsorUserId}`);
+        } else {
+          console.log(`Using default sponsor: ID=${sponsorUserId}`);
+        }
+
+        newMemberId = await generateUniqueMemberId();
+
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        const userData = {
+            id: user.uid,
+            memberId: newMemberId,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            is_subscribe: false,
+            is_verified: false,
+            balance: 0.00,
+            is_pin_created: false,
+            user_type: defaultUserType,
+            appName: APP_NAME,
+            photo: "https://weconnect-ph.online/assets/images/weconnect-user.png",
+            address: "N/A",
+            dob: "N/A",
+            token_balance: 1000,
+            play_money: 0.00,
+            total_affiliates: 0,
+            unilevel_income: 0.00,
+            displayName: fullName,
+            email: email,
+            phoneNumber: phone,
+            sponsorAccountNumber: sponsorAccountNumber,
+            sponsorUserId: sponsorUserId,
+            deviceAgent: deviceAgent
+        };
+
+        const userDocWrite = db.collection('users').doc(user.uid).set(userData);
+        const welcomeNotificationWrite = db.collection('notifications').add({
+          userId: user.uid,
+          message: `Welcome to WECONNECT, ${fullName}! Your Member ID is ${newMemberId}.`,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          isRead: false
+        });
+
+        const sponsorWrites = [];
+        if (sponsorUserId !== DEFAULT_SPONSOR_USER_ID) {
+            sponsorWrites.push(db.collection('users').doc(sponsorUserId).update({
+                total_affiliates: firebase.firestore.FieldValue.increment(1)
+            }));
+            sponsorWrites.push(db.collection('notifications').add({
+                userId: sponsorUserId,
+                message: `New WECONNECT affiliate: ${fullName} (${phone}).`,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                isRead: false
+            }));
+
+            let currentSponsorId = sponsorUserId;
+            for (let level = 1; level <= 5; level++) {
+                if (!currentSponsorId || currentSponsorId === DEFAULT_SPONSOR_USER_ID) break;
+                const currentSponsorDocRef = db.collection('users').doc(currentSponsorId);
+                const currentSponsorDoc = await currentSponsorDocRef.get();
+                if (!currentSponsorDoc.exists) {
+                    console.warn(`Sponsor document not found for ID: ${currentSponsorId} at level ${level}. Stopping unilevel update.`);
+                    break;
+                }
+                let rewardAmount = 5;
+                await currentSponsorDocRef.update({
+                    unilevel_income: firebase.firestore.FieldValue.increment(Math.max(0, rewardAmount))
+                });
+                const sponsorData = currentSponsorDoc.data();
+                if (!sponsorData || !sponsorData.sponsorUserId) {
+                   console.warn(`SponsorUserId field missing or invalid for ID: ${currentSponsorId} at level ${level}. Stopping unilevel update.`);
+                   break;
+                }
+                currentSponsorId = sponsorData.sponsorUserId;
+            }
+        }
+
+        await Promise.all([userDocWrite, welcomeNotificationWrite, ...sponsorWrites]);
+
+        finishLoading(false);
+        alert(`Sign Up Successful! Welcome, ${fullName}. Your Member ID is ${newMemberId}. Proceeding to next step.`);
+        window.location.href = 'signup2.html'; // MODIFIED HERE
+
+      } catch (error) {
+        console.error("Signup Error:", error);
+        finishLoading();
+        if (error.message.includes('already registered')) { alert(`Error: ${error.message}`); }
+        else if (error.code === 'auth/invalid-email') { alert('Error: Please enter a valid email address.'); }
+        else if (error.code === 'auth/weak-password') { alert('Error: Password is too weak (min. 6 characters).'); }
+        else if (error.message.includes('Sponsor account not found')) { alert('Error: Sponsor account not found. Please check the number or leave blank.'); }
+        else if (error.message.includes('Failed to generate a unique Member ID')) { alert(`Error: ${error.message}`); }
+        else { alert(`An error occurred during signup: ${error.message}`); }
+      }
+    });
+
+    // --- Install Prompt Logic (Optional) ---
+    let deferredPrompt;
+    const installModal = document.getElementById('installModal');
+    window.addEventListener('beforeinstallprompt', (e) => {e.preventDefault();deferredPrompt = e;console.log('beforeinstallprompt event fired');});
+    function simulateInstall() {if (installModal) installModal.classList.add('hidden');if (deferredPrompt) {deferredPrompt.prompt();deferredPrompt.userChoice.then((choiceResult) => {console.log(choiceResult.outcome);deferredPrompt = null;});} else {console.log('Install prompt not available.');}}
+    // --- End Install Prompt Logic ---
+
+  </script>
+</body>
+</html><script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+  <\/script>
